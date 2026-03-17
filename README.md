@@ -2,7 +2,7 @@
 
 Framework de documentacao tecnica e de negocio para projetos SaaS. Utiliza templates estruturados + skills do Claude Code para documentar um produto de ponta a ponta — do modelo de negocio a arquitetura frontend.
 
-**4 blueprints** | **48 documentos** | **56 skills**
+**4 blueprints** | **48 documentos** | **61 skills**
 
 ---
 
@@ -64,7 +64,9 @@ PRD (docs/prd.md)
 
   Depois:
   ├── /xxx-incrementar       ← Adicionar features sem sobrescrever
-  └── /patch                 ← Propagar mudancas globais
+  ├── /patch                 ← Propagar mudancas globais
+  |
+  └── /codegen               ← Gerar codigo a partir dos blueprints (XP/TDD)
 ```
 
 ---
@@ -246,6 +248,53 @@ Exemplos de uso:
 
 ---
 
+## Code Generation (Blueprints → Codigo)
+
+Apos preencher os blueprints, use os skills de codegen para gerar codigo fiel a documentacao. O workflow segue **Extreme Programming** (TDD, pair programming, small releases).
+
+### Workflow
+
+```
+/codegen-claudemd → Gera CLAUDE.md router no projeto-alvo (uma vez)
+       ↓
+/codegen-contracts → Phase 0: tipos, schema, scaffold (uma vez)
+       ↓
+/codegen → Apresenta fases do build plan (inicio de sessao)
+       ↓
+/codegen-feature [nome] → Implementa feature vertical com TDD
+       ↓                          ↑
+       ↓                    (repete por feature)
+       ↓
+/codegen-verify → Verifica aderencia ao blueprint (a cada fase)
+```
+
+### Estrategia de Contexto (2M+ tokens de blueprints)
+
+Os blueprints preenchidos ultrapassam 2M tokens — nao cabem no contexto de nenhum modelo. A solucao:
+
+1. **CLAUDE.md Router**: tabela que mapeia tipo de tarefa → 2-3 docs relevantes
+2. **Context Excerpting**: carrega apenas secoes relevantes de docs grandes (grep por headers)
+3. **Contracts as Cache**: `src/contracts/` e o "cache compilado" do domain model — tipos compactos vs docs verbosos
+4. **Budget por sessao**: max ~70-100k tokens de contexto, deixando 900k+ para geracao
+
+### Skills de Codegen (5)
+
+| Comando | Descricao | Quando |
+|---------|-----------|--------|
+| `/codegen-claudemd` | Gera CLAUDE.md router para o projeto-alvo | Setup (uma vez) |
+| `/codegen-contracts` | Gera tipos, schema e scaffold (Phase 0) | Setup (uma vez) |
+| `/codegen` | Apresenta fases do build plan e guia execucao | Inicio de sessao |
+| `/codegen-feature` | Implementa feature vertical (TDD: RED→GREEN→REFACTOR) | Dia-a-dia |
+| `/codegen-verify` | Verifica codigo vs blueprint (score de aderencia) | A cada 3-5 features |
+
+### Templates de Codegen (1)
+
+| Template | Descricao |
+|----------|-----------|
+| `docs/templates/claudemd-template.md` | Template do CLAUDE.md router |
+
+---
+
 ## Referencia Rapida de Skills
 
 ### Orquestradores (4)
@@ -271,6 +320,16 @@ Exemplos de uso:
 | Comando | Descricao |
 |---------|-----------|
 | `/patch` | Propaga mudanca em cascata nos 48 docs |
+
+### Code Generation (5)
+
+| Comando | Descricao |
+|---------|-----------|
+| `/codegen` | Orquestrador — apresenta fases do build plan |
+| `/codegen-claudemd` | Gera CLAUDE.md router para o projeto-alvo |
+| `/codegen-contracts` | Phase 0 — tipos, schema, scaffold |
+| `/codegen-feature` | Implementa feature vertical (TDD/XP) |
+| `/codegen-verify` | Verifica codigo gerado vs blueprint |
 
 ### Blueprint Tecnico (17)
 
@@ -367,7 +426,7 @@ blueprint/
 │   ├── diagrams/                 # Diagramas Mermaid
 │   └── adr/                      # Architecture Decision Records
 ├── .claude/
-│   └── skills/                   # 56 skills do Claude Code
+│   └── skills/                   # 61 skills do Claude Code
 │       ├── blueprint/            # Orquestrador tecnico
 │       ├── frontend/             # Orquestrador frontend
 │       ├── business/             # Orquestrador business
@@ -376,7 +435,8 @@ blueprint/
 │       ├── blueprint-*/          # 17 skills de secao + incrementar
 │       ├── frontend-*/           # 14 skills de secao + incrementar
 │       ├── business-*/           # 10 skills de secao + incrementar
-│       └── mvp-*/                # 7 skills de secao + incrementar
+│       ├── mvp-*/                # 7 skills de secao + incrementar
+│       └── codegen*/             # 5 skills de geracao de codigo
 └── README.md                     # Este arquivo
 ```
 

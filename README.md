@@ -2,7 +2,7 @@
 
 Framework de documentacao tecnica e de negocio para projetos SaaS. Utiliza templates estruturados + skills do Claude Code para documentar um produto de ponta a ponta — do modelo de negocio a arquitetura frontend.
 
-**4 blueprints** | **48 documentos** | **61 skills**
+**3 blueprints** | **41 documentos** | **52 skills**
 
 ---
 
@@ -15,7 +15,6 @@ Um conjunto de templates Markdown com placeholders (`{{...}}`) e skills do Claud
 | **Tecnico** | Arquitetura, dominio, dados, seguranca | 17 | Sistema ja validado, indo para producao |
 | **Frontend** | Componentes, estado, rotas, performance | 14 | Definir arquitetura frontend |
 | **Business** | Proposta de valor, receita, marketing | 10 | Modelar o negocio (BMC + Lean Canvas) |
-| **MVP** | Versao enxuta de tudo acima | 7 | Validar ideia rapidamente |
 
 ---
 
@@ -53,8 +52,6 @@ Um conjunto de templates Markdown com placeholders (`{{...}}`) e skills do Claud
 
 ```
 PRD (docs/prd.md)
-  |
-  ├── /mvp-blueprint        ← Validando ideia? Comece aqui (7 docs)
   |
   ├── /blueprint             ← Sistema validado (17 docs)
   |
@@ -147,24 +144,6 @@ Sequencia de skills:
 
 ---
 
-### 4. MVP Blueprint (`docs/mvp/`)
-
-Inicio: `/mvp-blueprint`
-
-Sequencia de skills:
-
-```
-1. /mvp-contexto    — Atores e sistemas do POC
-2. /mvp-visao       — Problema, solucao, metricas de sucesso
-3. /mvp-requisitos  — Must-have, should-have, out-of-scope
-4. /mvp-dominio     — Glossario, entidades, regras
-5. /mvp-dados       — Schema minimo do POC
-6. /mvp-arquitetura — Stack e componentes do POC
-7. /mvp-fluxos      — 2-3 fluxos criticos
-```
-
----
-
 ## Atualizacoes Incrementais
 
 Quando uma nova feature surge, nao e preciso reescrever o documento inteiro. Use os skills de incremento:
@@ -174,7 +153,6 @@ Quando uma nova feature surge, nao e preciso reescrever o documento inteiro. Use
 | Blueprint Tecnico | 17 docs | `/blueprint-incrementar` |
 | Frontend | 14 docs | `/frontend-incrementar` |
 | Business | 10 docs | `/business-incrementar` |
-| MVP | 7 docs | `/mvp-incrementar` |
 
 ### Tipos de alteracao suportados
 
@@ -201,8 +179,8 @@ Quando uma nova feature surge, nao e preciso reescrever o documento inteiro. Use
 
 **Remocao** — Feature saiu do escopo:
 ```
-/mvp-incrementar
-> "Remover feature de notificacoes push do escopo MVP"
+/blueprint-incrementar
+> "Remover feature de notificacoes push do escopo"
 → Marca como removida com strikethrough
 ```
 
@@ -230,7 +208,7 @@ Para mudancas que afetam **multiplos blueprints** simultaneamente:
 ```
 
 O `/patch` faz:
-1. **Varredura** em todos os 48 docs (Grep global)
+1. **Varredura** em todos os 41 docs (Grep global)
 2. **Analise de impacto** — classifica em substituicao direta, contextual e indireta
 3. **Confirmacao** — mostra tabela com todos os arquivos afetados
 4. **Aplica patches** — respeita case (PascalCase, camelCase, kebab-case)
@@ -297,29 +275,27 @@ Os blueprints preenchidos ultrapassam 2M tokens — nao cabem no contexto de nen
 
 ## Referencia Rapida de Skills
 
-### Orquestradores (4)
+### Orquestradores (3)
 
 | Comando | Descricao |
 |---------|-----------|
 | `/blueprint` | Inicia blueprint tecnico (17 docs) |
 | `/frontend` | Inicia blueprint frontend (14 docs) |
 | `/business` | Inicia blueprint business (10 docs) |
-| `/mvp-blueprint` | Inicia blueprint MVP (7 docs) |
 
-### Incremento (4)
+### Incremento (3)
 
 | Comando | Descricao |
 |---------|-----------|
 | `/blueprint-incrementar` | Adiciona/corrige nos docs tecnicos |
 | `/frontend-incrementar` | Adiciona/corrige nos docs frontend |
 | `/business-incrementar` | Adiciona/corrige nos docs business |
-| `/mvp-incrementar` | Adiciona/corrige nos docs MVP |
 
 ### Utilitario (1)
 
 | Comando | Descricao |
 |---------|-----------|
-| `/patch` | Propaga mudanca em cascata nos 48 docs |
+| `/patch` | Propaga mudanca em cascata nos 41 docs |
 
 ### Code Generation (5)
 
@@ -387,18 +363,6 @@ Os blueprints preenchidos ultrapassam 2M tokens — nao cabem no contexto de nen
 | `/business-marketing` | 08-estrategia-marketing.md |
 | `/business-operacional` | 09-plano-operacional.md |
 
-### MVP (7)
-
-| Comando | Doc |
-|---------|-----|
-| `/mvp-contexto` | 00-contexto.md |
-| `/mvp-visao` | 01-visao.md |
-| `/mvp-requisitos` | 02-requisitos.md |
-| `/mvp-dominio` | 03-dominio.md |
-| `/mvp-dados` | 04-dados.md |
-| `/mvp-arquitetura` | 05-arquitetura.md |
-| `/mvp-fluxos` | 06-fluxos.md |
-
 ---
 
 ## Estrutura de Pastas
@@ -419,23 +383,17 @@ blueprint/
 │   │   ├── 00-contexto-negocio.md
 │   │   ├── 01-proposta-valor.md
 │   │   └── ... (ate 09-plano-operacional.md)
-│   ├── mvp/                      # 7 docs — versao enxuta para POC
-│   │   ├── 00-contexto.md
-│   │   ├── 01-visao.md
-│   │   └── ... (ate 06-fluxos.md)
 │   ├── diagrams/                 # Diagramas Mermaid
 │   └── adr/                      # Architecture Decision Records
 ├── .claude/
-│   └── skills/                   # 61 skills do Claude Code
+│   └── skills/                   # 52 skills do Claude Code
 │       ├── blueprint/            # Orquestrador tecnico
 │       ├── frontend/             # Orquestrador frontend
 │       ├── business/             # Orquestrador business
-│       ├── mvp-blueprint/        # Orquestrador MVP
 │       ├── patch/                # Propagacao global
 │       ├── blueprint-*/          # 17 skills de secao + incrementar
 │       ├── frontend-*/           # 14 skills de secao + incrementar
 │       ├── business-*/           # 10 skills de secao + incrementar
-│       ├── mvp-*/                # 7 skills de secao + incrementar
 │       └── codegen*/             # 5 skills de geracao de codigo
 └── README.md                     # Este arquivo
 ```

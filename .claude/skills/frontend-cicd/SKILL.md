@@ -44,4 +44,4 @@ Apresente o documento preenchido ao usuario. Aplique ajustes solicitados. Salve 
 
 ## Proxima Etapa
 
-> "CI/CD e Convencoes preenchido. Todas as secoes do Frontend Blueprint estao completas! Revise os documentos em `docs/frontend/` e considere rodar `/blueprint` para complementar com a documentacao tecnica do backend."
+> "CI/CD e Convencoes preenchido. Rode `/frontend-copies` para preencher os textos e copies de todas as telas."

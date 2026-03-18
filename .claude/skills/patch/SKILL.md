@@ -1,12 +1,12 @@
 ---
 name: patch
-description: Aplica uma alteracao em cascata por todos os documentos dos 4 blueprints (tecnico, frontend, business, MVP). Busca todas as ocorrencias e aplica patches com Edit.
+description: Aplica uma alteracao em cascata por todos os documentos dos 3 blueprints (tecnico, frontend, business). Busca todas as ocorrencias e aplica patches com Edit.
 ---
 
 # Patch — Edicao Propagada em Todos os Blueprints
 
 Aplica uma alteracao (renomear, atualizar, corrigir) em cascata por todos os
-48 documentos dos 4 blueprints. Faz varredura global, mostra impacto, e aplica
+41 documentos dos 3 blueprints. Faz varredura global, mostra impacto, e aplica
 patches cirurgicos com Edit tool — nunca Write.
 
 ## Passo 1: Receber a Alteracao
@@ -39,7 +39,6 @@ Use a **Grep tool** para buscar TODAS as ocorrencias do termo nos 4 diretorios:
 docs/blueprint/*.md
 docs/frontend/*.md
 docs/business/*.md
-docs/mvp/*.md
 ```
 
 Busque tambem variacoes de case do termo:
@@ -94,7 +93,6 @@ Apresente resumo e peca confirmacao:
 > | blueprint/ | {{n}} | {{x}} |
 > | frontend/ | {{n}} | {{x}} |
 > | business/ | {{n}} | {{x}} |
-> | mvp/ | {{n}} | {{x}} |
 >
 > Deseja prosseguir? Quer excluir algum arquivo ou ocorrencia?"
 
@@ -151,7 +149,6 @@ Apresente resumo final:
 > | blueprint/ | {{N}} | {{X}} |
 > | frontend/ | {{N}} | {{X}} |
 > | business/ | {{N}} | {{X}} |
-> | mvp/ | {{N}} | {{X}} |
 > | **Total** | **{{N}}** | **{{X}}** |
 >
 > **{{Z}} referencias indiretas** marcadas com `<!-- PATCH-REVIEW -->` para revisao manual:
@@ -163,7 +160,7 @@ Apresente resumo final:
 ## Passo 7: Proximo
 
 > "Patch completo. Para aplicar outro patch, rode `/patch` novamente.
-> Para revisar um blueprint especifico, rode `/blueprint`, `/frontend`, `/business` ou `/mvp-blueprint`.
+> Para revisar um blueprint especifico, rode `/blueprint`, `/frontend` ou `/business`.
 > Para remover marcacoes PATCH-REVIEW apos revisao: `/patch` com instrucao de limpeza."
 
 ---

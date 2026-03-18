@@ -49,6 +49,7 @@ Apresente o resultado em tabela:
 | 11 | Seguranca | ... | ... |
 | 12 | Observabilidade | ... | ... |
 | 13 | CI/CD e Convencoes | ... | ... |
+| 14 | Copies | ... | ... |
 
 ## Passo 4: Apresentar o Roadmap
 
@@ -69,6 +70,7 @@ Apresente a ordem recomendada de preenchimento:
 12. /frontend-seguranca        — Autenticacao e protecao
 13. /frontend-observabilidade  — Monitoramento e feature flags
 14. /frontend-cicd             — Pipeline e convencoes de codigo
+15. /frontend-copies            — Textos e copies de todas as telas
 ```
 
 ## Passo 5: Orientar o Proximo Passo

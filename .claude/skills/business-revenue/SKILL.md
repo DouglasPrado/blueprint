@@ -1,6 +1,6 @@
 ---
-name: business-receita
-description: Use when filling the revenue model section (05-modelo-receita.md) of the business blueprint. Defines revenue sources, MRR composition, NRR, pricing strategy, unit economics, and revenue projections.
+name: business-revenue
+description: Use when filling the revenue model section (05-revenue-model.md) of the business blueprint. Defines revenue sources, MRR composition, NRR, pricing strategy, unit economics, and revenue projections.
 ---
 
 # Business Blueprint — Modelo de Receita
@@ -10,7 +10,7 @@ Define as fontes de receita, composicao do MRR, retencao liquida, estrategia de 
 ## Leitura de Contexto
 
 1. Leia `docs/prd.md` — fonte primaria
-2. Leia `docs/business/05-modelo-receita.md` — template a preencher
+2. Leia `docs/business/05-revenue-model.md` — template a preencher
 
 ## Analise de Lacunas
 
@@ -32,9 +32,9 @@ Se houver lacunas criticas que NAO podem ser inferidas do PRD, faca ate 3 pergun
 > **Modo de escrita:**
 > - Se o documento contem apenas `{{placeholders}}` (primeira vez): use Write para preencher tudo.
 > - Se o documento ja tem conteudo real (reexecucao): use **Edit** para atualizar APENAS o que mudou. Preserve conteudo existente. Insira novo conteudo antes dos marcadores `<!-- APPEND:... -->`.
-> - Para adicionar uma feature especifica sem reescrever, prefira `/business-incrementar`.
+> - Para adicionar uma feature especifica sem reescrever, prefira `/business-increment`.
 
-Preencha `docs/business/05-modelo-receita.md` substituindo TODOS os `{{placeholders}}`. Mantenha a estrutura. Use:
+Preencha `docs/business/05-revenue-model.md` substituindo TODOS os `{{placeholders}}`. Mantenha a estrutura. Use:
 - Informacoes explicitas do PRD
 - Respostas do usuario (se houve perguntas)
 - Inferencias logicas quando seguro (marque com `<!-- inferido do PRD -->`)
@@ -47,4 +47,4 @@ Apresente o documento preenchido ao usuario. Aplique ajustes solicitados. Salve 
 
 ## Proxima Etapa
 
-> "Modelo de Receita preenchido. Rode `/business-custos` para definir a Estrutura de Custos."
+> "Modelo de Receita preenchido. Rode `/business-costs` para definir a Estrutura de Custos."

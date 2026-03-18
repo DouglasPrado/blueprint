@@ -110,7 +110,7 @@ Para cada state machine:
 
 ### V7: Componentes Frontend vs Implementacao
 
-**Docs:** `docs/frontend/04-componentes.md`
+**Docs:** `docs/frontend/04-components.md`
 **Codigo:** Componentes do frontend
 
 Para cada componente documentado:
@@ -151,7 +151,7 @@ Para cada componente documentado:
 Para cada divergencia, sugira:
 
 - **Se o codigo esta errado:** "Corrija o codigo para seguir o blueprint. Use `/codegen-feature` para reimplementar."
-- **Se o blueprint esta desatualizado:** "Atualize o blueprint com `/blueprint-incrementar` para refletir a decisao tomada no codigo."
+- **Se o blueprint esta desatualizado:** "Atualize o blueprint com `/blueprint-increment` para refletir a decisao tomada no codigo."
 - **Se e ambiguo:** "Confirme com o dev: o blueprint ou o codigo esta correto?"
 
 ## Passo 6: Proximo
@@ -160,6 +160,6 @@ Para cada divergencia, sugira:
 >
 > Para corrigir divergencias:
 > - No codigo: `/codegen-feature [feature]`
-> - No blueprint: `/blueprint-incrementar`
+> - No blueprint: `/blueprint-increment`
 >
 > Para continuar implementando: `/codegen`"

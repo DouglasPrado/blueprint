@@ -1,16 +1,16 @@
 ---
-name: frontend-estrutura
-description: Preenche a secao de Estrutura do Projeto (02-estrutura-projeto.md) do frontend blueprint a partir do PRD.
+name: frontend-structure
+description: Preenche a secao de Estrutura do Projeto (02-project-structure.md) do frontend blueprint a partir do PRD.
 ---
 
 # Frontend Blueprint — Estrutura do Projeto
 
-Preenche `docs/frontend/02-estrutura-projeto.md` com base no PRD e no contexto do projeto.
+Preenche `docs/frontend/02-project-structure.md` com base no PRD e no contexto do projeto.
 
 ## Leitura de Contexto
 
 1. Leia `docs/prd.md` — fonte primaria
-2. Leia `docs/frontend/02-estrutura-projeto.md` — template a preencher
+2. Leia `docs/frontend/02-project-structure.md` — template a preencher
 
 ## Analise de Lacunas
 
@@ -23,16 +23,16 @@ A partir do PRD, identifique o que esta disponivel para cada subsecao:
 
 Se houver lacunas criticas que NAO podem ser inferidas do PRD, faca ate 3 perguntas pontuais ao usuario antes de gerar.
 
-> Ao referenciar tecnologias especificas com versoes, consulte https://context7.com/ para garantir versoes atualizadas.
+> **Versões atualizadas:** Ao referenciar tecnologias específicas com versões, use o MCP context7 para consultar documentação atualizada. Primeiro chame `mcp__context7__resolve-library-id` para obter o ID da biblioteca, depois `mcp__context7__query-docs` para consultar versões e exemplos.
 
 ## Geracao
 
 > **Modo de escrita:**
 > - Se o documento contem apenas `{{placeholders}}` (primeira vez): use Write para preencher tudo.
 > - Se o documento ja tem conteudo real (reexecucao): use **Edit** para atualizar APENAS o que mudou. Preserve conteudo existente. Insira novo conteudo antes dos marcadores `<!-- APPEND:... -->`.
-> - Para adicionar uma feature especifica sem reescrever, prefira `/frontend-incrementar`.
+> - Para adicionar uma feature especifica sem reescrever, prefira `/frontend-increment`.
 
-Preencha `docs/frontend/02-estrutura-projeto.md` substituindo TODOS os `{{placeholders}}`. Mantenha a estrutura. Use:
+Preencha `docs/frontend/02-project-structure.md` substituindo TODOS os `{{placeholders}}`. Mantenha a estrutura. Use:
 - Informacoes explicitas do PRD
 - Respostas do usuario (se houve perguntas)
 - Inferencias logicas quando seguro (marque com `<!-- inferido do PRD -->`)

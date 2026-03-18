@@ -22,6 +22,21 @@ Um conjunto de templates Markdown com placeholders (`{{...}}`) e skills do Claud
 
 1. **Claude Code** instalado e configurado
 2. **PRD do projeto** — sera salvo em `docs/prd.md`
+3. **MCP Context7** configurado — usado pelos skills para consultar versoes atualizadas de tecnologias. Adicione ao seu `claude_desktop_config.json` ou `.claude.json`:
+   ```json
+   {
+     "mcpServers": {
+       "context7": {
+         "command": "npx",
+         "args": ["-y", "@upstreamapi/context7-mcp@latest"]
+       }
+     }
+   }
+   ```
+4. **MCP Paper** configurado — usado para pesquisa e referencia de papers academicos e documentacao tecnica:
+   ```bash
+   claude mcp add paper --transport http http://127.0.0.1:29979/mcp --scope user
+   ```
 
 ---
 
@@ -406,5 +421,5 @@ blueprint/
 - **Siga a ordem**: os orquestradores sugerem a sequencia ideal
 - **Nao repita skills**: use `/xxx-incrementar` para adicionar, nao reexecute o skill original
 - **Use `/patch` para mudancas globais**: renomear entidade, mudar versao, etc.
-- **Versoes atualizadas**: skills consultam https://context7.com/ para tecnologias
+- **Versoes atualizadas**: skills usam o MCP context7 (`mcp__context7__resolve-library-id` + `mcp__context7__query-docs`) para consultar documentacao atualizada de tecnologias
 - **Templates sao templates**: os `{{placeholders}}` sao substituidos pelos skills, nao edite manualmente

@@ -1,6 +1,6 @@
 ---
-name: business-contexto
-description: Preenche a secao de Contexto de Negocio (00-contexto-negocio.md) do business blueprint a partir do PRD.
+name: business-context
+description: Preenche a secao de Contexto de Negocio (00-business-context.md) do business blueprint a partir do PRD.
 ---
 
 # Business Blueprint — Contexto de Negocio
@@ -10,7 +10,7 @@ Define o cenario de negocios onde o produto sera inserido: mercado, concorrencia
 ## Leitura de Contexto
 
 1. Leia `docs/prd.md` — fonte primaria
-2. Leia `docs/business/00-contexto-negocio.md` — template a preencher
+2. Leia `docs/business/00-business-context.md` — template a preencher
 
 ## Analise de Lacunas
 
@@ -32,9 +32,9 @@ Se houver lacunas criticas que NAO podem ser inferidas do PRD, faca ate 3 pergun
 > **Modo de escrita:**
 > - Se o documento contem apenas `{{placeholders}}` (primeira vez): use Write para preencher tudo.
 > - Se o documento ja tem conteudo real (reexecucao): use **Edit** para atualizar APENAS o que mudou. Preserve conteudo existente. Insira novo conteudo antes dos marcadores `<!-- APPEND:... -->`.
-> - Para adicionar uma feature especifica sem reescrever, prefira `/business-incrementar`.
+> - Para adicionar uma feature especifica sem reescrever, prefira `/business-increment`.
 
-Preencha `docs/business/00-contexto-negocio.md` substituindo TODOS os `{{placeholders}}`. Mantenha a estrutura. Use:
+Preencha `docs/business/00-business-context.md` substituindo TODOS os `{{placeholders}}`. Mantenha a estrutura. Use:
 - Informacoes explicitas do PRD
 - Respostas do usuario (se houve perguntas)
 - Inferencias logicas quando seguro (marque com `<!-- inferido do PRD -->`)
@@ -47,4 +47,4 @@ Apresente o documento preenchido ao usuario. Aplique ajustes solicitados. Salve 
 
 ## Proxima Etapa
 
-> "Contexto de Negocio preenchido. Rode `/business-proposta-valor` para definir a Proposta de Valor."
+> "Contexto de Negocio preenchido. Rode `/business-value-proposition` para definir a Proposta de Valor."

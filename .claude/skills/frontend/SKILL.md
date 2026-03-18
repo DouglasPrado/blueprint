@@ -56,19 +56,19 @@ Apresente o resultado em tabela:
 Apresente a ordem recomendada de preenchimento:
 
 ```
-1.  /frontend-visao            — Visao e stack do frontend
-2.  /frontend-arquitetura      — Camadas e fronteiras de dominio
-3.  /frontend-estrutura        — Estrutura de pastas e modulos
+1.  /frontend-vision            — Visao e stack do frontend
+2.  /frontend-architecture      — Camadas e fronteiras de dominio
+3.  /frontend-structure        — Estrutura de pastas e modulos
 4.  /frontend-design-system    — Tokens, temas e componentes base
-5.  /frontend-componentes      — Hierarquia e padroes de componentes
-6.  /frontend-estado           — Gerenciamento de estado
+5.  /frontend-components      — Hierarquia e padroes de componentes
+6.  /frontend-state           — Gerenciamento de estado
 7.  /frontend-data-layer       — API client, data fetching, contratos
-8.  /frontend-rotas            — Rotas, guards e navegacao
-9.  /frontend-fluxos           — Fluxos criticos de interface
-10. /frontend-testes           — Piramide e estrategia de testes
+8.  /frontend-routes            — Rotas, guards e navegacao
+9.  /frontend-flows           — Fluxos criticos de interface
+10. /frontend-tests           — Piramide e estrategia de testes
 11. /frontend-performance      — Otimizacao e Core Web Vitals
-12. /frontend-seguranca        — Autenticacao e protecao
-13. /frontend-observabilidade  — Monitoramento e feature flags
+12. /frontend-security        — Autenticacao e protecao
+13. /frontend-observability  — Monitoramento e feature flags
 14. /frontend-cicd             — Pipeline e convencoes de codigo
 15. /frontend-copies            — Textos e copies de todas as telas
 ```
@@ -77,7 +77,7 @@ Apresente a ordem recomendada de preenchimento:
 
 Diga ao usuario:
 
-> "PRD analisado. Rode `/frontend-visao` para comecar pelo primeiro documento."
+> "PRD analisado. Rode `/frontend-vision` para comecar pelo primeiro documento."
 
 ## Nota sobre Complementaridade
 

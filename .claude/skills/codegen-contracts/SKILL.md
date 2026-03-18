@@ -30,9 +30,9 @@ Leia os seguintes documentos **completos**:
 2. `docs/blueprint/05-data_model.md` — tabelas, campos, tipos, constraints, indices
 3. `docs/blueprint/06-system_architecture.md` — stack, componentes, protocolos
 4. `docs/blueprint/02-architecture_principles.md` — principios guia
-5. `docs/frontend/02-estrutura-projeto.md` — estrutura de diretorios do frontend
+5. `docs/frontend/02-project-structure.md` — estrutura de diretorios do frontend
 
-> Ao referenciar tecnologias especificas com versoes, consulte https://context7.com/ para garantir versoes atualizadas.
+> **Versões atualizadas:** Ao referenciar tecnologias específicas com versões, use o MCP context7 para consultar documentação atualizada. Primeiro chame `mcp__context7__resolve-library-id` para obter o ID da biblioteca, depois `mcp__context7__query-docs` para consultar versões e exemplos.
 
 Se algum doc tiver mais de 50k tokens, use Context Excerpting:
 - Grep pelos headers para ver a estrutura
@@ -82,7 +82,7 @@ Aguarde confirmacao.
 
 ## Passo 4: Gerar Scaffold
 
-Crie a estrutura de diretorios conforme a arquitetura definida nos blueprints. A estrutura DEVE seguir o que esta documentado em `06-system_architecture.md` e `frontend/02-estrutura-projeto.md`.
+Crie a estrutura de diretorios conforme a arquitetura definida nos blueprints. A estrutura DEVE seguir o que esta documentado em `06-system_architecture.md` e `frontend/02-project-structure.md`.
 
 Gere na seguinte ordem:
 

@@ -1,6 +1,6 @@
 ---
-name: business-relacionamento
-description: Preenche a secao de Relacionamento com Cliente (04-relacionamento.md) do business blueprint a partir do PRD.
+name: business-relationships
+description: Preenche a secao de Relacionamento com Cliente (04-relationships.md) do business blueprint a partir do PRD.
 ---
 
 # Business Blueprint — Relacionamento com Cliente
@@ -10,7 +10,7 @@ Define como o produto constroi e mantem relacoes duradouras: ativacao, ciclo de 
 ## Leitura de Contexto
 
 1. Leia `docs/prd.md` — fonte primaria
-2. Leia `docs/business/04-relacionamento.md` — template a preencher
+2. Leia `docs/business/04-relationships.md` — template a preencher
 
 ## Analise de Lacunas
 
@@ -32,9 +32,9 @@ Se houver lacunas criticas que NAO podem ser inferidas do PRD, faca ate 3 pergun
 > **Modo de escrita:**
 > - Se o documento contem apenas `{{placeholders}}` (primeira vez): use Write para preencher tudo.
 > - Se o documento ja tem conteudo real (reexecucao): use **Edit** para atualizar APENAS o que mudou. Preserve conteudo existente. Insira novo conteudo antes dos marcadores `<!-- APPEND:... -->`.
-> - Para adicionar uma feature especifica sem reescrever, prefira `/business-incrementar`.
+> - Para adicionar uma feature especifica sem reescrever, prefira `/business-increment`.
 
-Preencha `docs/business/04-relacionamento.md` substituindo TODOS os `{{placeholders}}`. Mantenha a estrutura. Use:
+Preencha `docs/business/04-relationships.md` substituindo TODOS os `{{placeholders}}`. Mantenha a estrutura. Use:
 - Informacoes explicitas do PRD
 - Respostas do usuario (se houve perguntas)
 - Inferencias logicas quando seguro (marque com `<!-- inferido do PRD -->`)
@@ -47,4 +47,4 @@ Apresente o documento preenchido ao usuario. Aplique ajustes solicitados. Salve 
 
 ## Proxima Etapa
 
-> "Relacionamento com Cliente preenchido. Rode `/business-receita` para definir o Modelo de Receita."
+> "Relacionamento com Cliente preenchido. Rode `/business-revenue` para definir o Modelo de Receita."

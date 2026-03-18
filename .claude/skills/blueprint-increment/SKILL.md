@@ -1,5 +1,5 @@
 ---
-name: blueprint-incrementar
+name: blueprint-increment
 description: Incrementa o blueprint tecnico com nova funcionalidade ou correcao sem sobrescrever conteudo existente. Usa Edit (nao Write) para preservar tudo.
 ---
 
@@ -52,7 +52,7 @@ Leia TODOS os documentos existentes em `docs/blueprint/`:
 
 Leia tambem `docs/prd.md` se existir, para contexto adicional.
 
-> Ao referenciar tecnologias especificas com versoes, consulte https://context7.com/ para garantir versoes atualizadas.
+> **Versões atualizadas:** Ao referenciar tecnologias específicas com versões, use o MCP context7 para consultar documentação atualizada. Primeiro chame `mcp__context7__resolve-library-id` para obter o ID da biblioteca, depois `mcp__context7__query-docs` para consultar versões e exemplos.
 
 ## Passo 3: Classificar Tipo de Alteracao
 
@@ -254,5 +254,5 @@ Apresente ao usuario um resumo do que foi alterado:
 ## Passo 7: Proximo
 
 > "Blueprint atualizado. Para adicionar outra alteracao, rode
-> `/blueprint-incrementar` novamente.
+> `/blueprint-increment` novamente.
 > Para revisar o blueprint completo, rode `/blueprint`."

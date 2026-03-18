@@ -1,6 +1,6 @@
 ---
-name: business-metricas
-description: Use when filling the metrics and KPIs section (07-metricas-kpis.md) of the business blueprint. Defines North Star Metric, AARRR pirate metrics, cohort retention, milestones, operational dashboard, and SaaS glossary.
+name: business-metrics
+description: Use when filling the metrics and KPIs section (07-metrics-kpis.md) of the business blueprint. Defines North Star Metric, AARRR pirate metrics, cohort retention, milestones, operational dashboard, and SaaS glossary.
 ---
 
 # Business Blueprint — Metricas e KPIs
@@ -10,7 +10,7 @@ Define a North Star Metric com metricas de suporte, funil AARRR, retencao por co
 ## Leitura de Contexto
 
 1. Leia `docs/prd.md` — fonte primaria
-2. Leia `docs/business/07-metricas-kpis.md` — template a preencher
+2. Leia `docs/business/07-metrics-kpis.md` — template a preencher
 
 ## Analise de Lacunas
 
@@ -30,9 +30,9 @@ Se houver lacunas criticas que NAO podem ser inferidas do PRD, faca ate 3 pergun
 > **Modo de escrita:**
 > - Se o documento contem apenas `{{placeholders}}` (primeira vez): use Write para preencher tudo.
 > - Se o documento ja tem conteudo real (reexecucao): use **Edit** para atualizar APENAS o que mudou. Preserve conteudo existente. Insira novo conteudo antes dos marcadores `<!-- APPEND:... -->`.
-> - Para adicionar uma feature especifica sem reescrever, prefira `/business-incrementar`.
+> - Para adicionar uma feature especifica sem reescrever, prefira `/business-increment`.
 
-Preencha `docs/business/07-metricas-kpis.md` substituindo TODOS os `{{placeholders}}`. Mantenha a estrutura. Use:
+Preencha `docs/business/07-metrics-kpis.md` substituindo TODOS os `{{placeholders}}`. Mantenha a estrutura. Use:
 - Informacoes explicitas do PRD
 - Respostas do usuario (se houve perguntas)
 - Inferencias logicas quando seguro (marque com `<!-- inferido do PRD -->`)

@@ -1,6 +1,6 @@
 ---
-name: business-custos
-description: Use when filling the cost structure section (06-estrutura-custos.md) of the business blueprint. Defines fixed/variable costs, COGS vs OpEx, key resources, key activities, vendors, scale curve, burn rate, break-even, runway, and sensitivity analysis.
+name: business-costs
+description: Use when filling the cost structure section (06-cost-structure.md) of the business blueprint. Defines fixed/variable costs, COGS vs OpEx, key resources, key activities, vendors, scale curve, burn rate, break-even, runway, and sensitivity analysis.
 ---
 
 # Business Blueprint — Estrutura de Custos
@@ -10,7 +10,7 @@ Define os custos fixos e variaveis, separacao COGS vs OpEx, recursos criticos, a
 ## Leitura de Contexto
 
 1. Leia `docs/prd.md` — fonte primaria
-2. Leia `docs/business/06-estrutura-custos.md` — template a preencher
+2. Leia `docs/business/06-cost-structure.md` — template a preencher
 
 ## Analise de Lacunas
 
@@ -35,9 +35,9 @@ Se houver lacunas criticas que NAO podem ser inferidas do PRD, faca ate 3 pergun
 > **Modo de escrita:**
 > - Se o documento contem apenas `{{placeholders}}` (primeira vez): use Write para preencher tudo.
 > - Se o documento ja tem conteudo real (reexecucao): use **Edit** para atualizar APENAS o que mudou. Preserve conteudo existente. Insira novo conteudo antes dos marcadores `<!-- APPEND:... -->`.
-> - Para adicionar uma feature especifica sem reescrever, prefira `/business-incrementar`.
+> - Para adicionar uma feature especifica sem reescrever, prefira `/business-increment`.
 
-Preencha `docs/business/06-estrutura-custos.md` substituindo TODOS os `{{placeholders}}`. Mantenha a estrutura. Use:
+Preencha `docs/business/06-cost-structure.md` substituindo TODOS os `{{placeholders}}`. Mantenha a estrutura. Use:
 - Informacoes explicitas do PRD
 - Respostas do usuario (se houve perguntas)
 - Inferencias logicas quando seguro (marque com `<!-- inferido do PRD -->`)
@@ -50,4 +50,4 @@ Apresente o documento preenchido ao usuario. Aplique ajustes solicitados. Salve 
 
 ## Proxima Etapa
 
-> "Estrutura de Custos preenchida. Rode `/business-metricas` para definir Metricas e KPIs."
+> "Estrutura de Custos preenchida. Rode `/business-metrics` para definir Metricas e KPIs."

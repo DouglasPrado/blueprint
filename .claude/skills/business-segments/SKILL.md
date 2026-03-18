@@ -1,6 +1,6 @@
 ---
-name: business-segmentos
-description: Preenche a secao de Segmentos e Personas (02-segmentos-personas.md) do business blueprint a partir do PRD.
+name: business-segments
+description: Preenche a secao de Segmentos e Personas (02-segments-personas.md) do business blueprint a partir do PRD.
 ---
 
 # Business Blueprint — Segmentos e Personas
@@ -10,7 +10,7 @@ Define quem sao os clientes: segmentos, dimensionamento de mercado, perfil ideal
 ## Leitura de Contexto
 
 1. Leia `docs/prd.md` — fonte primaria
-2. Leia `docs/business/02-segmentos-personas.md` — template a preencher
+2. Leia `docs/business/02-segments-personas.md` — template a preencher
 
 ## Analise de Lacunas
 
@@ -28,9 +28,9 @@ Se houver lacunas criticas que NAO podem ser inferidas do PRD, faca ate 3 pergun
 > **Modo de escrita:**
 > - Se o documento contem apenas `{{placeholders}}` (primeira vez): use Write para preencher tudo.
 > - Se o documento ja tem conteudo real (reexecucao): use **Edit** para atualizar APENAS o que mudou. Preserve conteudo existente. Insira novo conteudo antes dos marcadores `<!-- APPEND:... -->`.
-> - Para adicionar uma feature especifica sem reescrever, prefira `/business-incrementar`.
+> - Para adicionar uma feature especifica sem reescrever, prefira `/business-increment`.
 
-Preencha `docs/business/02-segmentos-personas.md` substituindo TODOS os `{{placeholders}}`. Mantenha a estrutura. Use:
+Preencha `docs/business/02-segments-personas.md` substituindo TODOS os `{{placeholders}}`. Mantenha a estrutura. Use:
 - Informacoes explicitas do PRD
 - Respostas do usuario (se houve perguntas)
 - Inferencias logicas quando seguro (marque com `<!-- inferido do PRD -->`)
@@ -43,4 +43,4 @@ Apresente o documento preenchido ao usuario. Aplique ajustes solicitados. Salve 
 
 ## Proxima Etapa
 
-> "Segmentos e Personas preenchidos. Rode `/business-canais` para definir Canais e Distribuicao."
+> "Segmentos e Personas preenchidos. Rode `/business-channels` para definir Canais e Distribuicao."

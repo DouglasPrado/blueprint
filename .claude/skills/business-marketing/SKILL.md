@@ -1,6 +1,6 @@
 ---
 name: business-marketing
-description: Use when filling the marketing strategy section (08-estrategia-marketing.md) of the business blueprint. Defines positioning, go-to-market, ICP validation, marketing channels, growth loops, pricing communication, content strategy, and budget.
+description: Use when filling the marketing strategy section (08-marketing-strategy.md) of the business blueprint. Defines positioning, go-to-market, ICP validation, marketing channels, growth loops, pricing communication, content strategy, and budget.
 ---
 
 # Business Blueprint — Estrategia de Marketing
@@ -10,7 +10,7 @@ Define o posicionamento, go-to-market, validacao de ICP, canais de marketing, gr
 ## Leitura de Contexto
 
 1. Leia `docs/prd.md` — fonte primaria
-2. Leia `docs/business/08-estrategia-marketing.md` — template a preencher
+2. Leia `docs/business/08-marketing-strategy.md` — template a preencher
 
 ## Analise de Lacunas
 
@@ -32,9 +32,9 @@ Se houver lacunas criticas que NAO podem ser inferidas do PRD, faca ate 3 pergun
 > **Modo de escrita:**
 > - Se o documento contem apenas `{{placeholders}}` (primeira vez): use Write para preencher tudo.
 > - Se o documento ja tem conteudo real (reexecucao): use **Edit** para atualizar APENAS o que mudou. Preserve conteudo existente. Insira novo conteudo antes dos marcadores `<!-- APPEND:... -->`.
-> - Para adicionar uma feature especifica sem reescrever, prefira `/business-incrementar`.
+> - Para adicionar uma feature especifica sem reescrever, prefira `/business-increment`.
 
-Preencha `docs/business/08-estrategia-marketing.md` substituindo TODOS os `{{placeholders}}`. Mantenha a estrutura. Use:
+Preencha `docs/business/08-marketing-strategy.md` substituindo TODOS os `{{placeholders}}`. Mantenha a estrutura. Use:
 - Informacoes explicitas do PRD
 - Respostas do usuario (se houve perguntas)
 - Inferencias logicas quando seguro (marque com `<!-- inferido do PRD -->`)
@@ -47,4 +47,4 @@ Apresente o documento preenchido ao usuario. Aplique ajustes solicitados. Salve 
 
 ## Proxima Etapa
 
-> "Estrategia de Marketing preenchida. Rode `/business-operacional` para definir o Plano Operacional."
+> "Estrategia de Marketing preenchida. Rode `/business-operational` para definir o Plano Operacional."

@@ -1,6 +1,6 @@
 ---
-name: business-operacional
-description: Use when filling the operational plan section (09-plano-operacional.md) of the business blueprint. Defines core processes, team roadmap, infrastructure, disaster recovery, timeline, scale plan, risks, and legal aspects.
+name: business-operational
+description: Use when filling the operational plan section (09-operational-plan.md) of the business blueprint. Defines core processes, team roadmap, infrastructure, disaster recovery, timeline, scale plan, risks, and legal aspects.
 ---
 
 # Business Blueprint — Plano Operacional
@@ -10,7 +10,7 @@ Define os processos core, roadmap de equipe, infraestrutura, disaster recovery, 
 ## Leitura de Contexto
 
 1. Leia `docs/prd.md` — fonte primaria
-2. Leia `docs/business/09-plano-operacional.md` — template a preencher
+2. Leia `docs/business/09-operational-plan.md` — template a preencher
 
 ## Analise de Lacunas
 
@@ -18,7 +18,7 @@ A partir do PRD, identifique o que esta disponivel para cada subsecao:
 
 - **Processos Core**: quais sao os 3 processos que quebram o negocio se falharem (responsavel, frequencia, ferramenta)?
 - **Roadmap de Equipe**: qual a estrutura atual e futura do time, com triggers claros para cada contratacao?
-- **Fornecedores**: referencia a `docs/business/06-estrutura-custos.md` — fornecedores e parceiros estao documentados la
+- **Fornecedores**: referencia a `docs/business/06-cost-structure.md` — fornecedores e parceiros estao documentados la
 - **Infraestrutura**: quais 4 componentes de infraestrutura digital sao necessarios (hospedagem, monitoramento, analytics, comunicacao)?
 - **Disaster Recovery**: quais sao os alvos de RTO e RPO e a estrategia de backup?
 - **Timeline**: quais 4 marcos de lancamento com datas, criterios de sucesso e criterios Go/No-Go?
@@ -33,9 +33,9 @@ Se houver lacunas criticas que NAO podem ser inferidas do PRD, faca ate 3 pergun
 > **Modo de escrita:**
 > - Se o documento contem apenas `{{placeholders}}` (primeira vez): use Write para preencher tudo.
 > - Se o documento ja tem conteudo real (reexecucao): use **Edit** para atualizar APENAS o que mudou. Preserve conteudo existente. Insira novo conteudo antes dos marcadores `<!-- APPEND:... -->`.
-> - Para adicionar uma feature especifica sem reescrever, prefira `/business-incrementar`.
+> - Para adicionar uma feature especifica sem reescrever, prefira `/business-increment`.
 
-Preencha `docs/business/09-plano-operacional.md` substituindo TODOS os `{{placeholders}}`. Mantenha a estrutura. Use:
+Preencha `docs/business/09-operational-plan.md` substituindo TODOS os `{{placeholders}}`. Mantenha a estrutura. Use:
 - Informacoes explicitas do PRD
 - Respostas do usuario (se houve perguntas)
 - Inferencias logicas quando seguro (marque com `<!-- inferido do PRD -->`)

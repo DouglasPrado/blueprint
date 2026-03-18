@@ -34,14 +34,14 @@ Se houver lacunas críticas que NÃO podem ser inferidas do PRD, faça até 3 pe
 2. Se não há informação sobre provedores (SendGrid, Twilio, etc.), pergunte qual stack de envio
 3. Se não há fluxo de onboarding detalhado, pergunte sobre emails de lifecycle
 
-> Ao referenciar tecnologias específicas com versões, consulte https://context7.com/ para garantir versões atualizadas.
+> **Versões atualizadas:** Ao referenciar tecnologias específicas com versões, use o MCP context7 para consultar documentação atualizada. Primeiro chame `mcp__context7__resolve-library-id` para obter o ID da biblioteca, depois `mcp__context7__query-docs` para consultar versões e exemplos.
 
 ## Geração
 
 > **Modo de escrita:**
 > - Se o documento contém apenas `{{placeholders}}` (primeira vez): use Write para preencher tudo.
 > - Se o documento já tem conteúdo real (reexecução): use **Edit** para atualizar APENAS o que mudou. Preserve conteúdo existente. Insira novo conteúdo antes dos marcadores `<!-- APPEND:... -->`.
-> - Para adicionar templates de uma feature específica sem reescrever, prefira `/blueprint-incrementar`.
+> - Para adicionar templates de uma feature específica sem reescrever, prefira `/blueprint-increment`.
 
 Preencha `docs/blueprint/17-communication.md` substituindo TODOS os `{{placeholders}}`. Mantenha a estrutura. Use:
 - Informações explícitas do PRD
@@ -78,4 +78,4 @@ Apresente o documento preenchido ao usuário. Aplique ajustes solicitados. Salve
 
 ## Próxima Etapa
 
-> "Comunicação documentada. O blueprint técnico está completo! Rode `/blueprint` para revisar a cobertura geral, ou `/blueprint-incrementar` para adicionar templates de novas features."
+> "Comunicação documentada. O blueprint técnico está completo! Rode `/blueprint` para revisar a cobertura geral, ou `/blueprint-increment` para adicionar templates de novas features."

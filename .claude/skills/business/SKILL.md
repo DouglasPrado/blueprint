@@ -51,23 +51,23 @@ Apresente o resultado em tabela:
 Apresente a ordem recomendada de preenchimento:
 
 ```
-1.  /business-contexto          — Contexto de Negocio (mercado, concorrencia, SWOT)
-2.  /business-proposta-valor    — Proposta de Valor (jobs, dores, ganhos, diferencial)
-3.  /business-segmentos         — Segmentos e Personas (TAM/SAM/SOM, personas)
-4.  /business-canais            — Canais e Distribuicao (funil, jornada, parcerias)
-5.  /business-relacionamento    — Relacionamento com Cliente (retencao, suporte, comunidade)
-6.  /business-receita           — Modelo de Receita (pricing, unit economics, projecoes)
-7.  /business-custos            — Estrutura de Custos (fixos, variaveis, burn rate, break-even)
-8.  /business-metricas          — Metricas e KPIs (North Star, AARRR, OKRs)
+1.  /business-context          — Contexto de Negocio (mercado, concorrencia, SWOT)
+2.  /business-value-proposition    — Proposta de Valor (jobs, dores, ganhos, diferencial)
+3.  /business-segments         — Segmentos e Personas (TAM/SAM/SOM, personas)
+4.  /business-channels            — Canais e Distribuicao (funil, jornada, parcerias)
+5.  /business-relationships    — Relacionamento com Cliente (retencao, suporte, comunidade)
+6.  /business-revenue           — Modelo de Receita (pricing, unit economics, projecoes)
+7.  /business-costs            — Estrutura de Custos (fixos, variaveis, burn rate, break-even)
+8.  /business-metrics          — Metricas e KPIs (North Star, AARRR, OKRs)
 9.  /business-marketing         — Estrategia de Marketing (GTM, growth loops, conteudo)
-10. /business-operacional       — Plano Operacional (processos, equipe, riscos)
+10. /business-operational       — Plano Operacional (processos, equipe, riscos)
 ```
 
 ## Passo 5: Orientar o Proximo Passo
 
 Diga ao usuario:
 
-> "PRD analisado. Rode `/business-contexto` para comecar pelo Contexto de Negocio."
+> "PRD analisado. Rode `/business-context` para comecar pelo Contexto de Negocio."
 
 ## Regra Critica: Nunca Inventar Numeros
 

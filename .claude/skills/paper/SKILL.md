@@ -1,11 +1,17 @@
 ---
 name: paper
-description: Cria paginas visuais no Paper (paper.design) a partir do frontend blueprint — design system e telas de cada rota.
+description: Cria paginas visuais no Paper (paper.design) a partir do frontend blueprint — design system com tokens e componentes, depois composicao de paginas.
 ---
 
 # Paper — Design Visual a partir do Blueprint
 
-Cria paginas visuais no Paper (paper.design) usando as ferramentas MCP. Le o frontend blueprint preenchido e produz artboards visuais — primeiro o design system como referencia, depois paginas de cada rota sob demanda.
+Cria paginas visuais no Paper (paper.design) usando as ferramentas MCP. O fluxo segue 5 fases:
+
+1. **Tokens** — cores, tipografia, espacamento, breakpoints no artboard Design System
+2. **Planejamento de Telas** — mapa completo de todas as paginas, seus componentes e ordem de construcao
+3. **Componentes no Design System** — cria todos os componentes identificados no planejamento, isolados e com variantes
+4. **Composicao de Paginas** — monta cada pagina usando os componentes ja existentes no Design System
+5. **Atualizacao do Design System** — se a pagina revelar componentes nao previstos, adiciona-os ao DS
 
 **Escopo:** Apenas visual no Paper. NAO gera codigo para o projeto.
 
@@ -25,6 +31,7 @@ Cria paginas visuais no Paper (paper.design) usando as ferramentas MCP. Le o fro
 - NAO use emojis como icones — use SVG ou omita
 - Sempre chame `mcp__paper__finish_working_on_nodes` ao finalizar cada artboard
 - Conversao rem→px (base 16px): 2.25rem=36px, 1.5rem=24px, 1rem=16px, 0.875rem=14px
+- **Posicionamento de artboards**: artboards de paginas devem ser criados LADO A LADO horizontalmente (mesma linha Y, X incrementando). Use gap de 100px entre artboards. O Design System fica a esquerda como primeiro artboard.
 
 ---
 
@@ -44,61 +51,50 @@ Leia os seguintes documentos para extrair os dados necessarios:
 
 | Documento | O que extrair |
 |-----------|---------------|
-| `docs/frontend/03-design-system.md` | Tokens: cores, tipografia, espacamento, breakpoints, catalogo de componentes |
+| `docs/frontend/03-design-system.md` | Tokens: cores, tipografia, espacamento, breakpoints |
 | `docs/frontend/04-components.md` | Hierarquia de componentes, variantes e props dos primitivos |
 | `docs/frontend/07-routes.md` | Tabela de rotas, layouts, tipos (publica/protegida/admin) |
+| `docs/frontend/08-flows.md` | Fluxos de UI e interacoes por pagina |
+| `docs/frontend/05-state.md` | Estado gerenciado por pagina |
+| `docs/frontend/14-copies.md` | Textos/copies por pagina (se disponiveis) |
 
-Monte tres conjuntos internos de referencia:
+Monte conjuntos internos de referencia:
 - **TOKENS**: mapa de cores, escala tipografica (convertida para px), escala de espacamento, breakpoints
-- **COMPONENTES**: lista de primitivos com suas variantes
+- **COMPONENTES**: lista de primitivos e compostos com suas variantes
 - **ROTAS**: lista de rotas com layout, tipo e nome da pagina
+- **FLUXOS**: fluxos de UI associados a cada rota
+- **COPIES**: textos disponiveis por pagina
 
 ---
 
-## Passo 3: Perguntar ao Usuario
+## Passo 3: Design System — Tokens
 
-Apresente as opcoes:
+O artboard de Design System comeca com tokens visuais. Componentes serao adicionados no Passo 5 apos o planejamento.
 
-> "O que voce gostaria de criar no Paper?
+### 3.1: Design Brief
+
+> "**Design Brief — Design System (Tokens)**
 >
-> 1. **Design System** — paleta de cores, tipografia, espacamento e catalogo de componentes
-> 2. **Pagina de Rota** — layout visual de uma pagina especifica
-> 3. **Ambos** — design system primeiro, depois paginas
->
-> Qual opcao?"
-
-Aguarde a resposta. Se "Ambos", execute Passo 4 seguido do Passo 5.
-
----
-
-## Passo 4: Fase 1 — Design System (artboard unico)
-
-### 4.1: Design Brief
-
-Apresente o brief ao usuario antes de criar qualquer coisa:
-
-> "**Design Brief — Design System**
->
-> - **Cores**: {{N}} tokens extraidos do blueprint (listar com hex)
+> - **Cores**: {{N}} tokens (listar com hex)
 > - **Tipografia**: {{font-family}} (headings {{weight}}, body {{weight}}) + {{code font}}
 > - **Espacamento**: grid de 8px ({{listar tokens}})
-> - **Componentes**: {{N}} primitivos ({{listar nomes}})
-> - **Artboard**: 1440 x 3200px (desktop, altura para todas as secoes)
+> - **Breakpoints**: {{listar com dispositivos}}
+> - **Artboard**: 1440 x 1200px (sera expandido ao adicionar componentes)
 > - **Fundo**: #FFFFFF
 > - **Direcao visual**: clean, minimalista, foco em documentacao
 >
-> Confirma? Quer ajustar algo?"
+> Confirma?"
 
 Aguarde confirmacao.
 
-### 4.2: Criar Artboard
+### 3.2: Criar Artboard
 
 ```
 mcp__paper__create_artboard({
   name: "Design System",
   styles: {
     width: "1440px",
-    height: "3200px",
+    height: "1200px",
     backgroundColor: "#FFFFFF",
     display: "flex",
     flexDirection: "column",
@@ -110,9 +106,9 @@ mcp__paper__create_artboard({
 
 Guarde o ID retornado como `DS_ID`.
 
-### 4.3: Construir Secao por Secao
+### 3.3: Construir Tokens
 
-Construa cada secao com multiplos `write_html` (um grupo visual por chamada). Faca screenshot a cada 2-3 chamadas.
+Construa cada secao com multiplos `write_html` (um grupo visual por chamada).
 
 **A) Header**
 - Titulo "Design System" (font 700, 36px, color texto principal)
@@ -144,96 +140,220 @@ Construa cada secao com multiplos `write_html` (um grupo visual por chamada). Fa
 - 4 indicadores visuais: sm (640px/Mobile), md (768px/Tablet), lg (1024px/Desktop), xl (1280px/Wide)
 - Screenshot checkpoint
 
-**F) Catalogo de Componentes**
+### 3.4: Finalizar Tokens
 
-Para cada componente primitivo, renderize as variantes lado a lado:
-
-| Componente | O que renderizar |
-|------------|-----------------|
-| Button | primary, secondary, ghost, destructive (tamanhos sm, md, lg) |
-| Input | text, password, search + estado de erro |
-| Select | single, searchable |
-| Card | default, outlined, elevated |
-| Modal | frame estatico (estado aberto) |
-| Toast | success, error, warning, info |
-| Badge | default, dot, count |
-| Avatar | placeholder circular, initials |
-| Tooltip | indicador direcional (top, right) |
-| Skeleton | text lines, card shape |
-
-- Agrupe 2-3 componentes por screenshot checkpoint
-- Review apos cada grupo: Spacing, Typography, Contrast, Alignment, Clipping, Repetition
-- Se o conteudo ultrapassar a altura do artboard, use `mcp__paper__update_styles` para ajustar height para `fit-content`
-
-### 4.4: Finalizar Design System
-
-1. Chame `mcp__paper__finish_working_on_nodes` com o ID do artboard
-2. Screenshot final completo
+1. Chame `mcp__paper__finish_working_on_nodes` com `DS_ID`
+2. Screenshot final
 3. Apresente resumo:
 
-> "Design System criado no Paper:
+> "Design System criado (tokens):
 >
-> - {{N}} cores documentadas
+> - {{N}} cores
 > - {{N}} niveis tipograficos
 > - {{N}} tokens de espacamento
 > - {{N}} breakpoints
-> - {{N}} componentes com variantes
 >
-> Deseja ajustar algo ou seguir para as paginas de rota?"
+> Seguindo para o planejamento de telas..."
 
 ---
 
-## Passo 5: Fase 2 — Paginas de Rota
+## Passo 4: Planejamento de Telas
 
-### 5.1: Apresentar Rotas
+Antes de criar componentes ou paginas, planeje TODAS as telas com seus componentes.
 
-Leia `docs/frontend/07-routes.md` e apresente a lista:
+### 4.1: Mapear Componentes por Tela
 
-> "Paginas disponiveis para criar no Paper:
+Cruzando ROTAS + FLUXOS + COMPONENTES do blueprint, monte o mapa completo.
+
+Para cada rota, identifique:
+- **Layout**: qual layout usa e quais componentes o layout contem (Sidebar, Navbar, Footer, etc.)
+- **Componentes de pagina**: quais componentes primitivos e compostos a pagina precisa
+- **Componentes de feature**: quais componentes especificos do dominio a pagina usa
+- **Estados**: quais estados da pagina afetam os componentes (loading, empty, error, success)
+
+### 4.2: Apresentar Plano ao Usuario
+
+Apresente o mapa completo:
+
+> "**Planejamento de Telas**
 >
-> | # | Rota | Layout | Tipo | Pagina |
-> |---|------|--------|------|--------|
-> | 1 | `/` | MainLayout | Publica | HomePage |
-> | 2 | `/login` | AuthLayout | Publica | LoginPage |
-> | 3 | `/register` | AuthLayout | Publica | RegisterPage |
-> | 4 | `/dashboard` | AppLayout | Protegida | DashboardPage |
-> | 5 | `/settings` | AppLayout | Protegida | SettingsPage |
-> | 6 | `/admin/users` | AdminLayout | Admin | AdminUsersPage |
+> | # | Rota | Layout | Componentes de Layout | Componentes de Pagina | Estados |
+> |---|------|--------|----------------------|----------------------|---------|
+> | 1 | `/` | MainLayout | Navbar, Footer | Hero, FeatureCards, CTA | default |
+> | 2 | `/login` | AuthLayout | Logo, Card | Input (email, password), Button (primary), Link | default, loading, error |
+> | 3 | `/register` | AuthLayout | Logo, Card | Input (name, email, password), Button, Link | default, loading, error |
+> | 4 | `/dashboard` | AppLayout | Sidebar, Navbar | StatsCards, DataTable, Charts | loading, empty, populated |
+> | 5 | `/settings` | AppLayout | Sidebar, Navbar | Tabs, Input, Select, Button, Avatar | default, saving |
+> | 6 | `/admin/users` | AdminLayout | AdminSidebar, Navbar | DataTable, Badge, Avatar, Button, Modal | loading, empty, populated |
 >
-> Qual pagina quer criar? (numero ou nome)"
-
-Aguarde escolha.
-
-### 5.2: Ler Contexto Complementar
-
-Para a pagina escolhida, leia docs adicionais:
-
-| Documento | O que buscar |
-|-----------|-------------|
-| `docs/frontend/08-flows.md` | Fluxos de UI relevantes para esta pagina |
-| `docs/frontend/05-state.md` | Estado gerenciado nesta pagina |
-| `docs/frontend/14-copies.md` | Textos/copies para esta pagina (se disponiveis) |
-| `docs/frontend/04-components.md` | Componentes do layout (Sidebar, Navbar, etc.) |
-
-Se algum documento ainda contem `{{placeholders}}`, use conteudo placeholder realista.
-
-### 5.3: Design Brief da Pagina
-
-> "**Design Brief — {{PageName}} ({{rota}})**
+> **Componentes unicos identificados:** {{N}} primitivos, {{N}} compostos, {{N}} de feature
 >
-> - **Layout**: {{LayoutName}} ({{componentes: sidebar, navbar, footer, etc.}})
-> - **Artboard**: 1440 x 900px (desktop)
-> - **Componentes na pagina**: {{lista baseada nos fluxos e componentes}}
-> - **Conteudo principal**: {{descricao baseada nos flows}}
-> - **Consistente com**: Design System criado
+> **Lista completa de componentes a criar no Design System:**
+>
+> | Componente | Tipo | Variantes | Usado em |
+> |------------|------|-----------|----------|
+> | Button | Primitivo | primary, secondary, ghost, destructive × sm, md, lg | /login, /register, /settings, /admin/users |
+> | Input | Primitivo | text, password, search, number + error state | /login, /register, /settings |
+> | Card | Primitivo | default, outlined, elevated | /, /login, /register |
+> | ... | ... | ... | ... |
+>
+> **Ordem sugerida de construcao de paginas** (maximiza reuso):
+> 1. {{rota}} — introduz: {{componentes novos}}
+> 2. {{rota}} — introduz: {{componentes novos}}
+> ...
+>
+> Confirma o plano? Quer ajustar componentes ou ordem?"
+
+Aguarde aprovacao. O usuario pode:
+- Ajustar componentes de uma tela
+- Mudar a ordem de construcao
+- Adicionar/remover telas ou componentes
+- Aprovar como esta
+
+---
+
+## Passo 5: Criar Componentes no Design System
+
+Com o planejamento aprovado, crie TODOS os componentes identificados no artboard de Design System, ANTES de montar qualquer pagina.
+
+### 5.1: Expandir Artboard
+
+Ajuste a altura do artboard para acomodar os componentes:
+
+```
+mcp__paper__update_styles({
+  nodeId: DS_ID,
+  styles: { height: "fit-content" }
+})
+```
+
+### 5.2: Titulo da Secao de Componentes
+
+- Titulo "Componentes" (font 700, 36px)
+- Subtitulo "{{N}} componentes · {{N}} variantes" (font 400, 14px, cor secundaria)
+- Screenshot checkpoint
+
+### 5.3: Renderizar Componentes por Grupo
+
+Agrupe componentes por tipo e renderize cada um isoladamente com todas as suas variantes.
+
+**Ordem de renderizacao:**
+
+**A) Primitivos** (componentes atomicos)
+
+Para cada componente primitivo do plano:
+
+- **Nome do componente** (font 600, 20px)
+- **Usado em:** {{lista de rotas}} (font 400, 12px, cor secundaria)
+- **Variantes lado a lado** — cada variante renderizada em tamanho real com label abaixo
+- **Estados** (se aplicavel): default, hover, disabled, error
+- Screenshot a cada 2-3 componentes → Review: Spacing, Alignment, Contrast
+
+Exemplo para Button:
+```
+[Button]
+Usado em: /login, /register, /settings, /admin/users
+
+Primary:    [sm] [md] [lg]
+Secondary:  [sm] [md] [lg]
+Ghost:      [sm] [md] [lg]
+Destructive:[sm] [md] [lg]
+```
+
+**B) Compostos** (combinacoes de primitivos)
+
+Para cada componente composto:
+- **Nome + descricao** (font 600, 20px + font 400, 14px)
+- **Usado em:** {{rotas}}
+- **Renderizacao completa** do componente com primitivos reais (usando mesmos tokens)
+- Screenshot a cada 2-3 componentes
+
+**C) Layout** (componentes estruturais)
+
+Para cada componente de layout:
+- **Nome** (font 600, 20px)
+- **Usado em:** {{rotas que usam este layout}}
+- **Renderizacao em miniatura** (escala reduzida mostrando a estrutura)
+- Screenshot checkpoint
+
+**D) Feature** (componentes de dominio)
+
+Para cada componente de feature:
+- **Nome + dominio** (font 600, 20px)
+- **Usado em:** {{rotas}}
+- **Renderizacao completa** usando primitivos e compostos ja definidos
+- Screenshot a cada 2-3 componentes
+
+### 5.4: Registrar Componentes
+
+Mantenha o registro de componentes criados:
+
+```
+COMPONENTES_NO_DS = [lista de todos os componentes renderizados]
+```
+
+### 5.5: Finalizar Design System Completo
+
+1. `mcp__paper__finish_working_on_nodes` com `DS_ID`
+2. Screenshot final do Design System completo
+3. Apresente resumo:
+
+> "Design System completo:
+>
+> **Tokens:** {{N}} cores, {{N}} tipografia, {{N}} espacamento, {{N}} breakpoints
+> **Componentes:** {{N}} primitivos, {{N}} compostos, {{N}} layout, {{N}} feature
+>
+> | Componente | Variantes | Usado em |
+> |------------|-----------|----------|
+> | Button | primary, secondary, ghost, destructive × 3 sizes | 4 paginas |
+> | Input | text, password, search + error | 3 paginas |
+> | ... | ... | ... |
+>
+> Pronto para comecar a compor as paginas. Primeira na fila: **{{rota}}**
 >
 > Confirma?"
 
-### 5.4: Criar Artboard
+---
+
+## Passo 6: Composicao de Paginas
+
+Agora monte cada pagina USANDO os componentes ja criados no Design System. O visual dos componentes na pagina deve ser identico ao do DS.
+
+### 6.1: Anunciar Pagina
+
+> "Compondo pagina {{N}}/{{total}}: **{{PageName}}** ({{rota}})
+>
+> **Componentes do DS que serao usados:**
+> - Layout: {{componentes do layout}}
+> - Pagina: {{componentes da pagina}}
+> - Feature: {{componentes de feature}}"
+
+### 6.2: Design Brief da Pagina
+
+> "**Design Brief — {{PageName}} ({{rota}})**
+>
+> - **Layout**: {{LayoutName}} ({{componentes do layout}})
+> - **Artboard**: 1440 x 900px (desktop)
+> - **Componentes**: {{lista completa — todos ja existem no DS}}
+> - **Estados a representar**: {{lista de estados}}
+> - **Conteudo**: {{descricao baseada nos flows e copies}}
+> - **Tokens**: consistente com Design System
+>
+> Confirma?"
+
+### 6.3: Criar Artboard
+
+Posicione o artboard ao lado do anterior (horizontalmente). Calcule a posicao X:
+
+```
+X = DS_WIDTH + GAP + (pagina_index * (1440 + GAP))
+// onde GAP = 100, DS_WIDTH = 1440, pagina_index comeca em 0
+```
 
 ```
 mcp__paper__create_artboard({
   name: "Page — {{rota}}",
+  position: { x: X, y: 0 },
   styles: {
     width: "1440px",
     height: "900px",
@@ -243,7 +363,7 @@ mcp__paper__create_artboard({
 })
 ```
 
-### 5.5: Construir Layout Incrementalmente
+### 6.4: Construir Layout Incrementalmente
 
 Siga a ordem:
 
@@ -256,34 +376,60 @@ Siga a ordem:
 7. **Screenshot a cada 2-3 writes**
 8. **Review completa**: Spacing, Typography, Contrast, Alignment, Clipping, Repetition
 
-### 5.6: Finalizar Pagina
+> **Dica:** Use `mcp__paper__duplicate_nodes` quando possivel para copiar componentes do DS e manter fidelidade visual. Ajuste posicao e conteudo com `update_styles` e `set_text_content`.
+
+### 6.5: Finalizar Pagina
 
 1. `mcp__paper__finish_working_on_nodes`
 2. Screenshot final
 3. Apresentar ao usuario
 
-### 5.7: Sugerir Proxima Pagina
+### 6.6: Verificar Componentes Nao Previstos
 
-> "Pagina **{{nome}}** ({{rota}}) criada no Paper.
->
-> Proxima sugestao: **{{proxima rota da lista}}** ({{layout}}).
-> Deseja criar? Ou escolha outra da lista."
+Se durante a composicao surgiu algum componente que NAO estava no planejamento:
 
-Se o usuario quiser, volte ao passo 5.2 para a proxima pagina.
+1. Informe ao usuario:
+   > "Durante a construcao de **{{pagina}}**, identifiquei {{N}} componente(s) nao previsto(s): {{lista}}.
+   > Vou adiciona-los ao Design System."
+
+2. Volte ao artboard do DS e adicione os componentes novos (mesmo fluxo do Passo 5.3)
+3. Atualize `COMPONENTES_NO_DS`
+4. `mcp__paper__finish_working_on_nodes` com `DS_ID`
 
 ---
 
-## Passo 6: Resumo Final
+## Passo 7: Proxima Pagina
+
+> "Pagina **{{nome}}** ({{rota}}) composta.
+>
+> **Progresso:** {{N}}/{{total}} paginas concluidas
+>
+> Proxima na fila: **{{proxima rota}}** ({{layout}})
+>
+> Deseja criar? Ou escolha outra da lista."
+
+Se o usuario quiser, volte ao Passo 6 para a proxima pagina.
+
+---
+
+## Passo 8: Resumo Final
 
 Quando o usuario encerrar:
 
-> "Paginas criadas no Paper:
+> "**Resumo do projeto no Paper:**
 >
 > | Artboard | Rota | Dimensao |
 > |----------|------|----------|
-> | Design System | — | 1440x3200 |
-> | {{pagina}} | {{rota}} | 1440x900 |
+> | Design System | — | 1440 x {{altura final}} |
+> | {{pagina}} | {{rota}} | 1440 x 900 |
 > | ... | ... | ... |
+>
+> **Design System final:**
+> - Tokens: {{N}} cores, {{N}} tipografia, {{N}} espacamento, {{N}} breakpoints
+> - Componentes: {{N}} primitivos, {{N}} compostos, {{N}} layout, {{N}} feature
+>
+> **Paginas compostas:** {{N}}/{{total}}
+> **Paginas restantes:** {{lista, se houver}}
 >
 > Para revisar ou ajustar, selecione elementos no Paper e descreva as alteracoes.
 > Para criar mais paginas, rode `/paper` novamente."

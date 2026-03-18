@@ -32,6 +32,8 @@ Cria paginas visuais no Paper (paper.design) usando as ferramentas MCP. O fluxo 
 - Sempre chame `mcp__paper__finish_working_on_nodes` ao finalizar cada artboard
 - Conversao rem→px (base 16px): 2.25rem=36px, 1.5rem=24px, 1rem=16px, 0.875rem=14px
 - **Posicionamento de artboards**: artboards de paginas devem ser criados LADO A LADO horizontalmente (mesma linha Y, X incrementando). Use gap de 100px entre artboards. O Design System fica a esquerda como primeiro artboard.
+- **Biblioteca de componentes**: use shadcn/ui como referencia visual para todos os componentes. Consulte a documentacao via Context7 MCP (`mcp__context7__resolve-library-id` com "shadcn/ui", depois `mcp__context7__query-docs`) para obter a aparencia, variantes e estados corretos de cada componente.
+- **Estilizacao**: use classes Tailwind CSS v4 como referencia para cores, espacamento, tipografia e utilidades. Consulte a documentacao do Tailwind v4 via Context7 MCP para garantir sintaxe e tokens atualizados. Ao escrever HTML no Paper, traduza as classes Tailwind para inline styles equivalentes (ex: `text-sm` → `font-size: 14px`, `rounded-md` → `border-radius: 6px`, `shadow-sm` → `box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05)`).
 
 ---
 
@@ -58,9 +60,34 @@ Leia os seguintes documentos para extrair os dados necessarios:
 | `docs/frontend/05-state.md` | Estado gerenciado por pagina |
 | `docs/frontend/14-copies.md` | Textos/copies por pagina (se disponiveis) |
 
+### 2.1: Consultar shadcn/ui e Tailwind v4 via Context7
+
+Antes de montar a referencia de componentes, consulte as documentacoes:
+
+**shadcn/ui:**
+1. Chame `mcp__context7__resolve-library-id` com query "shadcn/ui" para obter o ID da biblioteca
+2. Para cada componente listado no blueprint (`docs/frontend/04-components.md`), chame `mcp__context7__query-docs` para obter:
+   - Variantes disponiveis (variant, size, etc.)
+   - Props e estados (disabled, loading, error, etc.)
+   - Aparencia visual padrao (cores, border-radius, shadows)
+   - Composicao (ex: Dialog = DialogTrigger + DialogContent + DialogHeader + DialogFooter)
+
+**Tailwind CSS v4:**
+1. Chame `mcp__context7__resolve-library-id` com query "tailwindcss" para obter o ID
+2. Chame `mcp__context7__query-docs` para consultar:
+   - Escala de cores padrao (slate, zinc, neutral, etc.) e como mapear para os tokens do blueprint
+   - Escala de espacamento (0.5, 1, 1.5, 2, 3, 4, 5, 6, 8, 10, 12, etc.)
+   - Utilidades de tipografia (text-xs, text-sm, text-base, text-lg, text-xl, etc.)
+   - Border radius (rounded-sm=2px, rounded-md=6px, rounded-lg=8px, rounded-xl=12px)
+   - Shadows (shadow-sm, shadow-md, shadow-lg)
+
+Isso garante que os componentes no Paper reflitam fielmente o shadcn/ui com estilizacao Tailwind v4.
+
+### 2.2: Montar Conjuntos de Referencia
+
 Monte conjuntos internos de referencia:
 - **TOKENS**: mapa de cores, escala tipografica (convertida para px), escala de espacamento, breakpoints
-- **COMPONENTES**: lista de primitivos e compostos com suas variantes
+- **COMPONENTES**: lista de primitivos e compostos com variantes do shadcn/ui (nomes, props, estados)
 - **ROTAS**: lista de rotas com layout, tipo e nome da pagina
 - **FLUXOS**: fluxos de UI associados a cada rota
 - **COPIES**: textos disponiveis por pagina

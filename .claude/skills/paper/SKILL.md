@@ -5,13 +5,14 @@ description: Cria paginas visuais no Paper (paper.design) a partir do frontend b
 
 # Paper — Design Visual a partir do Blueprint
 
-Cria paginas visuais no Paper (paper.design) usando as ferramentas MCP. O fluxo segue 5 fases:
+Cria paginas visuais no Paper (paper.design) usando as ferramentas MCP. O fluxo segue 6 fases:
 
 1. **Tokens** — cores, tipografia, espacamento, breakpoints no artboard Design System
-2. **Planejamento de Telas** — mapa completo de todas as paginas, seus componentes e ordem de construcao
-3. **Componentes no Design System** — cria todos os componentes identificados no planejamento, isolados e com variantes
+2. **Planejamento de Telas** — mapa completo de todas as paginas, seus componentes, acoes e ordem de construcao
+3. **Componentes no Design System** — cria todos os componentes (baseados no shadcn/ui) identificados no planejamento, isolados e com variantes
 4. **Composicao de Paginas** — monta cada pagina usando os componentes ja existentes no Design System
-5. **Atualizacao do Design System** — se a pagina revelar componentes nao previstos, adiciona-os ao DS
+5. **Fluxos de Interacao** — simula a experiencia do usuario com artboards sequenciais representando estados antes/durante/depois de cada acao
+6. **Atualizacao do Design System** — se a pagina revelar componentes nao previstos, adiciona-os ao DS
 
 **Escopo:** Apenas visual no Paper. NAO gera codigo para o projeto.
 
@@ -197,6 +198,7 @@ Para cada rota, identifique:
 - **Componentes de pagina**: quais componentes primitivos e compostos a pagina precisa
 - **Componentes de feature**: quais componentes especificos do dominio a pagina usa
 - **Estados**: quais estados da pagina afetam os componentes (loading, empty, error, success)
+- **Acoes por componente**: o que cada componente FAZ nesta tela (ex: Button "Salvar" → submete formulario, Link "Esqueci senha" → navega para /forgot-password, Input "Email" → valida formato email on blur)
 
 ### 4.2: Apresentar Plano ao Usuario
 
@@ -212,6 +214,31 @@ Apresente o mapa completo:
 > | 4 | `/dashboard` | AppLayout | Sidebar, Navbar | StatsCards, DataTable, Charts | loading, empty, populated |
 > | 5 | `/settings` | AppLayout | Sidebar, Navbar | Tabs, Input, Select, Button, Avatar | default, saving |
 > | 6 | `/admin/users` | AdminLayout | AdminSidebar, Navbar | DataTable, Badge, Avatar, Button, Modal | loading, empty, populated |
+>
+> ---
+>
+> **Mapa de Acoes por Tela:**
+>
+> **`/login`**
+> | Componente | Acao | Destino/Efeito |
+> |------------|------|----------------|
+> | Input (email) | on blur: valida formato | exibe erro inline se invalido |
+> | Input (password) | on change: atualiza state | — |
+> | Button "Entrar" | on click: submit form | POST /api/auth/login → redireciona /dashboard |
+> | Link "Esqueci senha" | on click: navega | /forgot-password |
+> | Link "Criar conta" | on click: navega | /register |
+>
+> **`/dashboard`**
+> | Componente | Acao | Destino/Efeito |
+> |------------|------|----------------|
+> | StatsCard | on click: navega | /analytics/{{metric}} |
+> | DataTable row | on click: navega | /{{entity}}/{{id}} |
+> | DataTable search | on change: filtra | refetch com query param |
+> | Button "Novo" | on click: abre modal | CreateModal |
+>
+> _(... repete para cada tela)_
+>
+> ---
 >
 > **Componentes unicos identificados:** {{N}} primitivos, {{N}} compostos, {{N}} de feature
 >
@@ -366,6 +393,12 @@ Agora monte cada pagina USANDO os componentes ja criados no Design System. O vis
 > - **Conteudo**: {{descricao baseada nos flows e copies}}
 > - **Tokens**: consistente com Design System
 >
+> **Acoes mapeadas nesta tela:**
+> | Componente | Acao | Destino/Efeito |
+> |------------|------|----------------|
+> | {{componente}} | {{evento}}: {{descricao}} | {{resultado}} |
+> | ... | ... | ... |
+>
 > Confirma?"
 
 ### 6.3: Criar Artboard
@@ -405,13 +438,76 @@ Siga a ordem:
 
 > **Dica:** Use `mcp__paper__duplicate_nodes` quando possivel para copiar componentes do DS e manter fidelidade visual. Ajuste posicao e conteudo com `update_styles` e `set_text_content`.
 
-### 6.5: Finalizar Pagina
+### 6.5: Simular Fluxos de Interacao
 
-1. `mcp__paper__finish_working_on_nodes`
-2. Screenshot final
-3. Apresentar ao usuario
+Para cada acao mapeada no Passo 4, crie artboards adicionais que representem os estados ANTES e DEPOIS da interacao. Isso simula a experiencia do usuario navegando pela interface.
 
-### 6.6: Verificar Componentes Nao Previstos
+**Estrategia de simulacao:**
+
+Para cada fluxo critico da tela (baseado em `docs/frontend/08-flows.md`), crie uma **sequencia de artboards** lado a lado representando os passos do fluxo:
+
+1. **Estado inicial** — tela como o usuario a ve ao chegar (ja criado no 6.4)
+2. **Interacao ativa** — componente em estado de interacao (ex: input focado com texto digitado, dropdown aberto, modal visivel, tooltip aparecendo)
+3. **Feedback** — resultado da acao (ex: loading spinner, skeleton, toast de sucesso/erro, validacao inline)
+4. **Estado final** — tela apos a acao completar (ex: dados atualizados, redirect simulado mostrando a tela destino)
+
+**Convencoes de nomenclatura:**
+- Artboard principal: `Page — /login`
+- Estado de interacao: `Page — /login → Preenchendo form`
+- Estado de feedback: `Page — /login → Loading`
+- Estado de erro: `Page — /login → Erro validacao`
+- Estado de sucesso: `Page — /login → Sucesso → Redirect /dashboard`
+
+**Posicionamento:**
+Os artboards de fluxo ficam na MESMA LINHA horizontal, imediatamente apos o artboard principal da pagina. Gap de 60px entre artboards do mesmo fluxo (menor que o gap de 100px entre paginas diferentes, para agrupar visualmente).
+
+```
+[DS] --100px-- [/login] --60px-- [/login → Preenchendo] --60px-- [/login → Loading] --60px-- [/login → Erro] --100px-- [/dashboard] --60px-- ...
+```
+
+**Anotacoes visuais:**
+- Entre cada artboard do fluxo, adicione uma seta visual (→) ou label indicando a acao que conecta os estados
+- Use `write_html` para criar um pequeno label entre artboards: "Click 'Entrar'" ou "Valida email" (font 400, 12px, cor secundaria)
+- Destaque o componente que mudou de estado com um outline sutil (1px, cor primary, com 20% opacity) para guiar o olhar
+
+**O que simular por tela:**
+- Fluxo principal (happy path) — OBRIGATORIO
+- Fluxo de erro mais comum — OBRIGATORIO
+- Estados intermediarios (loading, empty) — se relevantes
+
+**Quando NAO simular:**
+- Navegacao simples entre paginas (Link → outra rota) — basta a pagina destino existir como artboard proprio
+- Estados identicos a outra tela ja simulada
+
+**Exemplo para /login:**
+```
+[/login]              → [/login → Form preenchido]  → [/login → Loading]        → [/login → Dashboard redirect]
+(estado inicial)        (inputs com valores,           (button disabled,            (tela do dashboard)
+                         email valido)                  spinner no button)
+
+[/login]              → [/login → Email invalido]   → [/login → Erro API]
+(estado inicial)        (input email com borda          (toast de erro,
+                         vermelha, msg erro)             form resetado)
+```
+
+> Apresente ao usuario antes de criar:
+> "**Fluxos de interacao para {{pagina}}:**
+>
+> **Happy path:** {{N}} artboards
+> 1. Estado inicial → 2. {{acao}} → 3. {{feedback}} → 4. {{resultado}}
+>
+> **Erro:** {{N}} artboards
+> 1. Estado inicial → 2. {{acao invalida}} → 3. {{feedback erro}}
+>
+> Criar fluxos de interacao? (S/N)"
+
+### 6.6: Finalizar Pagina
+
+1. `mcp__paper__finish_working_on_nodes` para todos os artboards da pagina (principal + fluxos)
+2. Screenshot final de cada artboard
+3. Apresentar ao usuario com resumo dos fluxos
+
+### 6.7: Verificar Componentes Nao Previstos
 
 Se durante a composicao surgiu algum componente que NAO estava no planejamento:
 
@@ -445,17 +541,19 @@ Quando o usuario encerrar:
 
 > "**Resumo do projeto no Paper:**
 >
-> | Artboard | Rota | Dimensao |
-> |----------|------|----------|
-> | Design System | — | 1440 x {{altura final}} |
-> | {{pagina}} | {{rota}} | 1440 x 900 |
-> | ... | ... | ... |
+> | Artboard | Rota | Tipo | Dimensao |
+> |----------|------|------|----------|
+> | Design System | — | DS | 1440 x {{altura final}} |
+> | {{pagina}} | {{rota}} | Pagina | 1440 x 900 |
+> | {{pagina}} → {{acao}} | {{rota}} | Fluxo | 1440 x 900 |
+> | ... | ... | ... | ... |
 >
 > **Design System final:**
 > - Tokens: {{N}} cores, {{N}} tipografia, {{N}} espacamento, {{N}} breakpoints
 > - Componentes: {{N}} primitivos, {{N}} compostos, {{N}} layout, {{N}} feature
 >
 > **Paginas compostas:** {{N}}/{{total}}
+> **Fluxos de interacao:** {{N}} artboards de fluxo ({{N}} happy paths + {{N}} fluxos de erro)
 > **Paginas restantes:** {{lista, se houver}}
 >
 > Para revisar ou ajustar, selecione elementos no Paper e descreva as alteracoes.

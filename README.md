@@ -2,7 +2,7 @@
 
 Framework de documentacao tecnica e de negocio para projetos SaaS. Utiliza templates estruturados + skills do Claude Code para documentar um produto de ponta a ponta — do modelo de negocio a arquitetura frontend.
 
-**4 blueprints** | **63 documentos** | **58 skills**
+**4 blueprints** | **63 documentos** | **60 skills**
 
 ---
 
@@ -83,6 +83,8 @@ PRD (docs/prd.md)
   Depois:
   ├── /xxx-incrementar       ← Adicionar features sem sobrescrever
   ├── /patch                 ← Propagar mudancas globais
+  ├── /specs                 ← Gerar backlog integral de tasks (docs/specs/)
+  ├── /opensource            ← Transformar em projeto opensource
   |
   └── /codegen               ← Gerar codigo a partir dos blueprints (XP/TDD)
 ```
@@ -341,6 +343,150 @@ Os blueprints preenchidos ultrapassam 2M tokens — nao cabem no contexto de nen
 
 ---
 
+## Specs — Backlog Integral de Tasks (`/specs`)
+
+Gera um documento unico com **todas as tasks de implementacao** a partir dos 3 blueprints. Produz um backlog completo — sem fases, todas as tasks de uma vez.
+
+### Pre-requisitos
+
+Os 3 blueprints devem estar preenchidos:
+- `docs/backend/` (fonte primaria — define as tasks)
+- `docs/frontend/` (consistencia — valida alinhamento)
+- `docs/blueprint/` (validacao — confirma cobertura)
+
+### Como funciona
+
+```
+/specs
+
+# 1. Verifica pre-requisitos (backend, frontend, blueprint preenchidos)
+# 2. Le o backend (fonte primaria) — extrai tasks de cada doc
+# 3. Le o frontend (consistencia) — identifica gaps
+# 4. Gera docs/specs/TASKS.md com todas as tasks
+# 5. Valida contra o blueprint tecnico
+# 6. Apresenta dashboard com metricas e gaps
+```
+
+### O que gera
+
+O output e `docs/specs/TASKS.md` com tasks organizadas em **12 grupos**:
+
+| Grupo | Prefixo | Fonte primaria |
+|-------|---------|---------------|
+| Setup & Infra | TASK-SETUP | 00-backend-vision, 01-architecture, 02-project-structure |
+| Domain | TASK-DOM | 03-domain (1 task por entidade) |
+| Data Layer | TASK-DATA | 04-data-layer (1 task por repository + migrations) |
+| Services | TASK-SVC | 06-services (1 task por service) |
+| API & Controllers | TASK-API | 05-api-contracts, 07-controllers, 10-validation |
+| Auth & Permissions | TASK-AUTH | 11-permissions, 08-middlewares (auth) |
+| Error Handling | TASK-ERR | 09-errors |
+| Middlewares | TASK-MW | 08-middlewares (nao-auth) |
+| Events & Workers | TASK-EVT | 12-events (1 produtor + 1 consumidor por evento) |
+| Integrations | TASK-INT | 13-integrations |
+| Tests | TASK-TEST | 14-tests |
+| Frontend Sync | TASK-FE | Cross-reference backend ↔ frontend |
+
+Cada task inclui: camada, entidade, prioridade (Must/Should/Could), origem, descricao, arquivos a criar, dependencias, regras de negocio, criterios de aceite, testes necessarios e consistencia com o frontend.
+
+### Validacao
+
+Ao final, cruza as tasks geradas com o blueprint tecnico:
+- Cada requisito funcional tem task?
+- Cada fluxo critico tem service + teste E2E?
+- Cada use case tem endpoint + controller + service?
+- Cada ameaca STRIDE tem mitigacao?
+- Gaps sao listados com sugestoes de acao
+
+---
+
+## Opensource — Transformacao para Projeto OSS (`/opensource`)
+
+Transforma um projeto documentado com blueprints proprietarios em um **projeto opensource completo**. Adapta os 3 blueprints in-place e gera os arquivos raiz tipicos de projetos OSS.
+
+### Pre-requisitos
+
+Os 3 blueprints devem estar preenchidos:
+- `docs/blueprint/` (tecnico)
+- `docs/frontend/` (frontend)
+- `docs/business/` (negocio)
+
+### Como funciona
+
+```
+/opensource
+
+# 1. Le todos os documentos dos 3 blueprints
+# 2. Pergunta 5 definicoes ao usuario:
+#    - Modelo OSS (open-core, community-driven, dev-tool, foundation-backed)
+#    - Licenca (MIT, Apache 2.0, GPL v3, AGPL v3, Dual)
+#    - Governanca (BDFL, Committee, Foundation, Meritocracy)
+#    - Nome do projeto
+#    - Canais da comunidade (Discord, Discussions, Slack, etc.)
+# 3. Adapta os 10 docs do business blueprint para contexto OSS
+# 4. Adiciona secoes OSS nos docs tecnicos e frontend
+# 5. Gera arquivos raiz do projeto OSS
+```
+
+### O que transforma
+
+**Business Blueprint (10 docs adaptados):**
+
+| Doc original | Transformacao |
+|-------------|--------------|
+| Contexto de negocio | → Contexto do ecossistema (TAM→Total Addressable Developers) |
+| Proposta de valor | → Por que usar / Por que contribuir |
+| Segmentos | → Personas OSS (contributors, maintainers, sponsors) |
+| Canais | → Canais da comunidade (GitHub, registries, docs, conferences) |
+| Relacionamentos | → Engajamento (Newcomer→Contributor→Committer→Maintainer→TSC) |
+| Receita | → Modelo de sustentabilidade (varia por modelo OSS) |
+| Custos | → Custos do projeto (CI/CD, hosting, maintainer stipend) |
+| Metricas | → Metricas OSS (stars, contributors ativos, downloads, bus factor) |
+| Marketing | → Posicionamento e awareness (Product Hunt, HN, conferences) |
+| Operacoes | → Community ops (releases, RFCs, governanca, triage, security) |
+
+**Blueprint Tecnico (6 secoes adicionadas):**
+- Vulnerability Disclosure Policy (seguranca)
+- Contribution Architecture (arquitetura)
+- Public Roadmap (build plan)
+- Contributor Testing Guide (testes)
+- Operational Transparency (observabilidade)
+- Community Communication Templates (comunicacao)
+
+**Frontend Blueprint (3 secoes adicionadas):**
+- Contributor Setup Guide (arquitetura)
+- CI for Contributors (cicd)
+- Design System for Contributors (design system)
+
+### Arquivos raiz gerados
+
+| Arquivo | Descricao |
+|---------|-----------|
+| `README.md` | README opensource com badges, features, quick start, community |
+| `CONTRIBUTING.md` | Guia de contribuicao (setup, PRs, code style, review) |
+| `CODE_OF_CONDUCT.md` | Contributor Covenant v2.1 |
+| `LICENSE` | Texto completo da licenca escolhida |
+| `SECURITY.md` | Politica de divulgacao de vulnerabilidades |
+| `.github/ISSUE_TEMPLATE/bug_report.md` | Template de bug report |
+| `.github/ISSUE_TEMPLATE/feature_request.md` | Template de feature request |
+| `.github/ISSUE_TEMPLATE/config.yml` | Config de issues |
+| `.github/PULL_REQUEST_TEMPLATE.md` | Template de PR |
+
+### Modelos OSS suportados
+
+| Aspecto | Open-core | Community-driven | Dev tool | Foundation-backed |
+|---------|-----------|-----------------|----------|-------------------|
+| Receita | Enterprise + hosted | Sponsors + grants | Marketplace + premium | Membership + sponsors |
+| Personas | Users + enterprise | Contributors + power users | Plugin devs + end users | Corporate adopters |
+| Metricas | Conversao free→paid | Contributors ativos | Downloads + installs | Deployments producao |
+| Governanca | Company-led | Community-led | Company-led + ecosystem | Charter fundacao |
+| Riscos | Erosao de confianca | Burnout maintainer | Fragmentacao ecosystem | Burocracia |
+
+### Todo conteudo gerado e em ingles
+
+A skill transforma o conteudo para ingles, mantendo o padrao de projetos OSS internacionais.
+
+---
+
 ## Referencia Rapida de Skills
 
 ### Orquestradores (4)
@@ -359,6 +505,13 @@ Os blueprints preenchidos ultrapassam 2M tokens — nao cabem no contexto de nen
 | `/blueprint-incrementar` | Adiciona/corrige nos docs tecnicos |
 | `/frontend-incrementar` | Adiciona/corrige nos docs frontend |
 | `/business-incrementar` | Adiciona/corrige nos docs business |
+
+### Transformacao e Backlog (2)
+
+| Comando | Descricao |
+|---------|-----------|
+| `/opensource` | Transforma blueprints em projeto opensource (adapta 3 blueprints + gera arquivos raiz) |
+| `/specs` | Gera backlog integral de tasks a partir de backend + frontend + blueprint (`docs/specs/TASKS.md`) |
 
 ### Utilitario (3)
 
@@ -466,15 +619,19 @@ blueprint/
 │   │   ├── glossary.md
 │   │   ├── error-ux-mapping.md
 │   │   └── event-mapping.md
+│   ├── specs/                    # Backlog integral de tasks (gerado por /specs)
+│   │   └── TASKS.md
 │   ├── diagrams/                 # Diagramas Mermaid
 │   ├── templates/                # 6 templates (PRD, Epic, Story, Task, etc.)
 │   └── adr/                      # Architecture Decision Records
 ├── .claude/
-│   └── skills/                   # 57 skills do Claude Code
+│   └── skills/                   # 60 skills do Claude Code
 │       ├── blueprint/            # Orquestrador tecnico
 │       ├── backend/              # Orquestrador backend
 │       ├── frontend/             # Orquestrador frontend
 │       ├── business/             # Orquestrador business
+│       ├── opensource/           # Transformacao para projeto OSS
+│       ├── specs/                # Geracao de backlog integral de tasks
 │       ├── patch/                # Propagacao global
 │       ├── paper/                # Paginas visuais no Paper
 │       ├── pencil/              # Paginas visuais no Pencil

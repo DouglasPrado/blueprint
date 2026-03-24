@@ -6,14 +6,7 @@ Define as entidades do sistema, value objects, regras de negocio (invariantes), 
 
 ## Glossario Ubiquo
 
-> Quais termos do dominio sao usados pelo time? Defina para evitar ambiguidade.
-
-| Termo | Definicao | Nao Confundir Com |
-| --- | --- | --- |
-| {{Termo 1}} | {{Definicao precisa}} | {{Termo similar}} |
-| {{Termo 2}} | {{Definicao precisa}} | {{Termo similar}} |
-
-<!-- APPEND:glossario -->
+> **Fonte unica:** [docs/shared/glossary.md](../shared/glossary.md). Nao duplique termos aqui — consulte e atualize o glossario compartilhado.
 
 ---
 
@@ -92,6 +85,7 @@ Define as entidades do sistema, value objects, regras de negocio (invariantes), 
 | create() | { email, name, password } | User | Hash da senha, status = created, emite UserCreated |
 | activate() | — | void | status → active, emite UserActivated |
 | suspend(reason) | string | void | status → suspended, registra motivo |
+| deactivate() | — | void | status → inactive, emite UserDeactivated |
 | changeEmail(newEmail) | string | void | Valida formato, emite UserEmailChanged |
 | changePassword(oldPwd, newPwd) | string, string | void | Verifica old, hash new, emite UserPasswordChanged |
 
@@ -101,7 +95,9 @@ Define as entidades do sistema, value objects, regras de negocio (invariantes), 
 | --- | --- | --- |
 | UserCreated | Apos criacao | { userId, email, name, timestamp } |
 | UserActivated | Apos ativacao | { userId, timestamp } |
+| UserDeactivated | Apos desativacao | { userId, timestamp } |
 | UserEmailChanged | Apos troca | { userId, oldEmail, newEmail, timestamp } |
+| UserPasswordChanged | Apos troca de senha | { userId, timestamp } |
 
 </details>
 
@@ -166,9 +162,15 @@ Define as entidades do sistema, value objects, regras de negocio (invariantes), 
 | --- | --- | --- | --- | --- |
 | {{created}} | {{activate()}} | {{active}} | {{—}} | {{Emite EntidadeActivated}} |
 | {{active}} | {{suspend(reason)}} | {{suspended}} | {{Apenas admin}} | {{Emite EntidadeSuspended}} |
+| {{active}} | {{deactivate()}} | {{inactive}} | {{Proprio usuario ou admin}} | {{Emite EntidadeDeactivated}} |
+| {{suspended}} | {{activate()}} | {{active}} | {{Apenas admin}} | {{Emite EntidadeActivated}} |
+| {{suspended}} | {{deactivate()}} | {{inactive}} | {{Apenas admin}} | {{Emite EntidadeDeactivated}} |
+
+**Estados terminais:**
+- {{inactive — requer reativacao manual por admin}}
 
 **Transicoes proibidas:**
-- {{completed → active (sem rollback)}}
+- {{inactive → qualquer estado (sem reativacao direta; requer processo administrativo)}}
 - {{deleted → qualquer estado}}
 
 <!-- APPEND:maquinas -->

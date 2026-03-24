@@ -10,8 +10,8 @@ Voce vai preencher a secao de Fluxos Criticos do blueprint. Fluxos criticos sao 
 ## Leitura de Contexto
 
 1. Leia `docs/prd.md` — fonte primaria
-2. Leia `docs/blueprint/04-domain_model.md` — entidades envolvidas nos fluxos
-3. Leia `docs/blueprint/06-system_architecture.md` — componentes e comunicacao
+2. Leia `docs/blueprint/04-domain-model.md` — entidades envolvidas nos fluxos
+3. Leia `docs/blueprint/06-system-architecture.md` — componentes e comunicacao
 4. Leia `docs/blueprint/07-critical_flows.md` — template a preencher
 5. Leia `docs/diagrams/sequences/template-flow.mmd` — template de diagrama de sequencia
 

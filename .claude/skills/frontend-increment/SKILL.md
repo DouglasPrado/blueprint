@@ -46,7 +46,8 @@ Leia TODOS os documentos existentes em `docs/frontend/`:
 13. `docs/frontend/12-observability.md`
 14. `docs/frontend/13-cicd-conventions.md`
 
-Leia tambem `docs/prd.md` se existir, para contexto adicional.
+Leia tambem os arquivos relevantes de `docs/blueprint/` para contexto do sistema (entidades, fluxos, requisitos).
+Leia `docs/prd.md` se existir, como complemento.
 
 > **Versões atualizadas:** Ao referenciar tecnologias específicas com versões, use o MCP context7 para consultar documentação atualizada. Primeiro chame `mcp__context7__resolve-library-id` para obter o ID da biblioteca, depois `mcp__context7__query-docs` para consultar versões e exemplos.
 

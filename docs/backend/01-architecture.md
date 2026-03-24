@@ -2,6 +2,9 @@
 
 Define as camadas arquiteturais, regras de dependencia, fronteiras de dominio e estrategia de deploy.
 
+> **Implementa:** [docs/blueprint/06-system-architecture.md](../blueprint/06-system-architecture.md) (componentes e deploy) e [docs/blueprint/10-architecture_decisions.md](../blueprint/10-architecture_decisions.md) (ADRs).
+> **Complementa:** [docs/frontend/01-architecture.md](../frontend/01-architecture.md) (camadas do frontend).
+
 ---
 
 ## Camadas Arquiteturais

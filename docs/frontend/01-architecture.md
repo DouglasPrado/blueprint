@@ -2,6 +2,9 @@
 
 Define a arquitetura em camadas do frontend, inspirada em Clean Architecture adaptada para aplicacoes client-side. Estabelece fronteiras claras entre UI, logica de aplicacao, dominio e infraestrutura, garantindo que cada parte do sistema tenha responsabilidade bem definida e que mudancas em uma camada nao impactem as demais.
 
+> **Implementa:** [docs/blueprint/06-system-architecture.md](../blueprint/06-system-architecture.md) (componentes e deploy) e [docs/blueprint/02-architecture_principles.md](../blueprint/02-architecture_principles.md) (principios).
+> **Complementa:** [docs/backend/01-architecture.md](../backend/01-architecture.md) (camadas do backend).
+
 ---
 
 ## Camadas Arquiteturais
@@ -66,7 +69,7 @@ Infrastructure Layer (API Client, Storage, Analytics)
 
 > Cada dominio possui: `components/`, `hooks/`, `api/`, `types/`, `services/`
 
-> Detalhes da estrutura de pastas: (ver 02-estrutura-projeto.md)
+> Detalhes da estrutura de pastas: (ver 02-project-structure.md)
 
 ---
 
@@ -78,13 +81,13 @@ Infrastructure Layer (API Client, Storage, Analytics)
 - Comunicacao via Event Bus leve ou estado global compartilhado
 - Componentes compartilhados vivem fora das features, em `components/`
 
-> Detalhes sobre Event Bus: (ver 05-estado.md)
+> Detalhes sobre Event Bus: (ver 05-state.md)
 
 ---
 
 ## Diagrama de Arquitetura
 
-> Diagrama: [frontend-architecture.mmd](../diagrams/frontend/frontend-architecture.mmd)
+> 📐 Diagrama: [frontend-architecture.mmd](../diagrams/frontend/frontend-architecture.mmd)
 
 {{Descreva o diagrama de arquitetura ou referencie o arquivo Mermaid}}
 

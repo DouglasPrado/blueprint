@@ -2,6 +2,9 @@
 
 Define todos os endpoints, DTOs de request/response, status codes e erros por rota. Este documento e o contrato entre frontend e backend.
 
+> **Consumido por:** [docs/frontend/15-api-dependencies.md](../frontend/15-api-dependencies.md) (endpoints que o frontend consome).
+> **Erros detalhados em:** [docs/shared/error-ux-mapping.md](../shared/error-ux-mapping.md) (como erros sao exibidos no frontend).
+
 ---
 
 ## Convencoes Gerais

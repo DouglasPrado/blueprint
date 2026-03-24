@@ -10,7 +10,7 @@ Voce vai preencher a secao de Casos de Uso do blueprint. Casos de uso descrevem 
 ## Leitura de Contexto
 
 1. Leia `docs/prd.md` — fonte primaria
-2. Leia `docs/blueprint/04-domain_model.md` — entidades e regras de negocio
+2. Leia `docs/blueprint/04-domain-model.md` — entidades e regras de negocio
 3. Leia `docs/blueprint/07-critical_flows.md` — fluxos ja documentados
 4. Leia `docs/blueprint/08-use_cases.md` — template a preencher
 

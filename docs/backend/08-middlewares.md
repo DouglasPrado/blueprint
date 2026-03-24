@@ -79,6 +79,7 @@ Response
 ## Configuracao de Rate Limiting
 
 > Quais limites se aplicam por tipo de request?
+> **Fonte:** [docs/blueprint/14-scalability.md](../blueprint/14-scalability.md) define a estrategia geral. Esta secao detalha os valores especificos por endpoint.
 
 | Escopo | Limite | Janela | Algoritmo | Storage |
 | --- | --- | --- | --- | --- |

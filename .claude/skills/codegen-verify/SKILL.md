@@ -44,7 +44,7 @@ Execute cada verificacao abaixo carregando os docs um par de cada vez (doc + cod
 
 ### V1: Entidades vs Tipos (Domain Model → src/contracts/)
 
-**Docs:** `docs/blueprint/04-domain_model.md`
+**Docs:** `docs/blueprint/04-domain-model.md`
 **Codigo:** `src/contracts/entities/`
 
 Para cada entidade no domain model:
@@ -56,7 +56,7 @@ Para cada entidade no domain model:
 
 ### V2: Tabelas vs Schema (Data Model → Schema)
 
-**Docs:** `docs/blueprint/05-data_model.md`
+**Docs:** `docs/blueprint/05-data-model.md`
 **Codigo:** Arquivo de schema (prisma, drizzle, etc.)
 
 Para cada tabela no data model:
@@ -89,7 +89,7 @@ Para cada use case:
 
 ### V5: State Machines vs Implementacao
 
-**Docs:** `docs/blueprint/09-state_models.md`
+**Docs:** `docs/blueprint/09-state-models.md`
 **Codigo:** Services/entities com logica de estado
 
 Para cada state machine:

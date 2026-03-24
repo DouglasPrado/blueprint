@@ -2,7 +2,7 @@
 
 Framework de documentacao tecnica e de negocio para projetos SaaS. Utiliza templates estruturados + skills do Claude Code para documentar um produto de ponta a ponta — do modelo de negocio a arquitetura frontend.
 
-**3 blueprints** | **41 documentos** | **52 skills**
+**4 blueprints** | **63 documentos** | **58 skills**
 
 ---
 
@@ -12,8 +12,9 @@ Um conjunto de templates Markdown com placeholders (`{{...}}`) e skills do Claud
 
 | Blueprint | Foco | Docs | Quando usar |
 |-----------|------|------|-------------|
-| **Tecnico** | Arquitetura, dominio, dados, seguranca | 17 | Sistema ja validado, indo para producao |
-| **Frontend** | Componentes, estado, rotas, performance | 14 | Definir arquitetura frontend |
+| **Tecnico** | Arquitetura, dominio, dados, seguranca | 18 | Sistema ja validado, indo para producao |
+| **Frontend** | Componentes, estado, rotas, performance | 16 | Definir arquitetura frontend |
+| **Backend** | Classes, servicos, API, eventos, testes | 15 | Especificar implementacao backend |
 | **Business** | Proposta de valor, receita, marketing | 10 | Modelar o negocio (BMC + Lean Canvas) |
 
 ---
@@ -33,10 +34,11 @@ Um conjunto de templates Markdown com placeholders (`{{...}}`) e skills do Claud
      }
    }
    ```
-4. **MCP Paper** configurado — usado para pesquisa e referencia de papers academicos e documentacao tecnica:
+4. **MCP Paper** configurado — usado pelo skill `/paper` para criar designs visuais no Paper:
    ```bash
    claude mcp add paper --transport http http://127.0.0.1:29979/mcp --scope user
    ```
+5. **MCP Pencil** configurado (opcional) — usado pelo skill `/pencil` para criar designs visuais no Pencil. Instale a extensao [Pencil](https://pencil.dev) no VS Code — o MCP server roda automaticamente quando o Pencil esta ativo.
 
 ---
 
@@ -50,7 +52,7 @@ Um conjunto de templates Markdown com placeholders (`{{...}}`) e skills do Claud
 #    - Pedir seu PRD (arquivo ou texto)
 #    - Salvar em docs/prd.md
 #    - Analisar cobertura
-#    - Mostrar roadmap de 17 skills
+#    - Mostrar roadmap de 18 skills
 
 # 3. Siga a sequencia sugerida:
 /blueprint-context
@@ -68,11 +70,15 @@ Um conjunto de templates Markdown com placeholders (`{{...}}`) e skills do Claud
 ```
 PRD (docs/prd.md)
   |
-  ├── /blueprint             ← Sistema validado (17 docs)
+  ├── /blueprint             ← Sistema validado (18 docs)
+  |
+  ├── /backend               ← Especificacao backend (15 docs)
+  |
+  ├── /frontend              ← Arquitetura frontend (16 docs)
   |
   ├── /business              ← Modelo de negocio (10 docs)
   |
-  └── /frontend              ← Arquitetura frontend (14 docs)
+  └── docs/shared/           ← Docs transversais (4 docs)
 
   Depois:
   ├── /xxx-incrementar       ← Adicionar features sem sobrescrever
@@ -109,11 +115,38 @@ Sequencia de skills:
 15. /blueprint-scalability    — Escala, cache, rate limiting
 16. /blueprint-observability  — Logs, metricas, alertas, dashboards
 17. /blueprint-evolution      — Roadmap tecnico, debt, deprecacao
+18. /blueprint-communication  — Templates de email, SMS, WhatsApp
 ```
 
 ---
 
-### 2. Frontend Blueprint (`docs/frontend/`)
+### 2. Backend Blueprint (`docs/backend/`)
+
+Inicio: `/backend`
+
+Gera a especificacao de implementacao a partir do blueprint tecnico:
+
+```
+ 1. 00-backend-vision.md      — Visao, stack, principios backend
+ 2. 01-architecture.md        — Camadas, Clean Architecture, DI
+ 3. 02-project-structure.md   — Pastas, modulos, convencoes
+ 4. 03-domain.md              — Entidades, Value Objects, Aggregates
+ 5. 04-data-layer.md          — Repositories, migrations, queries
+ 6. 05-api-contracts.md       — Endpoints, request/response, OpenAPI
+ 7. 06-services.md            — Application services, use cases
+ 8. 07-controllers.md         — Controllers, handlers, routing
+ 9. 08-middlewares.md          — Auth, logging, rate limiting
+10. 09-errors.md              — Error handling, codes, responses
+11. 10-validation.md          — Input validation, schemas
+12. 11-permissions.md         — RBAC, policies, guards
+13. 12-events.md              — Domain events, handlers, queues
+14. 13-integrations.md        — APIs externas, webhooks, SDKs
+15. 14-tests.md               — Estrategia de testes backend
+```
+
+---
+
+### 3. Frontend Blueprint (`docs/frontend/`)
 
 Inicio: `/frontend`
 
@@ -134,11 +167,13 @@ Sequencia de skills:
 12. /frontend-seguranca       — Auth, XSS, CSRF, CSP
 13. /frontend-observabilidade — Sentry, logging, feature flags
 14. /frontend-cicd            — Pipeline CI/CD, convencoes, docs viva
+15. /frontend-copies          — Textos, microcopy, i18n
+16. /frontend-api-deps        — Dependencias de API do backend
 ```
 
 ---
 
-### 3. Business Blueprint (`docs/business/`)
+### 4. Business Blueprint (`docs/business/`)
 
 Inicio: `/business`
 
@@ -159,14 +194,27 @@ Sequencia de skills:
 
 ---
 
+### 5. Documentacao Compartilhada (`docs/shared/`)
+
+Docs transversais que conectam os blueprints:
+
+| Documento | Descricao |
+|-----------|-----------|
+| `MAPPING.md` | Mapeamento entre blueprints (tecnico ↔ frontend ↔ backend) |
+| `glossary.md` | Glossario unificado do projeto |
+| `error-ux-mapping.md` | Mapeamento erro backend → UX frontend |
+| `event-mapping.md` | Mapeamento de eventos entre camadas |
+
+---
+
 ## Atualizacoes Incrementais
 
 Quando uma nova feature surge, nao e preciso reescrever o documento inteiro. Use os skills de incremento:
 
 | Skill | Escopo | Comando |
 |-------|--------|---------|
-| Blueprint Tecnico | 17 docs | `/blueprint-incrementar` |
-| Frontend | 14 docs | `/frontend-incrementar` |
+| Blueprint Tecnico | 18 docs | `/blueprint-incrementar` |
+| Frontend | 16 docs | `/frontend-incrementar` |
 | Business | 10 docs | `/business-incrementar` |
 
 ### Tipos de alteracao suportados
@@ -223,7 +271,7 @@ Para mudancas que afetam **multiplos blueprints** simultaneamente:
 ```
 
 O `/patch` faz:
-1. **Varredura** em todos os 41 docs (Grep global)
+1. **Varredura** em todos os 63 docs (Grep global)
 2. **Analise de impacto** — classifica em substituicao direta, contextual e indireta
 3. **Confirmacao** — mostra tabela com todos os arquivos afetados
 4. **Aplica patches** — respeita case (PascalCase, camelCase, kebab-case)
@@ -280,22 +328,28 @@ Os blueprints preenchidos ultrapassam 2M tokens — nao cabem no contexto de nen
 | `/codegen-feature` | Implementa feature vertical (TDD: RED→GREEN→REFACTOR) | Dia-a-dia |
 | `/codegen-verify` | Verifica codigo vs blueprint (score de aderencia) | A cada 3-5 features |
 
-### Templates de Codegen (1)
+### Templates (6)
 
 | Template | Descricao |
 |----------|-----------|
 | `docs/templates/claudemd-template.md` | Template do CLAUDE.md router |
+| `docs/templates/prd-template.md` | Template de PRD |
+| `docs/templates/epic-template.md` | Template de Epic |
+| `docs/templates/story-template.md` | Template de User Story |
+| `docs/templates/task-template.md` | Template de Task |
+| `docs/templates/use-case-template.md` | Template de Use Case |
 
 ---
 
 ## Referencia Rapida de Skills
 
-### Orquestradores (3)
+### Orquestradores (4)
 
 | Comando | Descricao |
 |---------|-----------|
-| `/blueprint` | Inicia blueprint tecnico (17 docs) |
-| `/frontend` | Inicia blueprint frontend (14 docs) |
+| `/blueprint` | Inicia blueprint tecnico (18 docs) |
+| `/backend` | Gera especificacao backend (15 docs) |
+| `/frontend` | Inicia blueprint frontend (16 docs) |
 | `/business` | Inicia blueprint business (10 docs) |
 
 ### Incremento (3)
@@ -306,11 +360,13 @@ Os blueprints preenchidos ultrapassam 2M tokens — nao cabem no contexto de nen
 | `/frontend-incrementar` | Adiciona/corrige nos docs frontend |
 | `/business-incrementar` | Adiciona/corrige nos docs business |
 
-### Utilitario (1)
+### Utilitario (3)
 
 | Comando | Descricao |
 |---------|-----------|
-| `/patch` | Propaga mudanca em cascata nos 41 docs |
+| `/patch` | Propaga mudanca em cascata nos 63 docs |
+| `/paper` | Cria paginas visuais no Paper a partir do blueprint |
+| `/pencil` | Cria paginas visuais no Pencil (pencil.dev) a partir do blueprint |
 
 ### Code Generation (5)
 
@@ -322,7 +378,7 @@ Os blueprints preenchidos ultrapassam 2M tokens — nao cabem no contexto de nen
 | `/codegen-feature` | Implementa feature vertical (TDD/XP) |
 | `/codegen-verify` | Verifica codigo gerado vs blueprint |
 
-### Blueprint Tecnico (17)
+### Blueprint Tecnico (18)
 
 | Comando | Doc |
 |---------|-----|
@@ -330,12 +386,12 @@ Os blueprints preenchidos ultrapassam 2M tokens — nao cabem no contexto de nen
 | `/blueprint-vision` | 01-vision.md |
 | `/blueprint-principles` | 02-architecture_principles.md |
 | `/blueprint-requirements` | 03-requirements.md |
-| `/blueprint-domain` | 04-domain_model.md |
-| `/blueprint-data` | 05-data_model.md |
-| `/blueprint-architecture` | 06-system_architecture.md |
+| `/blueprint-domain` | 04-domain-model.md |
+| `/blueprint-data` | 05-data-model.md |
+| `/blueprint-architecture` | 06-system-architecture.md |
 | `/blueprint-flows` | 07-critical_flows.md |
 | `/blueprint-usecases` | 08-use_cases.md |
-| `/blueprint-states` | 09-state_models.md |
+| `/blueprint-states` | 09-state-models.md |
 | `/blueprint-decisions` | 10-architecture_decisions.md |
 | `/blueprint-buildplan` | 11-build_plan.md |
 | `/blueprint-testing` | 12-testing_strategy.md |
@@ -343,8 +399,9 @@ Os blueprints preenchidos ultrapassam 2M tokens — nao cabem no contexto de nen
 | `/blueprint-scalability` | 14-scalability.md |
 | `/blueprint-observability` | 15-observability.md |
 | `/blueprint-evolution` | 16-evolution.md |
+| `/blueprint-communication` | 17-communication.md |
 
-### Frontend (14)
+### Frontend (16)
 
 | Comando | Doc |
 |---------|-----|
@@ -362,6 +419,8 @@ Os blueprints preenchidos ultrapassam 2M tokens — nao cabem no contexto de nen
 | `/frontend-seguranca` | 11-seguranca.md |
 | `/frontend-observabilidade` | 12-observabilidade.md |
 | `/frontend-cicd` | 13-cicd-convencoes.md |
+| `/frontend-copies` | 14-copies.md |
+| `/frontend-api-deps` | 15-api-dependencies.md |
 
 ### Business (10)
 
@@ -386,28 +445,41 @@ Os blueprints preenchidos ultrapassam 2M tokens — nao cabem no contexto de nen
 blueprint/
 ├── docs/
 │   ├── prd.md                    # PRD do projeto (entrada principal)
-│   ├── blueprint/                # 17 docs — arquitetura tecnica
+│   ├── blueprint/                # 18 docs — arquitetura tecnica
 │   │   ├── 00-context.md
 │   │   ├── 01-vision.md
-│   │   └── ... (ate 16-evolution.md)
-│   ├── frontend/                 # 14 docs — arquitetura frontend
+│   │   └── ... (ate 17-communication.md)
+│   ├── backend/                  # 15 docs — especificacao backend
+│   │   ├── 00-backend-vision.md
+│   │   ├── 01-architecture.md
+│   │   └── ... (ate 14-tests.md)
+│   ├── frontend/                 # 16 docs — arquitetura frontend
 │   │   ├── 00-visao-frontend.md
 │   │   ├── 01-arquitetura.md
-│   │   └── ... (ate 13-cicd-convencoes.md)
+│   │   └── ... (ate 15-api-dependencies.md)
 │   ├── business/                 # 10 docs — modelo de negocio
 │   │   ├── 00-contexto-negocio.md
 │   │   ├── 01-proposta-valor.md
 │   │   └── ... (ate 09-plano-operacional.md)
+│   ├── shared/                   # 4 docs — mapeamentos transversais
+│   │   ├── MAPPING.md
+│   │   ├── glossary.md
+│   │   ├── error-ux-mapping.md
+│   │   └── event-mapping.md
 │   ├── diagrams/                 # Diagramas Mermaid
+│   ├── templates/                # 6 templates (PRD, Epic, Story, Task, etc.)
 │   └── adr/                      # Architecture Decision Records
 ├── .claude/
-│   └── skills/                   # 52 skills do Claude Code
+│   └── skills/                   # 57 skills do Claude Code
 │       ├── blueprint/            # Orquestrador tecnico
+│       ├── backend/              # Orquestrador backend
 │       ├── frontend/             # Orquestrador frontend
 │       ├── business/             # Orquestrador business
 │       ├── patch/                # Propagacao global
-│       ├── blueprint-*/          # 17 skills de secao + incrementar
-│       ├── frontend-*/           # 14 skills de secao + incrementar
+│       ├── paper/                # Paginas visuais no Paper
+│       ├── pencil/              # Paginas visuais no Pencil
+│       ├── blueprint-*/          # 18 skills de secao + incrementar
+│       ├── frontend-*/           # 16 skills de secao + incrementar
 │       ├── business-*/           # 10 skills de secao + incrementar
 │       └── codegen*/             # 5 skills de geracao de codigo
 └── README.md                     # Este arquivo
@@ -423,3 +495,4 @@ blueprint/
 - **Use `/patch` para mudancas globais**: renomear entidade, mudar versao, etc.
 - **Versoes atualizadas**: skills usam o MCP context7 (`mcp__context7__resolve-library-id` + `mcp__context7__query-docs`) para consultar documentacao atualizada de tecnologias
 - **Templates sao templates**: os `{{placeholders}}` sao substituidos pelos skills, nao edite manualmente
+- **Docs compartilhados**: `docs/shared/` conecta os blueprints com glossario, mapeamentos de erro e eventos

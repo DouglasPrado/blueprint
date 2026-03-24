@@ -1,22 +1,24 @@
 ---
 name: frontend-copies
-description: Preenche a secao de Copies (14-copies.md) do frontend blueprint a partir do PRD.
+description: Preenche a secao de Copies (14-copies.md) do frontend blueprint a partir do blueprint tecnico.
 ---
 
 # Frontend Blueprint — Copies
 
-Preenche `docs/frontend/14-copies.md` com base no PRD e no contexto das telas do projeto.
+Preenche `docs/frontend/14-copies.md` com base no blueprint tecnico e no contexto das telas do projeto.
 
 ## Leitura de Contexto
 
-1. Leia `docs/prd.md` — fonte primaria
-2. Leia `docs/frontend/14-copies.md` — template a preencher
-3. Leia `docs/frontend/07-routes.md` — para identificar todas as telas/paginas
-4. Leia `docs/frontend/08-flows.md` — para identificar copies dentro dos fluxos criticos
+1. Leia `docs/blueprint/08-use_cases.md` — casos de uso com textos e mensagens
+2. Leia `docs/blueprint/17-communication.md` — templates de comunicacao
+3. Leia `docs/frontend/14-copies.md` — template a preencher
+4. Leia `docs/frontend/07-routes.md` — para identificar todas as telas/paginas
+5. Leia `docs/frontend/08-flows.md` — para identificar copies dentro dos fluxos criticos
+6. Leia `docs/prd.md` — complemento se necessario
 
 ## Analise de Lacunas
 
-A partir do PRD e das rotas/fluxos, identifique o que esta disponivel para cada subsecao:
+A partir do blueprint tecnico e das rotas/fluxos, identifique o que esta disponivel para cada subsecao:
 
 - **Estrategia de Copy**: Idioma padrao, suporte i18n, tom de voz, glossario de termos do produto
 - **Copies por Tela**: Textos de cada tela (titulos, labels, placeholders, CTAs, links, empty states)
@@ -36,11 +38,11 @@ Se houver lacunas criticas que NAO podem ser inferidas do PRD, faca ate 3 pergun
 > - Para adicionar copies de uma feature especifica sem reescrever, prefira `/frontend-increment`.
 
 Preencha `docs/frontend/14-copies.md` substituindo TODOS os `{{placeholders}}`. Mantenha a estrutura. Use:
-- Informacoes explicitas do PRD
+- Informacoes do blueprint tecnico (use cases, comunicacao)
 - Rotas de `07-routes.md` para gerar uma subsecao por tela
 - Fluxos de `08-flows.md` para garantir que mensagens de feedback estejam cobertas
 - Respostas do usuario (se houve perguntas)
-- Inferencias logicas quando seguro (marque com `<!-- inferido do PRD -->`)
+- Inferencias logicas quando seguro (marque com `<!-- do blueprint: XX-arquivo.md -->`)
 
 ### Checklist de Cobertura
 

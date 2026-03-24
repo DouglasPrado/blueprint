@@ -2,6 +2,8 @@
 
 Define a hierarquia de excecoes, formato padrao de erro, catalogo de codigos e estrategia de tratamento.
 
+> **Consumido por:** [docs/shared/error-ux-mapping.md](../shared/error-ux-mapping.md) (como o frontend trata cada erro).
+
 ---
 
 ## Formato Padrao de Erro
@@ -25,7 +27,7 @@ Define a hierarquia de excecoes, formato padrao de erro, catalogo de codigos e e
 
 **Regras:**
 - `code` e sempre UPPER_SNAKE_CASE
-- `message` e sempre em {{portugues/ingles}} e segura para exibir ao usuario
+- `message` e sempre em português e segura para exibir ao usuario
 - `details` so aparece em erros de validacao (400)
 - `requestId` vem do middleware RequestId
 - Stack trace NUNCA aparece em producao

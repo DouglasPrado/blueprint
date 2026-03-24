@@ -2,6 +2,8 @@
 
 Define eventos de dominio, filas, workers assincronos, schemas de payload e estrategias de retry.
 
+> **Consumido por:** [docs/shared/event-mapping.md](../shared/event-mapping.md) (como o frontend reage a cada evento).
+
 ---
 
 ## Estrategia de Mensageria
@@ -25,7 +27,11 @@ Define eventos de dominio, filas, workers assincronos, schemas de payload e estr
 | Evento | Produtor | Consumidor(es) | Fila/Topico | Retry | DLQ |
 | --- | --- | --- | --- | --- | --- |
 | {{UserCreated}} | {{UserService}} | {{EmailWorker, AnalyticsWorker}} | {{user.events}} | {{3x, backoff 2^n}} | {{user.events.dlq}} |
+| {{UserActivated}} | {{UserService}} | {{AnalyticsWorker}} | {{user.events}} | {{3x, backoff 2^n}} | {{user.events.dlq}} |
+| {{UserEmailChanged}} | {{UserService}} | {{EmailWorker, AnalyticsWorker}} | {{user.events}} | {{3x, backoff 2^n}} | {{user.events.dlq}} |
+| {{UserPasswordChanged}} | {{UserService}} | {{EmailWorker}} | {{user.events}} | {{3x, backoff 2^n}} | {{user.events.dlq}} |
 | {{OrderPaid}} | {{PaymentService}} | {{OrderService, NotificationWorker}} | {{order.events}} | {{5x, backoff 2^n}} | {{order.events.dlq}} |
+| {{OrderShipped}} | {{OrderService}} | {{NotificationWorker}} | {{order.events}} | {{5x, backoff 2^n}} | {{order.events.dlq}} |
 | {{EmailRequested}} | {{NotificationService}} | {{EmailWorker}} | {{email.send}} | {{3x, linear 30s}} | {{email.send.dlq}} |
 
 <!-- APPEND:eventos -->
@@ -88,6 +94,8 @@ Define eventos de dominio, filas, workers assincronos, schemas de payload e estr
 | Worker | Fila | Funcao | Concorrencia | Timeout | Retry | DLQ |
 | --- | --- | --- | --- | --- | --- | --- |
 | {{EmailWorker}} | {{email.send}} | {{Envia emails via provedor}} | {{5}} | {{30s}} | {{3x, backoff 30s}} | {{email.send.dlq}} |
+| {{AnalyticsWorker}} | {{user.events}} | {{Processa eventos para analytics/metricas}} | {{3}} | {{30s}} | {{3x, backoff 2^n}} | {{analytics.dlq}} |
+| {{NotificationWorker}} | {{order.events}} | {{Envia notificacoes (push, in-app) sobre pedidos}} | {{5}} | {{30s}} | {{3x, backoff 30s}} | {{notifications.dlq}} |
 | {{ReportWorker}} | {{reports.generate}} | {{Gera relatorios PDF}} | {{2}} | {{120s}} | {{2x, backoff 60s}} | {{reports.dlq}} |
 | {{WebhookWorker}} | {{webhooks.dispatch}} | {{Dispara webhooks}} | {{10}} | {{15s}} | {{5x, backoff exponencial}} | {{webhooks.dlq}} |
 

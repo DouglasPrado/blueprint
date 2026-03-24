@@ -1,6 +1,6 @@
 # Modelo de Dados
 
-Enquanto o [Modelo de Domínio](./04-domain_model.md) descreve entidades e regras de negócio de forma **lógica e conceitual**, o modelo de dados define como essas entidades serão **fisicamente armazenadas**. Aqui tratamos de tabelas, campos, tipos de dados, constraints, índices e estratégias de migração.
+Enquanto o [Modelo de Domínio](./04-domain-model.md) descreve entidades e regras de negócio de forma **lógica e conceitual**, o modelo de dados define como essas entidades serão **fisicamente armazenadas**. Aqui tratamos de tabelas, campos, tipos de dados, constraints, índices e estratégias de migração.
 
 > A separação entre domínio e dados permite que decisões de negócio e decisões de infraestrutura evoluam de forma independente.
 

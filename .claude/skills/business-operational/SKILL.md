@@ -1,6 +1,6 @@
 ---
 name: business-operational
-description: Use when filling the operational plan section (09-operational-plan.md) of the business blueprint. Defines core processes, team roadmap, infrastructure, disaster recovery, timeline, scale plan, risks, and legal aspects.
+description: Preenche a secao de Plano Operacional (09-operational-plan.md) do business blueprint a partir do blueprint tecnico.
 ---
 
 # Business Blueprint — Plano Operacional
@@ -9,12 +9,13 @@ Define os processos core, roadmap de equipe, infraestrutura, disaster recovery, 
 
 ## Leitura de Contexto
 
-1. Leia `docs/prd.md` — fonte primaria
-2. Leia `docs/business/09-operational-plan.md` — template a preencher
+1. Leia `docs/blueprint/06-system-architecture.md` e `docs/blueprint/11-build_plan.md` — fontes primarias
+2. Leia `docs/prd.md` — fallback/complemento
+3. Leia `docs/business/09-operational-plan.md` — template a preencher
 
 ## Analise de Lacunas
 
-A partir do PRD, identifique o que esta disponivel para cada subsecao:
+A partir do blueprint tecnico, identifique o que esta disponivel para cada subsecao:
 
 - **Processos Core**: quais sao os 3 processos que quebram o negocio se falharem (responsavel, frequencia, ferramenta)?
 - **Roadmap de Equipe**: qual a estrutura atual e futura do time, com triggers claros para cada contratacao?
@@ -26,7 +27,7 @@ A partir do PRD, identifique o que esta disponivel para cada subsecao:
 - **Riscos e Mitigacoes**: quais sao os principais riscos (mercado, produto, time, financeiro) e como mitiga-los?
 - **Aspectos Legais**: checklist minimo (Termos de Uso, Politica de Privacidade, LGPD, regime tributario, contratos) e estrutura juridica?
 
-Se houver lacunas criticas que NAO podem ser inferidas do PRD, faca ate 3 perguntas pontuais ao usuario antes de gerar.
+Se houver lacunas criticas que NAO podem ser inferidas do blueprint tecnico, faca ate 3 perguntas pontuais ao usuario antes de gerar.
 
 ## Geracao
 
@@ -36,11 +37,11 @@ Se houver lacunas criticas que NAO podem ser inferidas do PRD, faca ate 3 pergun
 > - Para adicionar uma feature especifica sem reescrever, prefira `/business-increment`.
 
 Preencha `docs/business/09-operational-plan.md` substituindo TODOS os `{{placeholders}}`. Mantenha a estrutura. Use:
-- Informacoes explicitas do PRD
+- Informacoes explicitas do blueprint tecnico
 - Respostas do usuario (se houve perguntas)
-- Inferencias logicas quando seguro (marque com `<!-- inferido do PRD -->`)
+- Inferencias logicas quando seguro (marque com `<!-- do blueprint: 06-system-architecture.md, 11-build_plan.md -->`)
 
-**REGRA CRITICA: NUNCA invente numeros.** Valores de custos, datas, salarios, percentuais, RTO/RPO ou qualquer dado numerico que NAO esteja explicitamente no PRD devem ser perguntados ao usuario. Use `{{placeholder}}` para campos numericos sem dados.
+**REGRA CRITICA: NUNCA invente numeros.** Valores de custos, datas, salarios, percentuais, RTO/RPO ou qualquer dado numerico que NAO esteja explicitamente no blueprint tecnico devem ser perguntados ao usuario. Use `{{placeholder}}` para campos numericos sem dados.
 
 ## Revisao
 

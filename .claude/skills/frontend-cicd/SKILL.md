@@ -1,20 +1,21 @@
 ---
 name: frontend-cicd
-description: Preenche a secao de CI/CD e Convencoes (13-cicd-conventions.md) do frontend blueprint a partir do PRD.
+description: Preenche a secao de CI/CD e Convencoes (13-cicd-conventions.md) do frontend blueprint a partir do blueprint tecnico.
 ---
 
 # Frontend Blueprint — CI/CD e Convencoes
 
-Preenche `docs/frontend/13-cicd-conventions.md` com base no PRD e no contexto do projeto.
+Preenche `docs/frontend/13-cicd-conventions.md` com base no blueprint tecnico e no contexto do projeto.
 
 ## Leitura de Contexto
 
-1. Leia `docs/prd.md` — fonte primaria
+1. Leia `docs/blueprint/06-system-architecture.md` — pipeline CI/CD e deploy
 2. Leia `docs/frontend/13-cicd-conventions.md` — template a preencher
+3. Leia `docs/prd.md` — complemento se necessario
 
 ## Analise de Lacunas
 
-A partir do PRD, identifique o que esta disponivel para cada subsecao:
+A partir do blueprint tecnico, identifique o que esta disponivel para cada subsecao:
 
 - **Pipeline CI/CD**: Quais etapas compoe o pipeline (lint, test, build, deploy) e quais ferramentas sao utilizadas?
 - **Ambientes**: Quais ambientes existem (dev, staging, production) e como o deploy e promovido entre eles?
@@ -34,9 +35,9 @@ Se houver lacunas criticas que NAO podem ser inferidas do PRD, faca ate 3 pergun
 > - Para adicionar uma feature especifica sem reescrever, prefira `/frontend-increment`.
 
 Preencha `docs/frontend/13-cicd-conventions.md` substituindo TODOS os `{{placeholders}}`. Mantenha a estrutura. Use:
-- Informacoes explicitas do PRD
+- Informacoes do blueprint tecnico (fonte primaria)
 - Respostas do usuario (se houve perguntas)
-- Inferencias logicas quando seguro (marque com `<!-- inferido do PRD -->`)
+- Inferencias logicas quando seguro (marque com `<!-- do blueprint: 06-system-architecture.md -->`)
 
 ## Revisao
 

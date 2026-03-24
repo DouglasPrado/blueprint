@@ -126,12 +126,12 @@ Tabela de correspondencia entre cada diagrama e a secao do blueprint onde seu co
 | Diagrama | Secao do Blueprint |
 |----------|-------------------|
 | `context/system-context.mmd` | `00-context.md` |
-| `containers/container-diagram.mmd` | `06-system_architecture.md` |
-| `components/*.mmd` | `06-system_architecture.md` |
+| `containers/container-diagram.mmd` | `06-system-architecture.md` |
+| `components/*.mmd` | `06-system-architecture.md` |
 | `sequences/*.mmd` | `07-critical_flows.md` |
-| `deployment/production.mmd` | `06-system_architecture.md`, `14-scalability.md` |
-| `domain/class-diagram.mmd` | `04-domain_model.md` |
-| `domain/er-diagram.mmd` | `05-data_model.md` |
-| `domain/state-*.mmd` | `09-state_models.md` |
+| `deployment/production.mmd` | `06-system-architecture.md`, `14-scalability.md` |
+| `domain/class-diagram.mmd` | `04-domain-model.md` |
+| `domain/er-diagram.mmd` | `05-data-model.md` |
+| `domain/state-*.mmd` | `09-state-models.md` |
 
 > Use esta tabela para manter diagramas e documentacao textual sincronizados. Ao atualizar um diagrama, revise a secao correspondente do blueprint — e vice-versa.

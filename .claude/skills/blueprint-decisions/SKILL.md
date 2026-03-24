@@ -11,9 +11,9 @@ Voce vai preencher a secao de Decisoes Arquiteturais do blueprint. ADRs (Archite
 
 1. Leia `docs/prd.md` — fonte primaria
 2. Leia `docs/blueprint/02-architecture_principles.md` — principios que guiam decisoes
-3. Leia `docs/blueprint/04-domain_model.md` — modelo de dominio
-4. Leia `docs/blueprint/05-data_model.md` — decisoes de persistencia
-5. Leia `docs/blueprint/06-system_architecture.md` — decisoes de arquitetura
+3. Leia `docs/blueprint/04-domain-model.md` — modelo de dominio
+4. Leia `docs/blueprint/05-data-model.md` — decisoes de persistencia
+5. Leia `docs/blueprint/06-system-architecture.md` — decisoes de arquitetura
 6. Leia `docs/blueprint/10-architecture_decisions.md` — template a preencher
 7. Leia `docs/adr/adr-template.md` — template de ADR individual
 

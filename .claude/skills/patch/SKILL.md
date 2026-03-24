@@ -73,7 +73,7 @@ Apresente tabela ao usuario:
 
 | # | Arquivo | Linha | Tipo | Antes | Depois |
 |---|---------|-------|------|-------|--------|
-| 1 | blueprint/04-domain_model.md | 23 | Direta | Booking | Appointment |
+| 1 | blueprint/04-domain-model.md | 23 | Direta | Booking | Appointment |
 | 2 | frontend/05-state.md | 45 | Contextual | bookingStore | appointmentStore |
 | 3 | frontend/04-components.md | 67 | Contextual | BookingCard | AppointmentCard |
 | 4 | business/03-canais.md | 12 | Indireta | "sistema de booking" | (revisar) |

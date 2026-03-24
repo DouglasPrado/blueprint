@@ -9,6 +9,7 @@ O modelo de domínio representa as entidades centrais do sistema, suas responsab
 ## Glossário Ubíquo
 
 > Quais termos do domínio precisam de definição clara para evitar ambiguidade?
+> **Fonte unica de termos:** [docs/shared/glossary.md](../shared/glossary.md). Ao preencher esta secao, atualize tambem o glossario compartilhado.
 
 | Termo | Definição |
 |-------|-----------|

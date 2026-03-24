@@ -13,7 +13,7 @@ Você vai preencher a seção de Comunicação do blueprint. Mensagens enviadas 
 2. Leia `docs/blueprint/17-communication.md` — template a preencher
 3. Leia `docs/blueprint/07-critical_flows.md` — para identificar fluxos que geram comunicação (cadastro, reset senha, checkout, etc.)
 4. Leia `docs/blueprint/08-use_cases.md` — para mapear eventos que disparam mensagens
-5. Leia `docs/blueprint/04-domain_model.md` — para identificar entidades e variáveis disponíveis
+5. Leia `docs/blueprint/04-domain-model.md` — para identificar entidades e variáveis disponíveis
 6. Leia `docs/blueprint/13-security.md` — para alinhar autenticação (2FA, tokens) com templates de verificação
 
 ## Análise de Lacunas
@@ -47,7 +47,7 @@ Preencha `docs/blueprint/17-communication.md` substituindo TODOS os `{{placehold
 - Informações explícitas do PRD
 - Fluxos de `07-critical_flows.md` para mapear eventos que geram comunicação
 - Use cases de `08-use_cases.md` para identificar todos os pontos de envio
-- Modelo de domínio de `04-domain_model.md` para definir variáveis disponíveis
+- Modelo de domínio de `04-domain-model.md` para definir variáveis disponíveis
 - Security de `13-security.md` para alinhar templates de verificação/2FA
 - Respostas do usuário (se houve perguntas)
 - Inferências lógicas quando seguro (marque com `<!-- inferido do PRD -->`)

@@ -10,7 +10,7 @@ Voce vai preencher a secao de Estrategia de Testes do blueprint. Esta secao defi
 ## Leitura de Contexto
 
 1. Leia `docs/prd.md` — fonte primaria
-2. Leia `docs/blueprint/06-system_architecture.md` — componentes e stack tecnologico
+2. Leia `docs/blueprint/06-system-architecture.md` — componentes e stack tecnologico
 3. Leia `docs/blueprint/07-critical_flows.md` — fluxos criticos a cobrir com testes
 4. Leia `docs/blueprint/12-testing_strategy.md` — template a preencher
 

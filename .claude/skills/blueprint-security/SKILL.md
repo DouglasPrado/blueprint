@@ -10,8 +10,8 @@ Voce vai preencher a secao de Seguranca do blueprint. Seguranca nao e uma featur
 ## Leitura de Contexto
 
 1. Leia `docs/prd.md` — fonte primaria
-2. Leia `docs/blueprint/05-data_model.md` — dados sensiveis e persistencia
-3. Leia `docs/blueprint/06-system_architecture.md` — componentes e comunicacao
+2. Leia `docs/blueprint/05-data-model.md` — dados sensiveis e persistencia
+3. Leia `docs/blueprint/06-system-architecture.md` — componentes e comunicacao
 4. Leia `docs/blueprint/13-security.md` — template a preencher
 5. Leia `docs/diagrams/sequences/auth-flow.mmd` — template de fluxo de autenticacao
 

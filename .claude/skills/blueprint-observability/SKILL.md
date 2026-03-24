@@ -10,7 +10,7 @@ Voce vai preencher a secao de Observabilidade do blueprint. Se voce nao consegue
 ## Leitura de Contexto
 
 1. Leia `docs/prd.md` — fonte primaria
-2. Leia `docs/blueprint/06-system_architecture.md` — componentes e stack
+2. Leia `docs/blueprint/06-system-architecture.md` — componentes e stack
 3. Leia `docs/blueprint/14-scalability.md` — metricas e thresholds de escala
 4. Leia `docs/blueprint/15-observability.md` — template a preencher
 

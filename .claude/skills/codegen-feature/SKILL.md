@@ -50,11 +50,11 @@ Para cada doc relevante:
 
 | Tipo | Docs a consultar |
 |------|-----------------|
-| CRUD de entidade | 04-domain_model (entidade), 05-data_model (tabela), 08-use_cases (UC da entidade), frontend/04-components |
-| Fluxo de negocio | 07-critical_flows (fluxo), 08-use_cases (UCs do fluxo), 09-state_models (estados), frontend/08-flows |
+| CRUD de entidade | 04-domain-model (entidade), 05-data-model (tabela), 08-use_cases (UC da entidade), frontend/04-components |
+| Fluxo de negocio | 07-critical_flows (fluxo), 08-use_cases (UCs do fluxo), 09-state-models (estados), frontend/08-flows |
 | Autenticacao | 07-critical_flows (auth flow), 13-security, frontend/11-security |
 | Dashboard/Relatorio | frontend/04-components, frontend/06-data-layer, 07-critical_flows |
-| Integracao externa | 06-system_architecture (componente), 07-critical_flows (fluxo de integracao) |
+| Integracao externa | 06-system-architecture (componente), 07-critical_flows (fluxo de integracao) |
 
 ### 2.3: Ler Contratos Existentes
 

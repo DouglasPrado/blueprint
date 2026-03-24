@@ -120,3 +120,43 @@ Define os tokens de design, padroes visuais e componentes base que garantem cons
 <!-- APPEND:catalogo -->
 
 > Documentacao completa dos componentes: (ver 04-componentes.md)
+
+---
+
+## Acessibilidade (a11y)
+
+> Quais padroes de acessibilidade o design system segue?
+
+**Meta:** {{WCAG 2.1 AA / WCAG 2.2 AA}}
+
+### Contraste de Cores
+
+| Par de Cores | Ratio Minimo | Tipo | Status |
+| --- | --- | --- | --- |
+| {{text sobre background}} | {{4.5:1 (AA normal text)}} | {{Texto corpo}} | {{Conforme / A verificar}} |
+| {{text sobre surface}} | {{4.5:1}} | {{Texto em cards}} | {{Conforme / A verificar}} |
+| {{error sobre background}} | {{4.5:1}} | {{Mensagens de erro}} | {{Conforme / A verificar}} |
+| {{placeholder text}} | {{3:1 (AA large text)}} | {{Placeholders}} | {{Conforme / A verificar}} |
+
+### Componentes Acessiveis
+
+| Componente | Requisitos a11y | ARIA Patterns |
+| --- | --- | --- |
+| {{Button}} | {{Focavel via Tab, ativavel via Enter/Space, aria-label se icone-only}} | {{role="button"}} |
+| {{Modal}} | {{Focus trap, Esc para fechar, aria-modal="true", aria-labelledby}} | {{role="dialog"}} |
+| {{Toast}} | {{aria-live="polite" ou "assertive", auto-dismiss nao bloqueia}} | {{role="status" ou "alert"}} |
+| {{Input}} | {{Label associada via htmlFor, aria-invalid em erro, aria-describedby para hint}} | {{—}} |
+| {{Select}} | {{Navegavel via setas, Enter para selecionar, Esc para fechar}} | {{role="listbox"}} |
+
+<!-- APPEND:a11y -->
+
+### Checklist de Acessibilidade
+
+- [ ] Todo texto atende ratio de contraste WCAG AA (4.5:1 normal, 3:1 large)
+- [ ] Todo componente interativo e focavel via teclado
+- [ ] Toda imagem tem alt text descritivo
+- [ ] Formularios tem labels associadas e mensagens de erro acessiveis
+- [ ] Modais tem focus trap e Esc para fechar
+- [ ] Navegacao funciona 100% via teclado
+- [ ] Screen reader anuncia mudancas de estado (aria-live)
+- [ ] Nenhuma informacao transmitida apenas por cor (usar icone + texto)

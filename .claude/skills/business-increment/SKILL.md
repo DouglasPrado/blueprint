@@ -43,9 +43,9 @@ Leia TODOS os documentos existentes em `docs/business/`:
 9. `docs/business/08-marketing-strategy.md`
 10. `docs/business/09-operational-plan.md`
 
-Leia tambem `docs/prd.md` se existir, para contexto adicional.
+Leia tambem os arquivos relevantes de `docs/blueprint/` para contexto tecnico, e `docs/prd.md` como fallback/complemento.
 
-> **Versões atualizadas:** Ao referenciar tecnologias, ferramentas ou plataformas específicas com versões, use o MCP context7 para consultar documentação atualizada. Primeiro chame `mcp__context7__resolve-library-id` para obter o ID da biblioteca, depois `mcp__context7__query-docs` para consultar versões e exemplos.
+> **Versoes atualizadas:** Ao referenciar tecnologias, ferramentas ou plataformas especificas com versoes, use o MCP context7 para consultar documentacao atualizada. Primeiro chame `mcp__context7__resolve-library-id` para obter o ID da biblioteca, depois `mcp__context7__query-docs` para consultar versoes e exemplos.
 
 ## Passo 3: Classificar Tipo de Alteracao
 

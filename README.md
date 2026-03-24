@@ -401,12 +401,13 @@ Ao final, cruza as tasks geradas com o blueprint tecnico:
 
 ## Opensource — Transformacao para Projeto OSS (`/opensource`)
 
-Transforma um projeto documentado com blueprints proprietarios em um **projeto opensource completo**. Adapta os 3 blueprints in-place e gera os arquivos raiz tipicos de projetos OSS.
+Transforma um projeto documentado com blueprints proprietarios em um **projeto opensource completo**. Adapta os 4 blueprints in-place e gera os arquivos raiz tipicos de projetos OSS.
 
 ### Pre-requisitos
 
-Os 3 blueprints devem estar preenchidos:
+Os 4 blueprints devem estar preenchidos:
 - `docs/blueprint/` (tecnico)
+- `docs/backend/` (backend)
 - `docs/frontend/` (frontend)
 - `docs/business/` (negocio)
 
@@ -415,7 +416,7 @@ Os 3 blueprints devem estar preenchidos:
 ```
 /opensource
 
-# 1. Le todos os documentos dos 3 blueprints
+# 1. Le todos os documentos dos 4 blueprints
 # 2. Pergunta 5 definicoes ao usuario:
 #    - Modelo OSS (open-core, community-driven, dev-tool, foundation-backed)
 #    - Licenca (MIT, Apache 2.0, GPL v3, AGPL v3, Dual)
@@ -423,7 +424,7 @@ Os 3 blueprints devem estar preenchidos:
 #    - Nome do projeto
 #    - Canais da comunidade (Discord, Discussions, Slack, etc.)
 # 3. Adapta os 10 docs do business blueprint para contexto OSS
-# 4. Adiciona secoes OSS nos docs tecnicos e frontend
+# 4. Adiciona secoes OSS nos docs tecnicos, backend e frontend
 # 5. Gera arquivos raiz do projeto OSS
 ```
 
@@ -451,6 +452,17 @@ Os 3 blueprints devem estar preenchidos:
 - Contributor Testing Guide (testes)
 - Operational Transparency (observabilidade)
 - Community Communication Templates (comunicacao)
+
+**Backend Blueprint (9 secoes adicionadas):**
+- OSS Backend Principles (visao)
+- Contributor Architecture Guide (arquitetura)
+- Contributor Directory Guide (estrutura)
+- API Contribution Guidelines (contratos)
+- Error Handling for Contributors (erros)
+- Testing Guide for Contributors (testes)
+- Auth for Self-Hosted (permissoes)
+- Event System for Contributors (eventos)
+- Integration Development Guide (integracoes)
 
 **Frontend Blueprint (3 secoes adicionadas):**
 - Contributor Setup Guide (arquitetura)
@@ -510,7 +522,7 @@ A skill transforma o conteudo para ingles, mantendo o padrao de projetos OSS int
 
 | Comando | Descricao |
 |---------|-----------|
-| `/opensource` | Transforma blueprints em projeto opensource (adapta 3 blueprints + gera arquivos raiz) |
+| `/opensource` | Transforma blueprints em projeto opensource (adapta 4 blueprints + gera arquivos raiz) |
 | `/specs` | Gera backlog integral de tasks a partir de backend + frontend + blueprint (`docs/specs/TASKS.md`) |
 
 ### Utilitario (3)

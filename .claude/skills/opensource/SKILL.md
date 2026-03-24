@@ -1,11 +1,11 @@
 ---
 name: opensource
-description: Transforms a proprietary blueprint into an opensource project. Adapts all 3 blueprints (technical, frontend, business) in-place and generates root files (README, CONTRIBUTING, LICENSE, etc.) based on the user's chosen OSS model.
+description: Transforms a proprietary blueprint into an opensource project. Adapts all 4 blueprints (technical, backend, frontend, business) in-place and generates root files (README, CONTRIBUTING, LICENSE, etc.) based on the user's chosen OSS model.
 ---
 
 # Opensource — Transform Blueprint into an Opensource Project
 
-You transform a project documented with proprietary blueprints into a complete opensource project. You adapt all 3 blueprints (technical, frontend, business) in-place and generate the root files typical of OSS projects. All generated content MUST be in English.
+You transform a project documented with proprietary blueprints into a complete opensource project. You adapt all 4 blueprints (technical, backend, frontend, business) in-place and generate the root files typical of OSS projects. All generated content MUST be in English.
 
 ## Step 1: Read All 3 Blueprints
 
@@ -23,6 +23,25 @@ Read all available files, focusing on:
 - `14-scalability.md` — caching, rate limiting
 - `15-observability.md` — logs, metrics, traces
 - `17-communication.md` — communication templates
+
+### Backend Blueprint (`docs/backend/`)
+
+Read all available files, focusing on:
+- `00-backend-vision.md` — stack, patterns, principles, metrics
+- `01-architecture.md` — layers, boundaries, deployment
+- `02-project-structure.md` — directory tree, naming conventions
+- `03-domain.md` — entities with methods and events
+- `04-data-layer.md` — repositories, ORM, queries
+- `05-api-contracts.md` — endpoints, DTOs, status codes
+- `06-services.md` — services with detailed flows
+- `07-controllers.md` — controllers and routes
+- `08-middlewares.md` — request pipeline
+- `09-errors.md` — exception hierarchy, error catalog
+- `10-validation.md` — field rules, sanitization
+- `11-permissions.md` — RBAC, ownership, JWT
+- `12-events.md` — events, workers, queues, DLQ
+- `13-integrations.md` — external clients, circuit breaker
+- `14-tests.md` — test pyramid, scenarios, CI
 
 ### Frontend Blueprint (`docs/frontend/`)
 
@@ -49,6 +68,7 @@ If any blueprint is missing, warn the user:
 
 > "To transform the project into opensource, I need the filled blueprints. Missing:
 > - `docs/blueprint/` — run `/blueprint` to generate
+> - `docs/backend/` — run `/backend` to generate
 > - `docs/frontend/` — run `/frontend` to generate
 > - `docs/business/` — run `/business` to generate
 >
@@ -59,6 +79,7 @@ Present status table:
 | Blueprint | Docs found | Status |
 |-----------|-----------|--------|
 | Technical | {{N}}/18 | Complete/Partial/Missing |
+| Backend | {{N}}/15 | Complete/Partial/Missing |
 | Frontend | {{N}}/15 | Complete/Partial/Missing |
 | Business | {{N}}/10 | Complete/Partial/Missing |
 
@@ -417,13 +438,148 @@ Add section:
 - **Security advisory**: severity, affected versions, mitigation, available patch
 ```
 
-## Step 5: Adapt Frontend Blueprint (Edit)
+## Step 5: Adapt Backend Blueprint (Edit)
+
+Add OSS-specific sections to backend blueprint documents using **Edit tool**. Insert before existing `<!-- APPEND:... -->` markers. Mark with `<!-- added: opensource -->`.
+
+**IMPORTANT**: All new content must be in English.
+
+### 5.1 `docs/backend/00-backend-vision.md`
+
+Add section:
+
+```markdown
+<!-- added: opensource -->
+### Opensource Backend Principles
+
+- **Extensibility**: plugin architecture, hooks, and extension points for community contributions
+- **Configuration over code**: environment-based configuration for easy deployment across environments
+- **Database agnosticism**: abstraction layer allowing community to add support for different databases
+- **API stability**: public API follows semver, internal APIs clearly marked as unstable
+```
+
+### 5.2 `docs/backend/01-architecture.md`
+
+Add section:
+
+```markdown
+<!-- added: opensource -->
+### Contributor Architecture Guide
+
+- **Layer boundaries**: what belongs in each layer, how to add new modules
+- **Dependency injection**: how to register new services and providers
+- **Module creation**: step-by-step guide to create a new domain module
+- **Architecture Decision Records**: link to ADRs for understanding past decisions
+```
+
+### 5.3 `docs/backend/02-project-structure.md`
+
+Add section:
+
+```markdown
+<!-- added: opensource -->
+### Contributor Directory Guide
+
+- **Where to add new features**: directory conventions for new modules
+- **File naming**: conventions for files, classes, and exports
+- **Generated files**: which files are auto-generated and should NOT be edited manually
+- **Monorepo navigation**: how packages/modules relate to each other (if applicable)
+```
+
+### 5.4 `docs/backend/05-api-contracts.md`
+
+Add section:
+
+```markdown
+<!-- added: opensource -->
+### API Contribution Guidelines
+
+- **Endpoint conventions**: naming, versioning (`/api/v1/`), HTTP methods
+- **Breaking changes**: process for proposing breaking API changes (RFC required)
+- **API documentation**: OpenAPI/Swagger spec must be updated with every endpoint change
+- **Backwards compatibility**: deprecation policy — minimum 2 minor versions before removal
+- **Rate limiting**: default rate limits for public API, how to configure for self-hosted
+```
+
+### 5.5 `docs/backend/09-errors.md`
+
+Add section:
+
+```markdown
+<!-- added: opensource -->
+### Error Handling for Contributors
+
+- **Adding new error codes**: naming convention, error catalog registration
+- **User-facing messages**: must be translatable (i18n keys, not hardcoded strings)
+- **Error documentation**: new errors must be documented in the error catalog
+- **HTTP status mapping**: how domain errors map to HTTP status codes
+```
+
+### 5.6 `docs/backend/14-tests.md`
+
+Add section:
+
+```markdown
+<!-- added: opensource -->
+### Testing Guide for Contributors
+
+- **Running tests locally**: `{{test_cmd}}` — full suite, `{{test_unit_cmd}}` — unit only
+- **Writing tests**: naming conventions (`*.test.ts` / `*.spec.ts`), directory placement
+- **Test fixtures**: how to create and use shared fixtures and factories
+- **Database tests**: use test containers or in-memory DB, never hit external services
+- **CI pipeline**: all PRs run lint → typecheck → unit → integration → e2e
+- **Coverage requirement**: PRs must not decrease existing coverage percentage
+```
+
+### 5.7 `docs/backend/11-permissions.md`
+
+Add section:
+
+```markdown
+<!-- added: opensource -->
+### Authentication & Authorization for Self-Hosted
+
+- **Auth providers**: how to configure different auth providers (OAuth, SAML, LDAP)
+- **API keys**: how to generate and manage API keys for programmatic access
+- **Role customization**: how to define custom roles and permissions for self-hosted deployments
+- **Security defaults**: principle of least privilege, secure by default configuration
+```
+
+### 5.8 `docs/backend/12-events.md`
+
+Add section:
+
+```markdown
+<!-- added: opensource -->
+### Event System for Contributors
+
+- **Adding new events**: naming convention, schema definition, registration
+- **Event handlers**: how to subscribe to events and add custom handlers
+- **Queue adapters**: supported queue backends (Redis, RabbitMQ, etc.), how to add new ones
+- **Webhook support**: how external systems can subscribe to events via webhooks
+```
+
+### 5.9 `docs/backend/13-integrations.md`
+
+Add section:
+
+```markdown
+<!-- added: opensource -->
+### Integration Development Guide
+
+- **Adding new integrations**: adapter pattern, interface contracts, configuration
+- **Plugin system**: how to create community plugins/integrations as separate packages
+- **Testing integrations**: mock adapters, contract tests, sandbox environments
+- **Registry**: how to publish and discover community integrations
+```
+
+## Step 6: Adapt Frontend Blueprint (Edit)
 
 Add OSS-specific sections to frontend blueprint documents using **Edit tool**. Mark with `<!-- added: opensource -->`.
 
 **IMPORTANT**: All new content must be in English.
 
-### 5.1 `docs/frontend/01-architecture.md`
+### 6.1 `docs/frontend/01-architecture.md`
 
 Add section:
 
@@ -438,7 +594,7 @@ Add section:
 - **Troubleshooting**: common issues and solutions
 ```
 
-### 5.2 `docs/frontend/13-cicd-conventions.md` (if exists)
+### 6.2 `docs/frontend/13-cicd-conventions.md` (if exists)
 
 Add section:
 
@@ -453,7 +609,7 @@ Add section:
 - **Auto-merge**: Dependabot PRs with passing tests
 ```
 
-### 5.3 `docs/frontend/03-design-system.md`
+### 6.3 `docs/frontend/03-design-system.md`
 
 Add section:
 
@@ -467,11 +623,11 @@ Add section:
 - **Visual regression**: comparative screenshots on PRs (if configured)
 ```
 
-## Step 6: Generate Root Files (Write)
+## Step 7: Generate Root Files (Write)
 
 Create the following files at the project root using **Write tool**. These are NEW files — they don't exist in the project yet.
 
-### 6.1 `README.md`
+### 7.1 `README.md`
 
 If a README.md already exists, ask the user:
 
@@ -523,7 +679,7 @@ This project is licensed under the [{{LICENSE}}](LICENSE) license.
 {{sponsors section — adapt per {{OSS_MODEL}}}}
 ```
 
-### 6.2 `CONTRIBUTING.md`
+### 7.2 `CONTRIBUTING.md`
 
 ```markdown
 # Contributing to {{PROJECT_NAME}}
@@ -589,12 +745,12 @@ Contributors are recognized in:
 - {{additional recognition per model}}
 ```
 
-### 6.3 `CODE_OF_CONDUCT.md`
+### 7.3 `CODE_OF_CONDUCT.md`
 
 Generate the full [Contributor Covenant v2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct/) in English, filling in:
 - `[INSERT CONTACT METHOD]` with the project's email/channel
 
-### 6.4 `LICENSE`
+### 7.4 `LICENSE`
 
 If a LICENSE file already exists, ask the user:
 
@@ -607,7 +763,7 @@ Generate the full license text for `{{LICENSE}}` with:
 - `{{PROJECT_NAME}}` or `{{org}}` as copyright holder
 - If Dual: generate 2 files (LICENSE-OSS and LICENSE-COMMERCIAL) with explanatory note
 
-### 6.5 `SECURITY.md`
+### 7.5 `SECURITY.md`
 
 ```markdown
 # Security Policy
@@ -645,7 +801,7 @@ Instead, report via:
 We follow [coordinated vulnerability disclosure](https://en.wikipedia.org/wiki/Coordinated_vulnerability_disclosure).
 ```
 
-### 6.6 `.github/ISSUE_TEMPLATE/bug_report.md`
+### 7.6 `.github/ISSUE_TEMPLATE/bug_report.md`
 
 ```markdown
 ---
@@ -683,7 +839,7 @@ If applicable, add screenshots.
 Add any other context about the problem here.
 ```
 
-### 6.7 `.github/ISSUE_TEMPLATE/feature_request.md`
+### 7.7 `.github/ISSUE_TEMPLATE/feature_request.md`
 
 ```markdown
 ---
@@ -707,7 +863,7 @@ Any alternative solutions or features you've considered.
 Add any other context, mockups, or examples.
 ```
 
-### 6.8 `.github/ISSUE_TEMPLATE/config.yml`
+### 7.8 `.github/ISSUE_TEMPLATE/config.yml`
 
 ```yaml
 blank_issues_enabled: false
@@ -720,7 +876,7 @@ contact_links:
     about: Check the documentation before opening an issue
 ```
 
-### 6.9 `.github/PULL_REQUEST_TEMPLATE.md`
+### 7.9 `.github/PULL_REQUEST_TEMPLATE.md`
 
 ```markdown
 ## Description
@@ -747,7 +903,7 @@ Closes #
 ## Screenshots (if applicable)
 ```
 
-## Step 7: Review and Adjustments
+## Step 8: Review and Adjustments
 
 Present a complete summary of all changes:
 
@@ -765,6 +921,15 @@ Present a complete summary of all changes:
 > | Edit | docs/business/07-metrics-kpis.md | Adapted | Metrics → OSS Metrics |
 > | Edit | docs/business/08-marketing-strategy.md | Adapted | Marketing → Awareness |
 > | Edit | docs/business/09-operational-plan.md | Adapted | Operations → Community Ops |
+> | Edit | docs/backend/00-backend-vision.md | Section added | OSS Backend Principles |
+> | Edit | docs/backend/01-architecture.md | Section added | Contributor Architecture Guide |
+> | Edit | docs/backend/02-project-structure.md | Section added | Contributor Directory Guide |
+> | Edit | docs/backend/05-api-contracts.md | Section added | API Contribution Guidelines |
+> | Edit | docs/backend/09-errors.md | Section added | Error Handling for Contributors |
+> | Edit | docs/backend/11-permissions.md | Section added | Auth for Self-Hosted |
+> | Edit | docs/backend/12-events.md | Section added | Event System for Contributors |
+> | Edit | docs/backend/13-integrations.md | Section added | Integration Development Guide |
+> | Edit | docs/backend/14-tests.md | Section added | Testing Guide for Contributors |
 > | Edit | docs/blueprint/06-system-architecture.md | Section added | Contribution Architecture |
 > | Edit | docs/blueprint/11-build_plan.md | Section added | Public Roadmap |
 > | Edit | docs/blueprint/12-testing_strategy.md | Section added | Contributor Testing |
@@ -792,7 +957,7 @@ Present a complete summary of all changes:
 
 Wait for feedback and apply adjustments with Edit.
 
-## Step 8: Next Steps
+## Step 9: Next Steps
 
 > "Blueprint transformed for opensource! Recommended next steps:
 >

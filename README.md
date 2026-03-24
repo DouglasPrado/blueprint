@@ -111,7 +111,7 @@ Sequencia de skills:
  9. /blueprint-usecases       — Casos de uso estruturados
 10. /blueprint-states         — Maquinas de estado
 11. /blueprint-decisions      — ADRs (Architecture Decision Records)
-12. /blueprint-buildplan      — Fases, milestones, riscos
+12. /blueprint-buildplan      — Entregas, milestones, riscos
 13. /blueprint-testing        — Piramide de testes, cobertura
 14. /blueprint-security       — STRIDE, auth, OWASP checklist
 15. /blueprint-scalability    — Escala, cache, rate limiting
@@ -300,15 +300,15 @@ Apos preencher os blueprints, use os skills de codegen para gerar codigo fiel a 
 ```
 /codegen-claudemd → Gera CLAUDE.md router no projeto-alvo (uma vez)
        ↓
-/codegen-contracts → Phase 0: tipos, schema, scaffold (uma vez)
+/codegen-contracts → Setup inicial: tipos, schema, scaffold (uma vez)
        ↓
-/codegen → Apresenta fases do build plan (inicio de sessao)
+/codegen → Apresenta entregas do build plan (inicio de sessao)
        ↓
 /codegen-feature [nome] → Implementa feature vertical com TDD
        ↓                          ↑
        ↓                    (repete por feature)
        ↓
-/codegen-verify → Verifica aderencia ao blueprint (a cada fase)
+/codegen-verify → Verifica aderencia ao blueprint (periodico)
 ```
 
 ### Estrategia de Contexto (2M+ tokens de blueprints)
@@ -325,8 +325,8 @@ Os blueprints preenchidos ultrapassam 2M tokens — nao cabem no contexto de nen
 | Comando | Descricao | Quando |
 |---------|-----------|--------|
 | `/codegen-claudemd` | Gera CLAUDE.md router para o projeto-alvo | Setup (uma vez) |
-| `/codegen-contracts` | Gera tipos, schema e scaffold (Phase 0) | Setup (uma vez) |
-| `/codegen` | Apresenta fases do build plan e guia execucao | Inicio de sessao |
+| `/codegen-contracts` | Gera tipos, schema e scaffold (setup inicial) | Setup (uma vez) |
+| `/codegen` | Apresenta entregas do build plan e guia execucao | Inicio de sessao |
 | `/codegen-feature` | Implementa feature vertical (TDD: RED→GREEN→REFACTOR) | Dia-a-dia |
 | `/codegen-verify` | Verifica codigo vs blueprint (score de aderencia) | A cada 3-5 features |
 
@@ -537,9 +537,9 @@ A skill transforma o conteudo para ingles, mantendo o padrao de projetos OSS int
 
 | Comando | Descricao |
 |---------|-----------|
-| `/codegen` | Orquestrador — apresenta fases do build plan |
+| `/codegen` | Orquestrador — apresenta entregas do build plan |
 | `/codegen-claudemd` | Gera CLAUDE.md router para o projeto-alvo |
-| `/codegen-contracts` | Phase 0 — tipos, schema, scaffold |
+| `/codegen-contracts` | Setup inicial — tipos, schema, scaffold |
 | `/codegen-feature` | Implementa feature vertical (TDD/XP) |
 | `/codegen-verify` | Verifica codigo gerado vs blueprint |
 

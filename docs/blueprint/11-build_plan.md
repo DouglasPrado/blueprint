@@ -1,30 +1,32 @@
 # Plano de Construção
 
-> Como o sistema será construído incrementalmente? Defina fases, entregas e dependências.
+> Como o sistema será construído? Defina entregas, prioridades e dependências.
 
-Um bom plano de construção transforma o blueprint em ação. Ele divide o projeto em **fases incrementais**, cada uma entregando valor mensurável, e explicita **dependências**, **riscos** e **critérios de aceite** para que a equipe saiba exatamente o que construir e em que ordem.
-
----
-
-## Fases / Milestones
-
-> Comece pelo que reduz risco mais cedo. MVP primeiro, refinamentos depois.
-
-Repita a estrutura abaixo para cada fase do projeto.
+Um bom plano de construção transforma o blueprint em ação. Ele organiza o projeto em **entregas independentes**, cada uma com valor mensurável, e explicita **dependências**, **riscos** e **critérios de aceite** para que a equipe saiba exatamente o que construir.
 
 ---
 
-### Fase {{N}}: {{Nome da Fase}}
+## Entregas (Deliverables)
 
-**Objetivo:** {{Qual o propósito principal desta fase? O que ela habilita?}}
+> Comece pelo que reduz risco mais cedo. Priorize pelo valor e pelas dependências técnicas.
 
-**Entregas (Deliverables):**
-- {{Entrega 1 — funcionalidade, serviço ou artefato concreto}}
-- {{Entrega 2}}
-- {{Entrega 3}}
+Repita a estrutura abaixo para cada entrega do projeto.
+
+---
+
+### {{ID}}: {{Nome da Entrega}}
+
+**Objetivo:** {{Qual o propósito principal desta entrega? O que ela habilita?}}
+
+**Prioridade:** {{Must | Should | Could}}
+
+**Itens:**
+- {{Item 1 — funcionalidade, serviço ou artefato concreto}}
+- {{Item 2}}
+- {{Item 3}}
 
 **Dependências:**
-- {{O que precisa estar pronto antes desta fase começar? Ex.: "Fase 1 concluída", "Contrato com fornecedor assinado"}}
+- {{O que precisa estar pronto antes desta entrega? Ex.: "ENT-001 concluída", "Contrato com fornecedor assinado"}}
 
 **Critérios de Aceite:**
 - {{Condição verificável que comprova a conclusão. Ex.: "Usuário consegue criar conta e fazer login"}}
@@ -36,26 +38,26 @@ Repita a estrutura abaixo para cada fase do projeto.
 > - **S** — até 1 semana de trabalho
 > - **M** — 1 a 3 semanas
 > - **L** — 3 a 6 semanas
-> - **XL** — mais de 6 semanas (considere quebrar em fases menores)
+> - **XL** — mais de 6 semanas (considere quebrar em entregas menores)
 
 ---
 
 ## Priorização
 
-> Comece pelo que reduz risco mais cedo. MVP primeiro, refinamentos depois.
+> Comece pelo que reduz risco mais cedo. Entregas Must primeiro, depois Should e Could.
 
-Ao definir a ordem das fases, considere:
+Ao definir a ordem das entregas, considere:
 
 1. **Redução de risco** — O que pode invalidar a abordagem técnica? Construa isso primeiro.
 2. **Valor para o usuário** — Entregue funcionalidades usáveis o mais cedo possível.
 3. **Dependências técnicas** — Infraestrutura e autenticação geralmente vêm antes de funcionalidades de negócio.
-4. **Feedback** — Fases que permitem validação com usuários reais devem ser priorizadas.
+4. **Feedback** — Entregas que permitem validação com usuários reais devem ser priorizadas.
 
-| Fase | Prioridade | Justificativa |
-|------|-----------|---------------|
-| {{Fase 1}} | {{Alta / Média / Baixa}} | {{Por que esta fase está nesta posição}} |
-| {{Fase 2}} | {{Alta / Média / Baixa}} | {{Por que esta fase está nesta posição}} |
-| {{Fase 3}} | {{Alta / Média / Baixa}} | {{Por que esta fase está nesta posição}} |
+| Entrega | Prioridade | Dependências | Justificativa |
+|---------|-----------|--------------|---------------|
+| {{ENT-001}} | {{Must / Should / Could}} | {{Nenhuma / ENT-XXX}} | {{Por que esta entrega está nesta posição}} |
+| {{ENT-002}} | {{Must / Should / Could}} | {{Nenhuma / ENT-XXX}} | {{Por que esta entrega está nesta posição}} |
+| {{ENT-003}} | {{Must / Should / Could}} | {{Nenhuma / ENT-XXX}} | {{Por que esta entrega está nesta posição}} |
 
 ---
 
@@ -90,18 +92,20 @@ Ao definir a ordem das fases, considere:
 
 ## Exemplo: Plano para um MVP de E-commerce
 
-### Fase 1: Fundação
+### ENT-001: Fundação
 
 **Objetivo:** Estabelecer infraestrutura base, autenticação e CI/CD.
 
-**Entregas:**
+**Prioridade:** Must
+
+**Itens:**
 - Setup do repositório com estrutura de pastas e linting
 - Pipeline de CI/CD (build, testes, deploy em staging)
 - Sistema de autenticação (registro, login, recuperação de senha)
 - Banco de dados provisionado com migrações iniciais
 
 **Dependências:**
-- Nenhuma (fase inicial)
+- Nenhuma (entrega inicial)
 
 **Critérios de Aceite:**
 - Deploy automatizado funciona do push ao staging
@@ -111,17 +115,19 @@ Ao definir a ordem das fases, considere:
 
 ---
 
-### Fase 2: Catálogo e Carrinho
+### ENT-002: Catálogo e Carrinho
 
 **Objetivo:** Permitir que o usuário navegue por produtos e monte um carrinho de compras.
 
-**Entregas:**
+**Prioridade:** Must
+
+**Itens:**
 - CRUD de produtos (admin)
 - Listagem e busca de produtos (cliente)
 - Carrinho de compras com persistência
 
 **Dependências:**
-- Fase 1 concluída
+- ENT-001 concluída
 
 **Critérios de Aceite:**
 - Admin consegue cadastrar, editar e remover produtos
@@ -131,17 +137,19 @@ Ao definir a ordem das fases, considere:
 
 ---
 
-### Fase 3: Checkout e Pagamento
+### ENT-003: Checkout e Pagamento
 
 **Objetivo:** Fechar o ciclo de compra com integração de pagamento.
 
-**Entregas:**
+**Prioridade:** Must
+
+**Itens:**
 - Fluxo de checkout (endereço, frete, resumo)
 - Integração com gateway de pagamento
 - Notificações por e-mail (confirmação de pedido)
 
 **Dependências:**
-- Fase 2 concluída
+- ENT-002 concluída
 - Contrato com gateway de pagamento assinado
 
 **Critérios de Aceite:**
@@ -150,4 +158,4 @@ Ao definir a ordem das fases, considere:
 
 **Estimativa:** L
 
-<!-- APPEND:phases -->
+<!-- APPEND:deliverables -->

@@ -17,7 +17,7 @@ Read all available files, focusing on:
 - `00-context.md` — actors, external systems, constraints
 - `01-vision.md` — vision, problem statement, success metrics
 - `06-system-architecture.md` — stack, components, deployment
-- `11-build_plan.md` — phases, milestones, deliverables
+- `11-build_plan.md` — deliverables, milestones, priorities
 - `12-testing_strategy.md` — test pyramid, coverage
 - `13-security.md` — authentication, STRIDE, OWASP
 - `14-scalability.md` — caching, rate limiting

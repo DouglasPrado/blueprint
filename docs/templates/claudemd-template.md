@@ -116,8 +116,8 @@ Antes de iniciar qualquer tarefa, leia os docs listados abaixo conforme o tipo d
 
 | Skill | Uso | Quando |
 |-------|-----|--------|
-| `/codegen` | Apresenta fases do build plan | Inicio de sessao |
-| `/codegen-contracts` | Gera tipos, schema, scaffold | Phase 0 (uma vez) |
+| `/codegen` | Apresenta entregas do build plan | Inicio de sessao |
+| `/codegen-contracts` | Gera tipos, schema, scaffold | Setup inicial (uma vez) |
 | `/codegen-feature` | Implementa feature (TDD) | Dia-a-dia |
 | `/codegen-verify` | Verifica codigo vs blueprint | A cada 3-5 features |
 | `/codegen-claudemd` | Gera/atualiza este arquivo | Setup inicial |

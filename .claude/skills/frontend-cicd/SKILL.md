@@ -7,15 +7,10 @@ description: Preenche a secao de CI/CD e Convencoes (13-cicd-conventions.md) do 
 
 Preenche `docs/frontend/{client}/13-cicd-conventions.md` com base no blueprint tecnico e no contexto do projeto.
 
-## Identificacao do Cliente
+## Cliente
 
-Este skill aceita um parametro de cliente: `web`, `mobile`, ou `desktop`.
-Se o parametro nao for fornecido, pergunte:
-
-> "Para qual cliente voce esta preenchendo este documento? (web / mobile / desktop)"
-
-Caminho de saida: `docs/frontend/{client}/13-cicd-conventions.md`
-Leia tambem os documentos compartilhados em `docs/frontend/shared/` para contexto.
+Parametro: `web` | `mobile` | `desktop`. Se nao fornecido, pergunte ao usuario.
+Saida: `docs/frontend/{client}/13-cicd-conventions.md`. Leia tambem `docs/frontend/shared/`.
 
 ## Leitura de Contexto
 
@@ -35,33 +30,15 @@ A partir do blueprint tecnico, identifique o que esta disponivel para cada subse
 
 Se houver lacunas criticas que NAO podem ser inferidas do PRD, faca ate 3 perguntas pontuais ao usuario antes de gerar.
 
-> **Versões atualizadas:** Ao referenciar tecnologias específicas com versões, use o MCP context7 para consultar documentação atualizada. Primeiro chame `mcp__context7__resolve-library-id` para obter o ID da biblioteca, depois `mcp__context7__query-docs` para consultar versões e exemplos.
+> **Versoes:** Para tecnologias com versao, consulte via `mcp__context7__resolve-library-id` → `mcp__context7__query-docs`.
 
-## Contexto por Plataforma
+## Plataformas
 
-### Se web:
-- Deploy via Vercel/Netlify
-- PR preview environments automaticos
-- CDN e cache invalidation
-
-### Se mobile:
-- EAS Build para builds na nuvem
-- TestFlight (iOS) e Play Console (Android) para distribuicao
-- OTA updates via EAS Update
-- Code push para hotfixes
-
-### Se desktop:
-- electron-builder ou tauri-action para builds
-- Artefatos: DMG (macOS), NSIS (Windows), AppImage (Linux)
-- Code signing em CI (certificados Apple e Windows)
-- Notarization automatica para macOS
+Adapte o conteudo conforme o cliente: **web** (Deploy via Vercel/Netlify; PR preview environments automaticos) | **mobile** (EAS Build para builds na nuvem; TestFlight (iOS) e Play Console (Android) para distribuicao) | **desktop** (electron-builder ou tauri-action para builds; Artefatos: DMG (macOS), NSIS (Windows), AppImage (Linux))
 
 ## Geracao
 
-> **Modo de escrita:**
-> - Se o documento contem apenas `{{placeholders}}` (primeira vez): use Write para preencher tudo.
-> - Se o documento ja tem conteudo real (reexecucao): use **Edit** para atualizar APENAS o que mudou. Preserve conteudo existente. Insira novo conteudo antes dos marcadores `<!-- APPEND:... -->`.
-> - Para adicionar uma feature especifica sem reescrever, prefira `/frontend-increment`.
+> **Escrita:** Primeira vez (so placeholders) → Write. Reexecucao (conteudo real) → Edit (preservar existente, inserir antes de `<!-- APPEND:... -->`). Feature isolada → `/frontend-increment`.
 
 Preencha `docs/frontend/{client}/13-cicd-conventions.md` substituindo TODOS os `{{placeholders}}`. Mantenha a estrutura. Use:
 - Informacoes do blueprint tecnico (fonte primaria)

@@ -1,6 +1,6 @@
 ---
 name: blueprint-vision
-description: Use when filling the vision section (01-vision.md) of the software blueprint. Defines the problem, elevator pitch, objectives, users, value generated, and success metrics from the PRD.
+description: Preenche 01-vision.md — problema, objetivos, usuarios e metricas de sucesso.
 ---
 
 # Blueprint — Visao do Sistema
@@ -28,10 +28,7 @@ Se o PRD nao tiver metricas de sucesso claras ou nao-objetivos definidos, pergun
 
 ## Geracao
 
-> **Modo de escrita:**
-> - Se o documento contem apenas `{{placeholders}}` (primeira vez): use Write para preencher tudo.
-> - Se o documento ja tem conteudo real (reexecucao): use **Edit** para atualizar APENAS o que mudou. Preserve conteudo existente. Insira novo conteudo antes dos marcadores `<!-- APPEND:... -->`.
-> - Para adicionar uma feature especifica sem reescrever, prefira `/blueprint-increment`.
+> **Escrita:** Primeira vez (so placeholders) → Write. Reexecucao (conteudo real) → Edit (preservar existente, inserir antes de `<!-- APPEND:... -->`). Feature isolada → `/blueprint-increment`.
 
 Preencha `docs/blueprint/01-vision.md` substituindo TODOS os `{{placeholders}}`. Mantenha a estrutura do template. O Elevator Pitch deve seguir o formato: "Para [publico] que [necessidade], o [sistema] e um [categoria] que [beneficio]. Diferente de [alternativa], nosso sistema [diferencial]."
 

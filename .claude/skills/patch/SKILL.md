@@ -1,6 +1,6 @@
 ---
 name: patch
-description: Aplica uma alteracao em cascata por todos os documentos dos 3 blueprints (tecnico, frontend, business). Busca todas as ocorrencias e aplica patches com Edit.
+description: Aplica alteracao em cascata nos 3 blueprints (tecnico, frontend, business).
 ---
 
 # Patch — Edicao Propagada em Todos os Blueprints

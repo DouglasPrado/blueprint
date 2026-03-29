@@ -1,6 +1,6 @@
 ---
 name: blueprint-context
-description: Use when filling the system context section (00-context.md) of the software blueprint. Defines actors, external systems, system boundaries, and constraints from the PRD.
+description: Preenche 00-context.md — atores, sistemas externos, limites e restricoes.
 ---
 
 # Blueprint — Contexto do Sistema
@@ -21,14 +21,11 @@ A partir do PRD, identifique o que esta disponivel e o que falta para cada subse
 - **Limites do Sistema**: O que esta dentro e fora do escopo?
 - **Restricoes e Premissas**: Restricoes tecnicas, de negocio ou regulatorias?
 
-Se houver lacunas criticas que NAO podem ser inferidas do PRD, faca ate 3 perguntas pontuais ao usuario antes de gerar. Priorize perguntas sobre limites do sistema e integracoes — estas sao as mais dificeis de inferir.
+Lacunas criticas nao inferiveis → ate 3 perguntas ao usuario (priorize limites e integracoes).
 
 ## Geracao
 
-> **Modo de escrita:**
-> - Se o documento contem apenas `{{placeholders}}` (primeira vez): use Write para preencher tudo.
-> - Se o documento ja tem conteudo real (reexecucao): use **Edit** para atualizar APENAS o que mudou. Preserve conteudo existente. Insira novo conteudo antes dos marcadores `<!-- APPEND:... -->`.
-> - Para adicionar uma feature especifica sem reescrever, prefira `/blueprint-increment`.
+> **Escrita:** Primeira vez (so placeholders) → Write. Reexecucao (conteudo real) → Edit (preservar existente, inserir antes de `<!-- APPEND:... -->`). Feature isolada → `/blueprint-increment`.
 
 Preencha `docs/blueprint/00-context.md` substituindo TODOS os `{{placeholders}}` por informacoes reais. Mantenha a estrutura e formatacao do template original. Use:
 

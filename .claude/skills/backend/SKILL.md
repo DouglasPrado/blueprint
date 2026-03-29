@@ -1,6 +1,6 @@
 ---
 name: backend
-description: Le o blueprint tecnico preenchido (docs/blueprint/) e gera a especificacao de implementacao do backend em 15 templates (docs/backend/) — classes, funcoes, camadas, contratos de API, servicos, repositorios, middlewares, eventos e erros.
+description: Gera spec de implementacao do backend (docs/backend/) a partir do blueprint tecnico.
 ---
 
 # Backend — Especificacao de Implementacao
@@ -102,72 +102,26 @@ Apresente a tabela de cobertura:
 
 ## Passo 3: Questionario de Implementacao
 
-Pergunte APENAS o que o blueprint NAO responde. Agrupe por tema. Pre-preencha com `(do blueprint: ...)` tudo que ja esta documentado.
+Pergunte APENAS o que o blueprint NAO responde. Pre-preencha com `(do blueprint: ...)`.
 
----
+| # | Tema | Pergunta | Fonte Blueprint |
+|---|------|----------|----------------|
+| 1 | Stack | Linguagem e framework? (Node+Fastify, Python+FastAPI, Go+Gin, Java+Spring) | 10-decisions |
+| 2 | Stack | ORM? (Prisma, Drizzle, TypeORM, SQLAlchemy, raw) | 05-data |
+| 3 | Stack | Deploy e CI/CD? (Docker+K8s, ECS, serverless, PaaS) | 06-architecture |
+| 4 | API | Confirme endpoints derivados dos use cases | 08-use_cases |
+| 5 | API | Campos de request/response derivados das entidades | 04-domain-model |
+| 6 | API | Versionamento? (URL /v1/, header, sem) | — |
+| 7 | Auth | Provedor de auth? (Auth0, Cognito, Keycloak, Supabase, proprio) | 13-security |
+| 8 | Auth | Confirme matriz RBAC derivada dos use cases | 08-use_cases + 13-security |
+| 9 | Async | Message broker? (BullMQ, RabbitMQ, Kafka, SQS) | 06-architecture |
+| 10 | Async | Confirme workers derivados dos fluxos async | 07-flows + 17-communication |
+| 11 | Async | Provedores externos? (email, SMS, WhatsApp, pagamento) | 17-communication |
+| 12 | Quality | Ferramentas de teste? (Jest, Vitest, Testcontainers, k6) | 12-testing |
+| 13 | Quality | Stack de observabilidade? (Datadog, Grafana, ELK, OpenTelemetry) | 15-observability |
+| 14 | Quality | Estrategia de cache? (Redis, in-memory, CDN) | 14-scalability |
 
-### Grupo 1: Stack Tecnica
-> O blueprint define principios e restricoes, mas raramente especifica framework e ORM.
-
-| # | Pergunta | Pre-preenchido do Blueprint |
-|---|----------|-----------------------------|
-| 1 | **Qual linguagem e framework?** Node.js+Fastify, Python+FastAPI, Go+Gin, Java+Spring? | (do blueprint 10-decisions: ...) ou PENDENTE |
-| 2 | **Qual ORM ou query builder?** Prisma, Drizzle, TypeORM, SQLAlchemy, raw? | (do blueprint 05-data: ...) ou PENDENTE |
-| 3 | **Qual estrategia de deploy e CI/CD?** Docker+K8s, ECS, serverless, PaaS? Pipeline? | (do blueprint 06-architecture: ...) ou PENDENTE |
-
-> Aguarde resposta.
-
----
-
-### Grupo 2: Detalhes de API
-> O blueprint tem requisitos e use cases, mas nao endpoints especificos.
-
-| # | Pergunta | Pre-preenchido do Blueprint |
-|---|----------|-----------------------------|
-| 4 | **Confirme os endpoints derivados dos use cases.** Vou apresentar o mapa de endpoints que inferi — confirme ou ajuste. | (derivado de 08-use_cases) |
-| 5 | **Quais campos cada request/response tem?** Posso derivar dos atributos das entidades — confirme ou ajuste. | (derivado de 04-domain-model) |
-| 6 | **Versionamento de API?** URL path (/v1/), header, ou sem? | PENDENTE |
-
-> Aguarde resposta.
-
----
-
-### Grupo 3: Detalhes de Autenticacao e Permissoes
-> O blueprint 13-security define STRIDE e metodo de auth, mas falta RBAC detalhado.
-
-| # | Pergunta | Pre-preenchido do Blueprint |
-|---|----------|-----------------------------|
-| 7 | **Qual provedor de autenticacao?** Auth0, Cognito, Keycloak, Supabase, proprio? | (do blueprint 13-security: ...) ou PENDENTE |
-| 8 | **Confirme a matriz de permissoes por role.** Vou derivar dos use cases — confirme ou ajuste. | (derivado de 08-use_cases + 13-security) |
-
-> Aguarde resposta.
-
----
-
-### Grupo 4: Detalhes de Workers e Integracoes
-> O blueprint 07-flows e 17-communication indicam fluxos async e canais, mas falta config de filas.
-
-| # | Pergunta | Pre-preenchido do Blueprint |
-|---|----------|-----------------------------|
-| 9 | **Qual message broker?** BullMQ, RabbitMQ, Kafka, SQS? | (do blueprint 06-architecture: ...) ou PENDENTE |
-| 10 | **Confirme os workers derivados dos fluxos async.** | (derivado de 07-flows + 17-communication) |
-| 11 | **Quais provedores de servicos externos?** Email, SMS, WhatsApp, pagamento — qual provedor? | (do blueprint 17-communication: ...) ou PENDENTE |
-
-> Aguarde resposta.
-
----
-
-### Grupo 5: Ferramentas de Teste e Observabilidade
-
-| # | Pergunta | Pre-preenchido do Blueprint |
-|---|----------|-----------------------------|
-| 12 | **Quais ferramentas de teste?** Jest, Vitest, Testcontainers, k6? | (do blueprint 12-testing: ...) ou PENDENTE |
-| 13 | **Qual stack de observabilidade?** Datadog, Grafana, ELK, OpenTelemetry? | (do blueprint 15-observability: ...) ou PENDENTE |
-| 14 | **Qual estrategia de cache?** Redis, in-memory, CDN? O que cachear? | (do blueprint 14-scalability: ...) ou PENDENTE |
-
-> Aguarde resposta.
-
----
+Pergunte em grupos tematicos, aguardando resposta entre cada grupo.
 
 ## Passo 4: Confirmar e Salvar
 

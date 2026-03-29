@@ -1,6 +1,6 @@
 ---
 name: specs
-description: Gera documento integral de specs detalhadas de todas as tarefas de implementacao a partir dos docs do backend, frontend e blueprint. Use quando os 3 blueprints estiverem preenchidos e precisar de um backlog completo de tarefas.
+description: Gera specs de todas as tarefas de implementacao a partir dos 3 blueprints.
 ---
 
 # Specs — Geracao Integral de Tarefas de Implementacao

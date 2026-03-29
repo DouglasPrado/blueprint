@@ -1,6 +1,6 @@
 ---
 name: codegen
-description: Orquestrador mestre de code generation. Le o build plan preenchido, apresenta as entregas ao dev, e guia a execucao na ordem correta. Ponto de entrada para o workflow de geracao de codigo.
+description: Orquestrador de codegen. Le build plan e guia execucao na ordem correta.
 ---
 
 # Codegen — Orquestrador Mestre
@@ -102,32 +102,6 @@ Quando todas as entregas Must estiverem concluidas:
 >
 > Deseja continuar com as entregas Should?"
 
-## Workflow Completo
+## Workflow
 
-```
-/codegen-claudemd → Gera CLAUDE.md (uma vez)
-       ↓
-/codegen-contracts → Scaffold inicial: tipos + setup (uma vez)
-       ↓
-/codegen → Apresenta entregas (inicio de sessao)
-       ↓
-/codegen-feature [nome] → Implementa feature (TDD)
-       ↓                          ↑
-       ↓                    (repete por feature)
-       ↓
-/codegen-verify → Verifica aderencia (periodico)
-```
-
-## Hierarquia de Documentacao
-
-```
-docs/blueprint/     ← Fonte primaria (O QUE construir)
-docs/backend/       ← Spec de implementacao server (COMO construir backend)
-docs/frontend/      ← Spec de implementacao client (COMO construir frontend)
-  ├── shared/       ← Design system, data layer, API deps
-  ├── web/          ← Cliente web
-  ├── mobile/       ← Cliente mobile
-  └── desktop/      ← Cliente desktop
-docs/shared/        ← Conectores cross-suite (glossario, mappings)
-docs/business/      ← Modelo de negocio
-```
+`/codegen-claudemd` (1x) → `/codegen-contracts` (1x) → `/codegen` (inicio sessao) → `/codegen-feature [nome]` (por feature) → `/codegen-verify` (periodico)

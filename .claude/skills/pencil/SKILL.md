@@ -1,6 +1,6 @@
 ---
 name: pencil
-description: Cria paginas visuais no Pencil (pencil.dev) a partir do frontend blueprint — design system com variables nativas, componentes reutilizaveis com slots, e composicao de paginas com instancias.
+description: Cria design visual no Pencil (pencil.dev) a partir do frontend blueprint.
 ---
 
 # Pencil — Design Visual a partir do Blueprint

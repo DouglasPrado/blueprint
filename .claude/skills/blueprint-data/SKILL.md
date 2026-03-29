@@ -1,6 +1,6 @@
 ---
 name: blueprint-data
-description: Use when filling the data model section (05-data-model.md) of the software blueprint. Defines database choices, table schemas, migration strategy, indexes, and critical queries.
+description: Preenche 05-data-model.md — banco, schemas, migrations, indices e queries.
 ---
 
 # Blueprint — Modelo de Dados
@@ -31,10 +31,7 @@ Se o PRD nao especificar a tecnologia de banco ou volumes esperados, pergunte ao
 
 ## Geracao
 
-> **Modo de escrita:**
-> - Se o documento contem apenas `{{placeholders}}` (primeira vez): use Write para preencher tudo.
-> - Se o documento ja tem conteudo real (reexecucao): use **Edit** para atualizar APENAS o que mudou. Preserve conteudo existente. Insira novo conteudo antes dos marcadores `<!-- APPEND:... -->`.
-> - Para adicionar uma feature especifica sem reescrever, prefira `/blueprint-increment`.
+> **Escrita:** Primeira vez (so placeholders) → Write. Reexecucao (conteudo real) → Edit (preservar existente, inserir antes de `<!-- APPEND:... -->`). Feature isolada → `/blueprint-increment`.
 
 Preencha `docs/blueprint/05-data-model.md`:
 

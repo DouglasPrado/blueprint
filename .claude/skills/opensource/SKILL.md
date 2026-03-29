@@ -1,6 +1,6 @@
 ---
 name: opensource
-description: Transforms a proprietary blueprint into an opensource project. Adapts all 4 blueprints (technical, backend, frontend, business) in-place and generates root files (README, CONTRIBUTING, LICENSE, etc.) based on the user's chosen OSS model.
+description: Transforma blueprint proprietario em projeto opensource. Adapta os 4 blueprints.
 ---
 
 # Opensource — Transform Blueprint into an Opensource Project

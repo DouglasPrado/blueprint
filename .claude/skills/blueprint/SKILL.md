@@ -1,6 +1,6 @@
 ---
 name: blueprint
-description: Use when starting a new software blueprint documentation project from a PRD. Receives the PRD, saves it, analyzes coverage gaps, and guides the user through the step-by-step documentation process.
+description: Inicia blueprint tecnico a partir de um PRD. Analisa lacunas e guia o preenchimento.
 ---
 
 # Blueprint — Orquestrador de Documentacao

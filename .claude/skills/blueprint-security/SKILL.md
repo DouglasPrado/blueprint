@@ -1,6 +1,6 @@
 ---
 name: blueprint-security
-description: Use when filling the security section (13-security.md) of the software blueprint. Defines threat model (STRIDE), authentication, authorization, data protection, OWASP checklist, and compliance.
+description: Preenche 13-security.md — STRIDE, autenticacao, autorizacao e OWASP.
 ---
 
 # Blueprint — Seguranca
@@ -29,10 +29,7 @@ Se o PRD nao especificar metodo de autenticacao ou regulamentacoes aplicaveis, p
 
 ## Geracao
 
-> **Modo de escrita:**
-> - Se o documento contem apenas `{{placeholders}}` (primeira vez): use Write para preencher tudo.
-> - Se o documento ja tem conteudo real (reexecucao): use **Edit** para atualizar APENAS o que mudou. Preserve conteudo existente. Insira novo conteudo antes dos marcadores `<!-- APPEND:... -->`.
-> - Para adicionar uma feature especifica sem reescrever, prefira `/blueprint-increment`.
+> **Escrita:** Primeira vez (so placeholders) → Write. Reexecucao (conteudo real) → Edit (preservar existente, inserir antes de `<!-- APPEND:... -->`). Feature isolada → `/blueprint-increment`.
 
 Preencha `docs/blueprint/13-security.md`:
 

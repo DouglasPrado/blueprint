@@ -1,6 +1,6 @@
 ---
 name: paper
-description: Cria paginas visuais no Paper (paper.design) a partir do frontend blueprint — design system com tokens e componentes, depois composicao de paginas.
+description: Cria design visual no Paper (paper.design) a partir do frontend blueprint.
 ---
 
 # Paper — Design Visual a partir do Blueprint

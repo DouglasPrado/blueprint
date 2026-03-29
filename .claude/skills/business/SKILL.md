@@ -1,6 +1,6 @@
 ---
 name: business
-description: Use when starting a new business blueprint documentation project. Reads the technical blueprint (docs/blueprint/), analyzes business coverage gaps, and guides the user through the step-by-step business documentation process.
+description: Inicia business blueprint a partir do blueprint tecnico. Guia o preenchimento.
 ---
 
 # Business Blueprint — Orquestrador de Documentacao de Negocios

@@ -1,6 +1,6 @@
 ---
 name: codegen-contracts
-description: Setup inicial do codegen. Gera o shared kernel do projeto — tipos TypeScript compartilhados, schema do banco, scaffold de diretorios e configuracoes base. Roda UMA VEZ no inicio do projeto.
+description: Setup inicial: gera tipos compartilhados, schema e scaffold do projeto (roda 1x).
 ---
 
 # Codegen — Contratos Compartilhados (Setup Inicial)
@@ -48,7 +48,7 @@ Leia os seguintes documentos **completos**:
 ### Dos Docs Compartilhados:
 13. `docs/shared/glossary.md` — linguagem ubiqua e convencoes de nomenclatura
 
-> **Versões atualizadas:** Ao referenciar tecnologias específicas com versões, use o MCP context7 para consultar documentação atualizada. Primeiro chame `mcp__context7__resolve-library-id` para obter o ID da biblioteca, depois `mcp__context7__query-docs` para consultar versões e exemplos.
+> **Versoes:** Para tecnologias com versao, consulte via `mcp__context7__resolve-library-id` → `mcp__context7__query-docs`.
 
 Se algum doc tiver mais de 50k tokens, use Context Excerpting:
 - Grep pelos headers para ver a estrutura

@@ -23,9 +23,9 @@ A partir do blueprint tecnico, identifique o que esta disponivel para cada subse
 - **Ferramentas**: Quais ferramentas de design e documentacao sao utilizadas (Figma, Storybook, etc.)?
 - **Catalogo de Componentes Base**: Quais componentes primitivos compõem a base do design system (Button, Input, Typography, etc.)?
 
-Se houver lacunas criticas que NAO podem ser inferidas do blueprint tecnico, faca ate 3 perguntas pontuais ao usuario antes de gerar.
+Lacunas criticas nao inferiveis → ate 3 perguntas ao usuario.
 
-> **Versões atualizadas:** Ao referenciar tecnologias específicas com versões, use o MCP context7 para consultar documentação atualizada. Primeiro chame `mcp__context7__resolve-library-id` para obter o ID da biblioteca, depois `mcp__context7__query-docs` para consultar versões e exemplos.
+> **Versoes:** Para tecnologias com versao, consulte via `mcp__context7__resolve-library-id` → `mcp__context7__query-docs`.
 
 ---
 
@@ -217,10 +217,7 @@ Regras:
 
 ## Geracao
 
-> **Modo de escrita:**
-> - Se o documento contem apenas `{{placeholders}}` (primeira vez): use Write para preencher tudo.
-> - Se o documento ja tem conteudo real (reexecucao): use **Edit** para atualizar APENAS o que mudou. Preserve conteudo existente. Insira novo conteudo antes dos marcadores `<!-- APPEND:... -->`.
-> - Para adicionar uma feature especifica sem reescrever, prefira `/frontend-increment`.
+> **Escrita:** Primeira vez (so placeholders) → Write. Reexecucao (conteudo real) → Edit (preservar existente, inserir antes de `<!-- APPEND:... -->`). Feature isolada → `/frontend-increment`.
 
 Preencha `docs/frontend/shared/03-design-system.md` substituindo TODOS os `{{placeholders}}`. Mantenha a estrutura. Use:
 - Informacoes explicitas do blueprint tecnico

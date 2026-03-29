@@ -1,6 +1,6 @@
 ---
 name: blueprint-communication
-description: Use when filling the communication section (17-communication.md) of the software blueprint. Defines email templates (transactional and marketing), SMS and WhatsApp templates (when applicable), variables, triggers, rate limits, and writing conventions per channel.
+description: Preenche 17-communication.md — templates de email, SMS, WhatsApp e convencoes.
 ---
 
 # Blueprint — Comunicação
@@ -34,7 +34,7 @@ Se houver lacunas críticas que NÃO podem ser inferidas do PRD, faça até 3 pe
 2. Se não há informação sobre provedores (SendGrid, Twilio, etc.), pergunte qual stack de envio
 3. Se não há fluxo de onboarding detalhado, pergunte sobre emails de lifecycle
 
-> **Versões atualizadas:** Ao referenciar tecnologias específicas com versões, use o MCP context7 para consultar documentação atualizada. Primeiro chame `mcp__context7__resolve-library-id` para obter o ID da biblioteca, depois `mcp__context7__query-docs` para consultar versões e exemplos.
+> **Versoes:** Para tecnologias com versao, consulte via `mcp__context7__resolve-library-id` → `mcp__context7__query-docs`.
 
 ## Geração
 

@@ -1,6 +1,6 @@
 ---
 name: codegen-claudemd
-description: Gera o CLAUDE.md router para o projeto-alvo a partir dos blueprints preenchidos. Analisa a estrutura dos docs e cria um mapa de contexto que guia o Claude Code durante a geracao de codigo.
+description: Gera CLAUDE.md router no projeto-alvo a partir dos blueprints preenchidos.
 ---
 
 # Codegen — Gerar CLAUDE.md Router
@@ -69,127 +69,33 @@ Use o template em `docs/templates/claudemd-template.md` como base (se existir). 
 
 ## Fonte de Verdade
 
-Todo codigo DEVE implementar fielmente o que esta documentado nos blueprints e docs de implementacao.
+Todo codigo DEVE implementar fielmente o que esta documentado nos blueprints.
 
-**Hierarquia de documentacao:**
-- `docs/blueprint/` — O QUE construir (fonte primaria)
-- `docs/backend/` — COMO construir o backend (spec de implementacao)
-- `docs/frontend/` — COMO construir o frontend (spec de implementacao)
-  - `shared/` — Design system, data layer, API deps (compartilhado entre clientes)
-  - `web/` — Cliente web
-  - `mobile/` — Cliente mobile
-  - `desktop/` — Cliente desktop
-- `docs/shared/` — Conectores cross-suite (glossario, mappings)
-- `docs/business/` — Modelo de negocio
+**Docs:** `docs/blueprint/` (O QUE) → `docs/backend/` (COMO backend) → `docs/frontend/` (COMO frontend, com `shared/` + per-client) → `docs/shared/` (glossario, mappings) → `docs/business/` (modelo de negocio)
 
-**Regras inviolaveis:**
-- NUNCA gere codigo sem antes ler os docs relevantes para a tarefa
-- Use a linguagem ubiqua do dominio (`docs/shared/glossary.md`)
-- Sempre leia `src/contracts/` antes de implementar qualquer feature
-- Test-first: escreva testes ANTES da implementacao (XP)
-- Consulte `docs/shared/MAPPING.md` para rastreabilidade entre docs
+**Regras:** (1) Leia docs relevantes antes de codar. (2) Use linguagem ubiqua de `docs/shared/glossary.md`. (3) Leia `src/contracts/` antes de implementar. (4) Test-first (RED→GREEN→REFACTOR). (5) Use `docs/shared/MAPPING.md` para rastreabilidade.
 
-## Stack Tecnologica
+## Stack
 
-{{Extraido de backend/00-backend-vision.md e blueprint/06-system-architecture.md}}
+{{Tabela compacta extraida de backend/00-backend-vision.md e blueprint/06-system-architecture.md}}
 
 ## Clientes Frontend
 
 {{Lista de clientes ativos com stack de cada um}}
 
-## Mapa de Contexto por Tarefa
+## Convencoes
 
-Antes de iniciar qualquer tarefa, leia os docs listados abaixo conforme o tipo de trabalho:
+- **Nomenclatura:** Entidades PascalCase, campos camelCase. Conforme `docs/shared/glossary.md`
+- **Rotas API:** {{padrao extraido da arquitetura}}
+- **Arquivos:** {{padrao extraido da estrutura}}
+- **Principios:** {{1 linha por principio, extraido de 02-architecture_principles.md}}
+- **Camadas backend:** {{regras de dependencia, extraido de backend/01-architecture.md}}
 
-### Schema / Migrations
-- `docs/blueprint/05-data-model.md`
-- `docs/backend/04-data-layer.md`
+## Antes de Codar
 
-### API / Backend
-- `docs/backend/05-api-contracts.md`
-- `docs/backend/06-services.md`
-- `docs/backend/07-controllers.md`
-- `docs/backend/09-errors.md`
-- `docs/backend/10-validation.md`
+Leia apenas o necessario para a tarefa. Use `/codegen-feature` que guia a selecao de docs por tipo de feature.
 
-### Frontend Components
-- `docs/frontend/shared/03-design-system.md`
-- `docs/frontend/{{client}}/04-components.md`
-- `docs/frontend/shared/06-data-layer.md`
-
-### Routing / Navigation
-- `docs/frontend/{{client}}/07-routes.md`
-- `docs/frontend/{{client}}/08-flows.md`
-
-### Domain / Business Rules
-- `docs/blueprint/04-domain-model.md`
-- `docs/backend/03-domain.md`
-- `docs/shared/glossary.md`
-
-### Security
-- `docs/blueprint/13-security.md`
-- `docs/backend/08-middlewares.md`
-- `docs/backend/11-permissions.md`
-- `docs/frontend/{{client}}/11-security.md`
-
-### Events / Integrations
-- `docs/backend/12-events.md`
-- `docs/backend/13-integrations.md`
-- `docs/shared/event-mapping.md`
-
-### Error Handling
-- `docs/backend/09-errors.md`
-- `docs/shared/error-ux-mapping.md`
-
-### Testing
-- `docs/backend/14-tests.md`
-- `docs/frontend/{{client}}/09-tests.md`
-- `docs/blueprint/12-testing_strategy.md`
-
-### Observabilidade
-- `docs/blueprint/15-observability.md`
-- `docs/frontend/{{client}}/12-observability.md`
-
-## Convencoes de Codigo
-
-### Nomenclatura
-- Conforme `docs/shared/glossary.md`
-- Entidades: PascalCase
-- Campos/propriedades: camelCase
-- Rotas API: {{padrao extraido da arquitetura}}
-- Arquivos: {{padrao extraido da estrutura do projeto}}
-
-### Principios Arquiteturais
-{{Extraido de 02-architecture_principles.md — resumo de 1 linha por principio}}
-
-### Camadas do Backend
-{{Extraido de backend/01-architecture.md — regras de dependencia}}
-
-### Glossario do Dominio (Linguagem Ubiqua)
-{{Tabela com os termos principais extraidos de docs/shared/glossary.md}}
-
-## Sempre Ler Antes de Codar
-
-- `src/contracts/` — tipos compartilhados e interfaces
-- `{{arquivo de schema}}` — schema do banco de dados
-- `package.json` — dependencias instaladas
-- `docs/shared/glossary.md` — linguagem ubiqua
-
-## Workflow de Desenvolvimento (XP)
-
-1. Leia os docs relevantes (blueprint + backend/frontend)
-2. Leia `src/contracts/` para tipos existentes
-3. **RED**: Escreva os testes primeiro
-4. **GREEN**: Implemente o minimo para os testes passarem
-5. **REFACTOR**: Melhore o codigo mantendo testes verdes
-6. Commit small release
-
-## Skills de Codegen Disponiveis
-
-- `/codegen` — apresenta entregas do build plan e guia a execucao
-- `/codegen-contracts` — gera tipos, schema e scaffold do projeto (setup inicial)
-- `/codegen-feature` — implementa uma feature completa (vertical slice, TDD)
-- `/codegen-verify` — verifica codigo gerado contra o blueprint
+Sempre leia: `src/contracts/` (tipos) + `{{arquivo de schema}}` (DB, se relevante)
 ```
 
 ## Passo 6: Salvar e Apresentar
@@ -197,16 +103,7 @@ Antes de iniciar qualquer tarefa, leia os docs listados abaixo conforme o tipo d
 1. Salve o arquivo em `{{projeto-alvo}}/CLAUDE.md`
 2. Apresente ao usuario um resumo do que foi gerado:
 
-> "CLAUDE.md gerado em `{{caminho}}`. O arquivo contem:
-> - Hierarquia de docs (blueprint → backend → frontend → shared)
-> - Mapa de contexto com **{{N}} categorias** de tarefa
-> - Stack: {{resumo da stack}}
-> - Clientes frontend: {{lista}}
-> - **{{N}} termos** do glossario do dominio
-> - **{{N}} principios** arquiteturais
-> - Workflow XP com TDD
->
-> Revise o arquivo e ajuste conforme necessario."
+> "CLAUDE.md gerado em `{{caminho}}`. Contem: hierarquia de docs, stack, clientes frontend, convencoes e principios. Revise e ajuste."
 
 ## Passo 7: Proximo Passo
 

@@ -1,6 +1,6 @@
 ---
 name: frontend
-description: Use when starting a new frontend blueprint documentation project a partir do blueprint tecnico (docs/blueprint/). Reads the technical blueprint, analyzes frontend coverage gaps, and guides the user through the step-by-step frontend documentation process. Supports multiple clients (web, mobile, desktop) in monorepo structure.
+description: Gera frontend blueprint a partir do blueprint tecnico. Multi-client (web/mobile/desktop).
 ---
 
 # Frontend Blueprint — Orquestrador de Documentacao de Frontend

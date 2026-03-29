@@ -7,15 +7,10 @@ description: Preenche a secao de Estrategia de Testes (09-tests.md) do frontend 
 
 Preenche `docs/frontend/{client}/09-tests.md` com base no blueprint tecnico e no contexto do projeto.
 
-## Identificacao do Cliente
+## Cliente
 
-Este skill aceita um parametro de cliente: `web`, `mobile`, ou `desktop`.
-Se o parametro nao for fornecido, pergunte:
-
-> "Para qual cliente voce esta preenchendo este documento? (web / mobile / desktop)"
-
-Caminho de saida: `docs/frontend/{client}/09-tests.md`
-Leia tambem os documentos compartilhados em `docs/frontend/shared/` para contexto.
+Parametro: `web` | `mobile` | `desktop`. Se nao fornecido, pergunte ao usuario.
+Saida: `docs/frontend/{client}/09-tests.md`. Leia tambem `docs/frontend/shared/`.
 
 ## Leitura de Contexto
 
@@ -33,33 +28,17 @@ A partir do blueprint tecnico, identifique o que esta disponivel para cada subse
 - **Cobertura e Metas**: Quais metas de cobertura sao adequadas e quais areas criticas exigem cobertura obrigatoria?
 - **Integracao com CI**: Como os testes se integram ao pipeline de CI/CD e quais gates de qualidade existem?
 
-Se houver lacunas criticas que NAO podem ser inferidas do blueprint tecnico, faca ate 3 perguntas pontuais ao usuario antes de gerar.
+Lacunas criticas nao inferiveis → ate 3 perguntas ao usuario.
 
-> **Versões atualizadas:** Ao referenciar tecnologias específicas com versões, use o MCP context7 para consultar documentação atualizada. Primeiro chame `mcp__context7__resolve-library-id` para obter o ID da biblioteca, depois `mcp__context7__query-docs` para consultar versões e exemplos.
+> **Versoes:** Para tecnologias com versao, consulte via `mcp__context7__resolve-library-id` → `mcp__context7__query-docs`.
 
-## Contexto por Plataforma
+## Plataformas
 
-### Se web:
-- Playwright para testes E2E
-- Testing Library para testes de componentes
-- Jest/Vitest para testes unitarios
-
-### Se mobile:
-- Detox ou Maestro para testes E2E
-- React Native Testing Library para testes de componentes
-- Testes de integracao com APIs nativas
-
-### Se desktop:
-- Playwright + Electron para testes E2E
-- Testes de IPC handlers (main <-> renderer)
-- Testes de integracao com APIs do sistema operacional
+Adapte o conteudo conforme o cliente: **web** (Playwright para testes E2E; Testing Library para testes de componentes) | **mobile** (Detox ou Maestro para testes E2E; React Native Testing Library para testes de componentes) | **desktop** (Playwright + Electron para testes E2E; Testes de IPC handlers (main <-> renderer))
 
 ## Geracao
 
-> **Modo de escrita:**
-> - Se o documento contem apenas `{{placeholders}}` (primeira vez): use Write para preencher tudo.
-> - Se o documento ja tem conteudo real (reexecucao): use **Edit** para atualizar APENAS o que mudou. Preserve conteudo existente. Insira novo conteudo antes dos marcadores `<!-- APPEND:... -->`.
-> - Para adicionar uma feature especifica sem reescrever, prefira `/frontend-increment`.
+> **Escrita:** Primeira vez (so placeholders) → Write. Reexecucao (conteudo real) → Edit (preservar existente, inserir antes de `<!-- APPEND:... -->`). Feature isolada → `/frontend-increment`.
 
 Preencha `docs/frontend/{client}/09-tests.md` substituindo TODOS os `{{placeholders}}`. Mantenha a estrutura. Use:
 - Informacoes explicitas do blueprint tecnico

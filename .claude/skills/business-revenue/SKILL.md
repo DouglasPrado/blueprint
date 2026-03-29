@@ -26,14 +26,11 @@ A partir do blueprint tecnico, identifique o que esta disponivel para cada subse
 - **Projecoes de Receita**: existem metas de receita em 5 checkpoints (Mes 1, 3, 6, 9, 12)?
 - **Premissas Financeiras**: quais premissas sustentam as projecoes (formato simplificado: premissa, valor assumido, risco)?
 
-Se houver lacunas criticas que NAO podem ser inferidas do blueprint tecnico, faca ate 3 perguntas pontuais ao usuario antes de gerar.
+Lacunas criticas nao inferiveis → ate 3 perguntas ao usuario.
 
 ## Geracao
 
-> **Modo de escrita:**
-> - Se o documento contem apenas `{{placeholders}}` (primeira vez): use Write para preencher tudo.
-> - Se o documento ja tem conteudo real (reexecucao): use **Edit** para atualizar APENAS o que mudou. Preserve conteudo existente. Insira novo conteudo antes dos marcadores `<!-- APPEND:... -->`.
-> - Para adicionar uma feature especifica sem reescrever, prefira `/business-increment`.
+> **Escrita:** Primeira vez (so placeholders) → Write. Reexecucao (conteudo real) → Edit (preservar existente, inserir antes de `<!-- APPEND:... -->`). Feature isolada → `/business-increment`.
 
 Preencha `docs/business/05-revenue-model.md` substituindo TODOS os `{{placeholders}}`. Mantenha a estrutura. Use:
 - Informacoes explicitas do blueprint tecnico

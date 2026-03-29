@@ -1,6 +1,6 @@
 ---
 name: blueprint-requirements
-description: Use when filling the requirements section (03-requirements.md) of the software blueprint. Defines functional and non-functional requirements with MoSCoW prioritization and traceability.
+description: Preenche 03-requirements.md — requisitos funcionais e nao-funcionais (MoSCoW).
 ---
 
 # Blueprint — Requisitos
@@ -25,10 +25,7 @@ Se o PRD nao tiver SLAs ou metas de performance claras, pergunte ao usuario (max
 
 ## Geracao
 
-> **Modo de escrita:**
-> - Se o documento contem apenas `{{placeholders}}` (primeira vez): use Write para preencher tudo.
-> - Se o documento ja tem conteudo real (reexecucao): use **Edit** para atualizar APENAS o que mudou. Preserve conteudo existente. Insira novo conteudo antes dos marcadores `<!-- APPEND:... -->`.
-> - Para adicionar uma feature especifica sem reescrever, prefira `/blueprint-increment`.
+> **Escrita:** Primeira vez (so placeholders) → Write. Reexecucao (conteudo real) → Edit (preservar existente, inserir antes de `<!-- APPEND:... -->`). Feature isolada → `/blueprint-increment`.
 
 Preencha `docs/blueprint/03-requirements.md`:
 

@@ -7,15 +7,10 @@ description: Preenche a secao de Copies (14-copies.md) do frontend blueprint a p
 
 Preenche `docs/frontend/{client}/14-copies.md` com base no blueprint tecnico e no contexto das telas do projeto.
 
-## Identificacao do Cliente
+## Cliente
 
-Este skill aceita um parametro de cliente: `web`, `mobile`, ou `desktop`.
-Se o parametro nao for fornecido, pergunte:
-
-> "Para qual cliente voce esta preenchendo este documento? (web / mobile / desktop)"
-
-Caminho de saida: `docs/frontend/{client}/14-copies.md`
-Leia tambem os documentos compartilhados em `docs/frontend/shared/` para contexto.
+Parametro: `web` | `mobile` | `desktop`. Se nao fornecido, pergunte ao usuario.
+Saida: `docs/frontend/{client}/14-copies.md`. Leia tambem `docs/frontend/shared/`.
 
 ## Leitura de Contexto
 
@@ -38,24 +33,11 @@ A partir do blueprint tecnico e das rotas/fluxos, identifique o que esta disponi
 
 Se houver lacunas criticas que NAO podem ser inferidas do PRD, faca ate 3 perguntas pontuais ao usuario antes de gerar.
 
-> **Versões atualizadas:** Ao referenciar tecnologias específicas com versões, use o MCP context7 para consultar documentação atualizada. Primeiro chame `mcp__context7__resolve-library-id` para obter o ID da biblioteca, depois `mcp__context7__query-docs` para consultar versões e exemplos.
+> **Versoes:** Para tecnologias com versao, consulte via `mcp__context7__resolve-library-id` → `mcp__context7__query-docs`.
 
-## Contexto por Plataforma
+## Plataformas
 
-### Se web:
-- Bibliotecas de i18n: i18next, next-intl, react-intl
-- SEO copies: meta titles, descriptions, OpenGraph
-- Acessibilidade: aria-labels, alt texts, screen reader announcements
-
-### Se mobile:
-- Bibliotecas de i18n: expo-localization, react-native-localize
-- Copies especificos: push notifications, app store listing, onboarding
-- Adaptacao de tamanho: textos mais curtos para telas menores
-
-### Se desktop:
-- Mesmas bibliotecas web (i18next, next-intl) + copies especificos
-- Strings de menu bar, system tray, dialogs nativos do OS
-- Tooltips de acoes do sistema, mensagens de auto-update
+Adapte o conteudo conforme o cliente: **web** (Bibliotecas de i18n: i18next, next-intl, react-intl; SEO copies: meta titles, descriptions, OpenGraph) | **mobile** (Bibliotecas de i18n: expo-localization, react-native-localize; Copies especificos: push notifications, app store listing, onboarding) | **desktop** (Mesmas bibliotecas web (i18next, next-intl) + copies especificos; Strings de menu bar, system tray, dialogs nativos do OS)
 
 ## Geracao
 

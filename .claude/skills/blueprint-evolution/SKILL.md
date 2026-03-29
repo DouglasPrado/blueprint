@@ -1,6 +1,6 @@
 ---
 name: blueprint-evolution
-description: Use when filling the evolution section (16-evolution.md) of the software blueprint. Defines technical roadmap, tech debt tracking, versioning strategy, deprecation policies, and blueprint review cadence.
+description: Preenche 16-evolution.md — roadmap tecnico, tech debt, versionamento e deprecacao.
 ---
 
 # Blueprint — Evolucao e Migracao
@@ -29,10 +29,7 @@ Se o PRD nao cobrir visao de longo prazo ou estrategia de versionamento, pergunt
 
 ## Geracao
 
-> **Modo de escrita:**
-> - Se o documento contem apenas `{{placeholders}}` (primeira vez): use Write para preencher tudo.
-> - Se o documento ja tem conteudo real (reexecucao): use **Edit** para atualizar APENAS o que mudou. Preserve conteudo existente. Insira novo conteudo antes dos marcadores `<!-- APPEND:... -->`.
-> - Para adicionar uma feature especifica sem reescrever, prefira `/blueprint-increment`.
+> **Escrita:** Primeira vez (so placeholders) → Write. Reexecucao (conteudo real) → Edit (preservar existente, inserir antes de `<!-- APPEND:... -->`). Feature isolada → `/blueprint-increment`.
 
 Preencha `docs/blueprint/16-evolution.md`:
 

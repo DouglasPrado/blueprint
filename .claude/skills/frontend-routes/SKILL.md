@@ -7,15 +7,10 @@ description: Preenche a secao de Rotas (07-routes.md) do frontend blueprint a pa
 
 Preenche `docs/frontend/{client}/07-routes.md` com base no blueprint tecnico e no contexto do projeto.
 
-## Identificacao do Cliente
+## Cliente
 
-Este skill aceita um parametro de cliente: `web`, `mobile`, ou `desktop`.
-Se o parametro nao for fornecido, pergunte:
-
-> "Para qual cliente voce esta preenchendo este documento? (web / mobile / desktop)"
-
-Caminho de saida: `docs/frontend/{client}/07-routes.md`
-Leia tambem os documentos compartilhados em `docs/frontend/shared/` para contexto.
+Parametro: `web` | `mobile` | `desktop`. Se nao fornecido, pergunte ao usuario.
+Saida: `docs/frontend/{client}/07-routes.md`. Leia tambem `docs/frontend/shared/`.
 
 ## Leitura de Contexto
 
@@ -33,33 +28,17 @@ A partir do blueprint tecnico, identifique o que esta disponivel para cada subse
 - **Layouts Compartilhados**: Quais layouts sao reutilizados entre rotas e como a composicao de layouts funciona?
 - **Navegacao**: Como o usuario navega entre as paginas, quais menus e breadcrumbs existem?
 
-Se houver lacunas criticas que NAO podem ser inferidas do blueprint tecnico, faca ate 3 perguntas pontuais ao usuario antes de gerar.
+Lacunas criticas nao inferiveis → ate 3 perguntas ao usuario.
 
-> **Versões atualizadas:** Ao referenciar tecnologias específicas com versões, use o MCP context7 para consultar documentação atualizada. Primeiro chame `mcp__context7__resolve-library-id` para obter o ID da biblioteca, depois `mcp__context7__query-docs` para consultar versões e exemplos.
+> **Versoes:** Para tecnologias com versao, consulte via `mcp__context7__resolve-library-id` → `mcp__context7__query-docs`.
 
-## Contexto por Plataforma
+## Plataformas
 
-### Se web:
-- URL-based App Router, file-based routing
-- Guards via middleware
-- Suporte a layouts aninhados e rotas paralelas
-
-### Se mobile:
-- React Navigation com stacks, tabs e drawers
-- Deep linking via URL schemes e universal links
-- Navegacao gestual nativa
-
-### Se desktop:
-- Window-based navigation
-- Menu bar e system tray com context menu
-- Suporte a multiplas janelas
+Adapte o conteudo conforme o cliente: **web** (URL-based App Router, file-based routing; Guards via middleware) | **mobile** (React Navigation com stacks, tabs e drawers; Deep linking via URL schemes e universal links) | **desktop** (Window-based navigation; Menu bar e system tray com context menu)
 
 ## Geracao
 
-> **Modo de escrita:**
-> - Se o documento contem apenas `{{placeholders}}` (primeira vez): use Write para preencher tudo.
-> - Se o documento ja tem conteudo real (reexecucao): use **Edit** para atualizar APENAS o que mudou. Preserve conteudo existente. Insira novo conteudo antes dos marcadores `<!-- APPEND:... -->`.
-> - Para adicionar uma feature especifica sem reescrever, prefira `/frontend-increment`.
+> **Escrita:** Primeira vez (so placeholders) → Write. Reexecucao (conteudo real) → Edit (preservar existente, inserir antes de `<!-- APPEND:... -->`). Feature isolada → `/frontend-increment`.
 
 Preencha `docs/frontend/{client}/07-routes.md` substituindo TODOS os `{{placeholders}}`. Mantenha a estrutura. Use:
 - Informacoes explicitas do blueprint tecnico

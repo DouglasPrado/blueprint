@@ -1,6 +1,6 @@
 ---
 name: blueprint-decisions
-description: Use when filling the architecture decisions section (10-architecture_decisions.md) of the software blueprint. Creates ADRs documenting key technical choices with context, options, and consequences.
+description: Preenche 10-architecture_decisions.md — ADRs com contexto, opcoes e consequencias.
 ---
 
 # Blueprint — Decisoes Arquiteturais
@@ -30,10 +30,7 @@ Para cada decisao, voce precisa de contexto, alternativas consideradas e justifi
 
 ## Geracao
 
-> **Modo de escrita:**
-> - Se o documento contem apenas `{{placeholders}}` (primeira vez): use Write para preencher tudo.
-> - Se o documento ja tem conteudo real (reexecucao): use **Edit** para atualizar APENAS o que mudou. Preserve conteudo existente. Insira novo conteudo antes dos marcadores `<!-- APPEND:... -->`.
-> - Para adicionar uma feature especifica sem reescrever, prefira `/blueprint-increment`.
+> **Escrita:** Primeira vez (so placeholders) → Write. Reexecucao (conteudo real) → Edit (preservar existente, inserir antes de `<!-- APPEND:... -->`). Feature isolada → `/blueprint-increment`.
 
 Preencha `docs/blueprint/10-architecture_decisions.md` com a lista de ADRs. Para cada ADR, crie tambem um arquivo individual em `docs/adr/` usando o template `adr-template.md`:
 

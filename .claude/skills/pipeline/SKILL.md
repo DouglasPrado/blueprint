@@ -8,10 +8,11 @@ description: Executa o pipeline completo de documentacao automaticamente — blu
 Roda as 11+ fases de documentacao em sequencia, **sem parar para perguntar**. Cada fase executa num subagente com contexto limpo, escreve seus documentos e devolve um resumo. Ao final, consolida todas as inferencias em `docs/ASSUMPTIONS.md` para revisao.
 
 ```
-/pipeline [caminho-do-prd] [clientes]
+/pipeline [caminho-do-prd] [clientes] [projeto-alvo]
 
-/pipeline                          # usa docs/prd.md, infere os clientes
-/pipeline docs/prd.md web,mobile   # explicito
+/pipeline                                      # usa docs/prd.md, infere os clientes
+/pipeline docs/prd.md web,mobile               # explicito, para na documentacao
+/pipeline docs/prd.md web ../meu-saas/         # inclui o scaffold do codigo
 ```
 
 ## Modo autonomo — o que isso significa
@@ -30,12 +31,21 @@ Trate o resultado como um rascunho completo, nao como documentacao final. Corrij
 
 ## Passo 1: Pre-requisitos
 
-Verifique `docs/prd.md`. Se nao existir e o usuario nao passou um caminho, **pare** — esta e a unica interacao do pipeline:
+Toda validacao acontece **antes** do run comecar. Depois disso, nenhuma interrupcao.
+
+**PRD.** Verifique `docs/prd.md`. Se nao existir e o usuario nao passou um caminho, **pare**:
 
 > "O pipeline precisa do PRD. Passe o caminho (`/pipeline caminho/do/prd.md`) ou crie `docs/prd.md` primeiro.
 > Sem PRD nao ha de onde inferir — o resultado seria inteiramente inventado."
 
 Se existir, leia o PRD **completo**. E o unico documento que o orquestrador carrega — todo o resto fica nos subagentes.
+
+**Projeto-alvo.** A ultima fase (`codegen-setup`) escreve codigo fora deste repositorio e precisa saber onde. Se o usuario nao informou:
+
+> "Onde o codigo deve ser gerado? (ex: `../meu-saas/`)
+> Responda o caminho, ou `pular` para rodar so a documentacao."
+
+Resolva isso **agora**, no kickoff — nunca no meio do run. Se o usuario responder `pular`, remova a fase final do plano.
 
 ## Passo 2: Determinar os Clientes Frontend
 
@@ -90,10 +100,36 @@ Para cada fase, use a ferramenta **Agent** com `subagent_type: general-purpose` 
 | 9 | `frontend` | clientes | frontend shared/06, shared/15 |
 | 10 | `frontend-app` | `{client}` | frontend {client} 00,01,02,04,05,07,08,14 |
 | 11 | `frontend-quality` | `{client}` | frontend {client} 09,10,11,12,13 |
+| 12 | `codegen-setup` | `{projeto-alvo}` | CLAUDE.md, `src/contracts/`, schema, scaffold |
 
 As fases 10 e 11 repetem para **cada** cliente selecionado, sempre `app` antes de `quality`.
 
 > A fase 9 roda depois da 7 de proposito: `shared/15-api-dependencies.md` usa `docs/backend/05-api-contracts.md` como fonte autoritativa dos endpoints.
+
+### A fase 12 e diferente das outras
+
+`codegen-setup` escreve **codigo fora deste repositorio** e tem um portao objetivo: type check, lint e validacao de schema. As regras do modo autonomo mudam para ela:
+
+- **Nao ha suposicao a marcar** — ela deriva mecanicamente dos documentos ja preenchidos. Se um documento estava suposto, o scaffold herda a suposicao; nao duplique no `ASSUMPTIONS.md`.
+- **O portao e real.** Se type check, lint ou schema validate falhar, o subagente deve corrigir e rodar de novo. Se ainda falhar, deve **reportar a falha** — nunca declarar sucesso com o scaffold quebrado.
+- **Nao commite** no projeto-alvo. Deixe as mudancas em working tree para o usuario revisar.
+
+Acrescente ao prompt do subagente desta fase:
+
+```
+Esta fase escreve codigo em {projeto-alvo}, fora do repositorio de documentacao.
+
+- Rode type check, lint e validacao de schema ao final. Corrija o que falhar.
+- Se apos a correcao ainda houver erro, devolva-o em GAPS e NAO declare sucesso.
+- Nao faca commit no projeto-alvo.
+- ASSUMPTIONS fica vazio: esta fase deriva dos documentos, nao do PRD.
+
+Acrescente ao retorno:
+GATE:
+  typecheck: ok|falhou — {resumo}
+  lint:      ok|falhou — {resumo}
+  schema:    ok|falhou — {resumo}
+```
 
 ### Prompt de cada subagente
 
@@ -202,15 +238,17 @@ O PRD nao cobre os pontos abaixo. Considere enriquece-lo e rodar `/increment`:
 >
 > {{Se houve falhas: **Fases que falharam:** lista + o que ficou incompleto}}
 >
+> **Scaffold ({{projeto-alvo}}):** typecheck {{ok|falhou}} · lint {{ok|falhou}} · schema {{ok|falhou}}
+>
 > **{{n}} suposicoes de risco alto** precisam da sua revisao — estao no topo de
 > `docs/ASSUMPTIONS.md`. As tres mais criticas:
 > 1. {{documento}} — {{suposicao}}
 > 2. ...
 >
 > **Proximos passos:**
-> - Revise `docs/ASSUMPTIONS.md` e corrija com `/increment`
+> - Revise `docs/ASSUMPTIONS.md` e corrija com `/increment` — o scaffold herdou as suposicoes
 > - `/specs` — backlog integral de tasks
-> - `/codegen-setup` — CLAUDE.md router e scaffold"
+> - `/build` — implementar as features em loop com portoes de teste"
 
 ---
 
@@ -218,5 +256,6 @@ O PRD nao cobre os pontos abaixo. Considere enriquece-lo e rodar `/increment`:
 
 - **Qualidade depende do PRD.** PRD raso gera documentacao rasa com muitas suposicoes de risco alto. O pipeline nao inventa contexto de negocio — ele extrapola o que existe.
 - **Nao substitui as skills individuais.** Se o projeto e critico, rode fase a fase (`/blueprint-foundation`, `/blueprint-domain`, ...) e responda as perguntas. O pipeline e para primeira versao rapida e para projetos onde o PRD ja e detalhado.
-- **Nao inclui codegen.** Geracao de codigo exige validacao humana a cada feature (ciclo TDD). Rode `/codegen-setup` e `/codegen-feature` manualmente depois.
+- **Vai ate o scaffold, nao ate as features.** A fase 12 gera tipos, schema e estrutura — tudo derivavel mecanicamente dos documentos. Implementar features e outro loop, com outros portoes: `/build`.
+- **O scaffold herda as suposicoes dos documentos.** Se `05-data-model.md` supos PostgreSQL, o schema nasce em PostgreSQL. Revise `ASSUMPTIONS.md` antes de construir em cima.
 - **Custo.** Um subagente por fase multiplica o consumo de tokens em relacao a rodar tudo numa sessao — e o preco por nao estourar o contexto.

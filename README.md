@@ -2,7 +2,7 @@
 
 Framework de documentacao tecnica para projetos de software. Templates estruturados + skills do Claude Code que documentam um produto de ponta a ponta — do contexto do sistema a arquitetura de frontend — e depois geram codigo fiel a essa documentacao.
 
-**3 blueprints** | **52 documentos** | **20 skills**
+**3 blueprints** | **52 documentos** | **21 skills**
 
 ---
 
@@ -16,7 +16,7 @@ Um conjunto de templates Markdown com placeholders (`{{...}}`) e skills do Claud
 | **Backend** | Classes, servicos, API, eventos, integracoes, testes | 15 | 1 |
 | **Frontend** | Design system, componentes, estado, rotas, performance | 3 + 13/cliente | 4 |
 
-Mais 8 skills de apoio: pipeline automatico, incremento, patch global, backlog de tasks e geracao de codigo.
+Mais 9 skills de apoio: dois loops automaticos (`/pipeline` e `/build`), incremento, patch global, backlog de tasks e geracao de codigo.
 
 Cada skill gera um **grupo de documentos** numa unica passada — le o contexto uma vez e escreve tudo que deriva dele. E isso que mantem o processo curto.
 
@@ -42,13 +42,14 @@ Cada skill gera um **grupo de documentos** numa unica passada — le o contexto 
 
 ## Quick Start
 
-### Automatico — um comando
+### Automatico — dois comandos
 
 ```
-/pipeline docs/prd.md web
+/pipeline docs/prd.md web ../meu-saas/    # 52 docs + scaffold tipado
+/build                                     # implementa as features com TDD
 ```
 
-Roda as 11 fases em sequencia sem parar para perguntar, gera os 52 documentos e consolida cada inferencia em `docs/ASSUMPTIONS.md` classificada por risco. Cada fase executa num subagente com contexto limpo.
+O `/pipeline` roda as 12 fases sem parar para perguntar, gera os 52 documentos, o scaffold do codigo, e consolida cada inferencia em `docs/ASSUMPTIONS.md` classificada por risco. O `/build` implementa as features em loop, parando na primeira suite vermelha.
 
 Bom para: primeira versao rapida, PRD ja detalhado. Ruim para: projeto critico com PRD raso — sem perguntas, o que o PRD nao cobre vira suposicao. Veja [limites](#pipeline--execucao-automatica).
 
@@ -113,15 +114,18 @@ A ordem importa: cada fase le o que a anterior produziu.
 Cada fase executa num **subagente com contexto limpo** — le so o que precisa, escreve seus documentos e devolve um resumo. O orquestrador guarda apenas os resumos, nunca os documentos gerados. E isso que permite produzir 52 documentos sem estourar o contexto.
 
 ```
-[1/11] blueprint-foundation   → 00, 01, 02, 03
-[2/11] blueprint-domain       → 04, 05, 09
+[1/12] blueprint-foundation   → 00, 01, 02, 03
+[2/12] blueprint-domain       → 04, 05, 09
 ...
-[7/11] backend                → 15 docs
-[8/11] frontend-design-system → shared/03
-[9/11] frontend               → shared/06, shared/15
-[10/11] frontend-app web      → 8 docs
-[11/11] frontend-quality web  → 5 docs
+[7/12] backend                → 15 docs
+[8/12] frontend-design-system → shared/03
+[9/12] frontend               → shared/06, shared/15
+[10/12] frontend-app web      → 8 docs
+[11/12] frontend-quality web  → 5 docs
+[12/12] codegen-setup         → CLAUDE.md, src/contracts/, schema, scaffold
 ```
+
+A fase 12 e a unica com **portao objetivo**: type check, lint e validacao de schema. Se falhar apos correcao, o pipeline reporta o erro em vez de declarar sucesso. Ela escreve fora deste repositorio — informe o projeto-alvo como argumento, ou responda `pular` no kickoff.
 
 **Retomavel:** se a sessao cair no meio, rode `/pipeline` de novo — ele detecta quais documentos ja tem conteudo real e pula as fases concluidas.
 
@@ -147,7 +151,8 @@ Corrija as suposicoes com `/increment` (um blueprint) ou `/patch` (mudanca globa
 
 - **Qualidade depende do PRD** — PRD raso gera muitas suposicoes de risco alto. O pipeline extrapola o que existe; nao inventa contexto de negocio.
 - **Nao substitui as skills individuais** — para projeto critico, rode fase a fase e responda as perguntas.
-- **Nao inclui codegen** — geracao de codigo exige validacao humana a cada feature (ciclo TDD).
+- **Vai ate o scaffold, nao ate as features** — implementar features e outro loop, com outros portoes: `/build`.
+- **O scaffold herda as suposicoes** — se `05-data-model.md` supos PostgreSQL, o schema nasce em PostgreSQL. Revise `ASSUMPTIONS.md` antes de construir em cima.
 - **Custo** — um subagente por fase consome mais tokens que rodar tudo numa sessao. E o preco por nao estourar o contexto.
 
 Trate o resultado como **rascunho completo**, nao como documentacao final.
@@ -344,6 +349,33 @@ Gera codigo fiel a documentacao seguindo **Extreme Programming** (TDD, small rel
 /codegen-verify           → verifica aderencia ao blueprint               (a cada 3-5 features)
 ```
 
+Ou `/build`, que roda esse ciclo inteiro em loop — veja abaixo.
+
+### `/build` — loop de features com portoes
+
+```
+/build                      # todas as entregas Must, em ordem de dependencia
+/build ENT-001 ENT-002      # entregas especificas
+/build --max 5              # limita a 5 features nesta sessao
+```
+
+Cada feature roda num subagente e passa por dois portoes:
+
+| Portao | Frequencia | Reprova se |
+|--------|-----------|------------|
+| **Suite completa** | Toda feature | Qualquer teste vermelho, ou a contagem de testes caiu (sinal de teste apagado/pulado) |
+| **`/codegen-verify`** | A cada 3 features | Score de aderencia < 90% |
+
+Suite vermelha → 1 retry com o output real do erro → ainda vermelha → **para**. Commit por feature, para `git revert` granular.
+
+**Por que este loop para e o `/pipeline` nao:** o pipeline pula uma fase que falha, porque um documento ruim nao contamina o proximo. Aqui e o oposto — a feature 1 estabelece abstracoes que a feature 8 herda. Uma feature errada contamina todas as seguintes e voce termina com um codigo internamente consistente, todo verde, e arquiteturalmente errado.
+
+**A regra que mais protege:** e proibido apagar, pular (`skip`/`only`) ou afrouxar qualquer teste para deixar a suite verde. O portao compara a contagem de testes contra o baseline justamente para detectar isso.
+
+**Por que `/codegen-verify` e obrigatorio no loop:** teste escrito pelo mesmo agente que escreveu o codigo nao e verificacao independente. Suite verde prova consistencia interna, nao conformidade com o blueprint. O `verify` compara o codigo com os *documentos* — e a unica checagem externa.
+
+Limites: verde nao e correto (revise o diff); deriva arquitetural so aparece no verify da 3a feature — rode `/build --max 3` nas primeiras e revise antes de soltar o loop inteiro.
+
 ### Estrategia de contexto
 
 Blueprints preenchidos ultrapassam 2M tokens — nao cabem em nenhum contexto. A solucao:
@@ -359,13 +391,14 @@ Blueprints preenchidos ultrapassam 2M tokens — nao cabem em nenhum contexto. A
 
 ---
 
-## Referencia Rapida — 20 Skills
+## Referencia Rapida — 21 Skills
 
-### Automacao (1)
+### Automacao (2)
 
 | Comando | Descricao |
 |---------|-----------|
-| `/pipeline` | Roda todas as fases automaticamente (subagente por fase, zero perguntas) |
+| `/pipeline` | Documentacao completa + scaffold, automatico (subagente por fase, zero perguntas) |
+| `/build` | Implementa as features em loop com TDD e portoes de teste (para na primeira falha) |
 
 ### Blueprint Tecnico (7)
 
@@ -406,9 +439,9 @@ Blueprints preenchidos ultrapassam 2M tokens — nao cabem em nenhum contexto. A
 
 | Comando | Descricao | Quando |
 |---------|-----------|--------|
-| `/codegen-setup` | CLAUDE.md router + contratos + schema + scaffold | Setup (uma vez) |
+| `/codegen-setup` | CLAUDE.md router + contratos + schema + scaffold | Setup (uma vez, ou via `/pipeline`) |
 | `/codegen` | Apresenta entregas do build plan | Inicio de sessao |
-| `/codegen-feature` | Implementa feature vertical com TDD | Dia-a-dia |
+| `/codegen-feature` | Implementa feature vertical com TDD | Dia-a-dia (ou em loop via `/build`) |
 | `/codegen-verify` | Score de aderencia codigo vs blueprint | A cada 3-5 features |
 
 ---
@@ -432,7 +465,7 @@ blueprint/
 │   ├── diagrams/                 # diagramas Mermaid
 │   ├── templates/                # 6 templates
 │   └── adr/                      # Architecture Decision Records
-├── .claude/skills/               # 20 skills
+├── .claude/skills/               # 21 skills
 └── README.md
 ```
 
@@ -455,7 +488,8 @@ Todas seguem o mesmo contrato:
 
 - **Comece pelo PRD** — sem ele, as skills nao tem de onde extrair. Quanto mais detalhado, menos o `/pipeline` precisa supor
 - **Siga a ordem** — cada fase le o que a anterior produziu; pular quebra as dependencias
-- **Depois do `/pipeline`, leia `docs/ASSUMPTIONS.md`** antes de tratar a documentacao como definitiva
+- **Depois do `/pipeline`, leia `docs/ASSUMPTIONS.md`** antes de tratar a documentacao como definitiva — o scaffold e o codigo herdam as suposicoes
+- **Rode `/build --max 3` primeiro** e revise o diff antes de soltar o loop inteiro; deriva arquitetural so aparece depois de algumas features
 - **Nao reexecute uma skill para adicionar** — use `/increment`
 - **Use `/patch` para renomear** — entidade, endpoint, tecnologia, versao
 - **Templates sao templates** — os `{{placeholders}}` sao substituidos pelas skills, nao edite a mao

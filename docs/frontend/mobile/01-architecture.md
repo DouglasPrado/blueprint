@@ -2,8 +2,8 @@
 
 Define a arquitetura em camadas do app mobile, inspirada em Clean Architecture adaptada para aplicacoes React Native. Estabelece fronteiras claras entre UI, logica de aplicacao, dominio e infraestrutura, garantindo que cada parte do sistema tenha responsabilidade bem definida e que mudancas em uma camada nao impactem as demais.
 
-> **Implementa:** [docs/blueprint/06-system-architecture.md](../blueprint/06-system-architecture.md) (componentes e deploy) e [docs/blueprint/02-architecture_principles.md](../blueprint/02-architecture_principles.md) (principios).
-> **Complementa:** [docs/backend/01-architecture.md](../backend/01-architecture.md) (camadas do backend).
+> **Implementa:** [docs/blueprint/06-system-architecture.md](../../blueprint/06-system-architecture.md) (componentes e deploy) e [docs/blueprint/02-architecture_principles.md](../../blueprint/02-architecture_principles.md) (principios).
+> **Complementa:** [docs/backend/01-architecture.md](../../backend/01-architecture.md) (camadas do backend).
 
 ---
 
@@ -92,7 +92,7 @@ Native Module Layer (Camera, Biometrics, Push, Storage Nativo)
 
 ## Diagrama de Arquitetura
 
-> Diagrama: [mobile-architecture.mmd](../diagrams/mobile/mobile-architecture.mmd)
+> Diagrama: [mobile-architecture.mmd](../../diagrams/mobile/mobile-architecture.mmd)
 
 {{Descreva o diagrama de arquitetura ou referencie o arquivo Mermaid}}
 

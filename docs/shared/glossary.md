@@ -1,6 +1,6 @@
 # Glossario Ubiquo
 
-> **Fonte unica de termos do dominio.** Todos os blueprints (tecnico, backend, frontend, business) devem usar estes termos. Nao crie glossarios separados — referencie este arquivo.
+> **Fonte unica de termos do dominio.** Todos os blueprints (tecnico, backend, frontend) devem usar estes termos. Nao crie glossarios separados — referencie este arquivo.
 
 | Termo | Definicao | Nao Confundir Com | Usado em |
 | --- | --- | --- | --- |
@@ -49,5 +49,5 @@
 > Este arquivo e referenciado por:
 > - `docs/blueprint/04-domain-model.md` (glossario de dominio)
 > - `docs/backend/03-domain.md` (implementacao de entidades)
-> - `docs/frontend/04-components.md` (nomes de componentes baseados no dominio)
-> - `docs/business/00-business-context.md` (termos de negocio)
+> - `docs/frontend/{client}/04-components.md` (nomes de componentes baseados no dominio)
+> - `docs/frontend/{client}/14-copies.md` (glossario de produto exibido ao usuario)

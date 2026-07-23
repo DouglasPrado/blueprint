@@ -1,42 +1,41 @@
 ---
 name: frontend-design-system
-description: Preenche a secao de Design System (03-design-system.md) do frontend blueprint a partir do blueprint tecnico.
+description: Gera o design system compartilhado (shared/03-design-system.md) — tokens, tipografia, cores e iconografia.
 ---
 
-# Frontend Blueprint — Design System
+# Frontend — Design System (compartilhado)
 
-Preenche `docs/frontend/shared/03-design-system.md` com base no blueprint tecnico e no contexto do projeto. Este e um documento **compartilhado** entre todos os clientes (web, mobile, desktop).
+Gera `docs/frontend/shared/03-design-system.md`. Documento **compartilhado** entre web, mobile e desktop.
 
-## Leitura de Contexto
+## Contexto (ler uma vez)
 
-1. Leia `docs/blueprint/04-domain-model.md` — entidades e termos do dominio
-2. Leia `docs/blueprint/01-vision.md` — visao e identidade do produto
-3. Leia `docs/frontend/shared/03-design-system.md` — template a preencher
-4. Leia `docs/prd.md` — complemento se necessario
+- `docs/blueprint/01-vision.md` — visao e identidade do produto (define a personalidade visual)
+- `docs/blueprint/04-domain-model.md` — entidades e termos do dominio
+- `docs/prd.md` — complemento
+- Template a preencher: `docs/frontend/shared/03-design-system.md`
 
-## Analise de Lacunas
+## Convencoes
 
-A partir do blueprint tecnico, identifique o que esta disponivel para cada subsecao:
+- **Escrita:** doc so com `{{placeholders}}` → Write. Doc com conteudo real → Edit, inserindo antes de `<!-- APPEND:... -->`. Alteracao pontual → `/increment`.
+- **Origem:** marque conteudo derivado com `<!-- do blueprint: XX-arquivo.md -->`.
+- **Versoes:** bibliotecas de UI → `mcp__context7__resolve-library-id` → `mcp__context7__query-docs`.
+- **Perguntas:** as escolhas de tipografia e paleta **sao** as perguntas desta skill — apresente opcoes em vez de decidir sozinho.
 
-- **Design Tokens (Cores, Tipografia, Espacamento, Breakpoints)**: Quais tokens de design estao definidos e como sao estruturados?
-- **Temas**: O sistema suporta temas (light/dark/custom)? Como sao implementados e alternados?
-- **Ferramentas**: Quais ferramentas de design e documentacao sao utilizadas (Figma, Storybook, etc.)?
-- **Catalogo de Componentes Base**: Quais componentes primitivos compõem a base do design system (Button, Input, Typography, etc.)?
+## Cobertura
 
-Lacunas criticas nao inferiveis → ate 3 perguntas ao usuario.
-
-> **Versoes:** Para tecnologias com versao, consulte via `mcp__context7__resolve-library-id` → `mcp__context7__query-docs`.
+- **Design Tokens**: cores, tipografia, espacamento, breakpoints
+- **Temas**: light/dark/custom — implementacao e alternancia
+- **Ferramentas**: Figma, Storybook
+- **Catalogo de Componentes Base**: primitivos (Button, Input, Typography, ...)
 
 ---
 
 ## Tipografia — Google Fonts via Fontpair
 
-As fontes devem ser escolhidas em par (heading + body) a partir do https://www.fontpair.co/all usando Google Fonts.
+Escolha um par (heading + body) em https://www.fontpair.co/all usando Google Fonts.
 
-### Como escolher o par de fontes
-
-1. Analise a **visao e identidade do produto** (docs/blueprint/01-vision.md)
-2. Escolha a **categoria** que melhor representa a personalidade do produto:
+1. Analise a **visao e identidade do produto** (`docs/blueprint/01-vision.md`)
+2. Escolha a **categoria** que representa a personalidade do produto:
 
 | Categoria | Quando usar | Exemplos de pares (Heading / Body) |
 |---|---|---|
@@ -46,17 +45,14 @@ As fontes devem ser escolhidas em par (heading + body) a partir do https://www.f
 | **Slab Serif + Sans** | Solido, editorial moderno | Arvo / Lato, Bitter / Source Sans Pro, Crete Round / Open Sans, Bree Serif / Raleway |
 | **Monospace + Sans** | Tecnico, developer tools | JetBrains Mono / Inter, Fira Code / Open Sans, Space Mono / Work Sans |
 
-3. Pergunte ao usuario qual par melhor representa o produto (apresente 2-3 opcoes da categoria escolhida)
-4. Documente no design system com os imports do Google Fonts:
+3. **Apresente 2-3 opcoes da categoria escolhida e pergunte ao usuario** qual representa melhor o produto
+4. Documente com o import do Google Fonts:
 
 ```css
-/* Exemplo de import */
 @import url('https://fonts.googleapis.com/css2?family={HeadingFont}:wght@400;500;600;700&family={BodyFont}:wght@300;400;500;600&display=swap');
 ```
 
-### Especificacao de tipografia no documento
-
-Ao preencher a secao de tipografia, defina:
+Tokens a definir no documento:
 
 | Token | Uso | Exemplo |
 |---|---|---|
@@ -71,12 +67,10 @@ Ao preencher a secao de tipografia, defina:
 
 ## Paleta de Cores — Coolors
 
-As cores devem ser escolhidas a partir de paletas trending do https://coolors.co/palettes/trending e mapeadas para CSS variables seguindo a estrutura do globals.css (padrao shadcn/ui + extensoes).
+Escolha uma paleta de 5 cores em https://coolors.co/palettes/trending e mapeie para CSS variables (padrao shadcn/ui + extensoes).
 
-### Como escolher a paleta
-
-1. Analise a **identidade visual** desejada no blueprint
-2. Escolha uma paleta de 5 cores do Coolors que represente o produto. Paletas populares de referencia:
+1. Analise a identidade visual desejada no blueprint
+2. Proponha uma paleta que represente o produto. Referencias:
 
 | Paleta | Cores | Vibe |
 |---|---|---|
@@ -88,24 +82,22 @@ As cores devem ser escolhidas a partir de paletas trending do https://coolors.co
 | Metro UI | `#D11141` `#00B159` `#00AEDB` `#F37735` `#FFC425` | Vibrante, app |
 | Beach Towels | `#FE4A49` `#2AB7CA` `#FED766` `#E6E6EA` `#F4F4F8` | Fresco, divertido |
 
-3. O usuario pode tambem colar o link direto do Coolors (ex: `coolors.co/palette/264653-2a9d8f-e9c46a-f4a261-e76f51`)
-4. A partir das 5 cores, derive toda a paleta semantica
+3. O usuario pode colar o link direto do Coolors (ex: `coolors.co/palette/264653-2a9d8f-e9c46a-f4a261-e76f51`)
+4. Derive toda a paleta semantica a partir das 5 cores
 
-### Mapeamento das 5 cores do Coolors para CSS variables
-
-A paleta de 5 cores deve ser distribuida nas seguintes CSS variables (formato oklch, converter de hex):
+### Mapeamento das 5 cores (formato oklch — converter de hex)
 
 ```
-Cor 1 (mais escura/ancora)     → --primary          (botoes, links, CTA principal)
-Cor 2 (complementar)           → --accent           (destaque secundario, hover states)
-Cor 3 (neutra/suave)           → --secondary        (backgrounds alternativos, badges)
-Cor 4 (quente/atencao)         → --warning          (alertas, atencao)
-Cor 5 (vibrante/contraste)     → --destructive      (erros, acoes destrutivas)
+Cor 1 (mais escura/ancora)  → --primary       (botoes, links, CTA principal)
+Cor 2 (complementar)        → --accent        (destaque secundario, hover states)
+Cor 3 (neutra/suave)        → --secondary     (backgrounds alternativos, badges)
+Cor 4 (quente/atencao)      → --warning       (alertas, atencao)
+Cor 5 (vibrante/contraste)  → --destructive   (erros, acoes destrutivas)
 ```
 
 ### Estrutura completa do globals.css
 
-Ao gerar o design system, documente TODAS as CSS variables seguindo esta estrutura (light + dark):
+Documente TODAS as variables (light + dark):
 
 ```css
 :root {
@@ -122,82 +114,60 @@ Ao gerar o design system, documente TODAS as CSS variables seguindo esta estrutu
   --popover-foreground: oklch(...);
 
   /* Cores semanticas */
-  --primary: oklch(...);           /* CTA, botoes principais, links — Cor 1 da paleta */
-  --primary-foreground: oklch(...);/* Texto sobre primary */
-  --secondary: oklch(...);         /* Backgrounds secundarios — Cor 3 da paleta */
+  --primary: oklch(...);           /* CTA, botoes principais, links — Cor 1 */
+  --primary-foreground: oklch(...);
+  --secondary: oklch(...);         /* Backgrounds secundarios — Cor 3 */
   --secondary-foreground: oklch(...);
-  --accent: oklch(...);            /* Destaques, hovers — Cor 2 da paleta */
+  --accent: oklch(...);            /* Destaques, hovers — Cor 2 */
   --accent-foreground: oklch(...);
   --muted: oklch(...);             /* Textos e areas desabilitadas */
   --muted-foreground: oklch(...);
 
   /* Status */
-  --destructive: oklch(...);       /* Erros, delete — Cor 5 ou vermelho derivado */
+  --destructive: oklch(...);       /* Erros, delete — Cor 5 */
   --destructive-foreground: oklch(...);
-  --success: oklch(...);           /* Sucesso, confirmacao */
+  --success: oklch(...);
   --success-foreground: oklch(...);
-  --warning: oklch(...);           /* Alertas — Cor 4 da paleta */
+  --warning: oklch(...);           /* Alertas — Cor 4 */
   --warning-foreground: oklch(...);
-  --info: oklch(...);              /* Informacional */
+  --info: oklch(...);
   --info-foreground: oklch(...);
 
   /* Bordas e inputs */
-  --border: oklch(...);            /* Bordas gerais */
-  --input: oklch(...);             /* Bordas de inputs */
+  --border: oklch(...);
+  --input: oklch(...);
   --ring: oklch(...);              /* Focus ring */
 
-  /* Charts (derivar da paleta de 5 cores) */
+  /* Charts */
   --chart-1 a --chart-5: oklch(...);
 
   /* Sidebar (se aplicavel) */
-  --sidebar: oklch(...);
-  --sidebar-foreground: oklch(...);
-  --sidebar-primary: oklch(...);
-  --sidebar-primary-foreground: oklch(...);
-  --sidebar-accent: oklch(...);
-  --sidebar-accent-foreground: oklch(...);
-  --sidebar-border: oklch(...);
-  --sidebar-ring: oklch(...);
+  --sidebar, --sidebar-foreground, --sidebar-primary, --sidebar-primary-foreground,
+  --sidebar-accent, --sidebar-accent-foreground, --sidebar-border, --sidebar-ring
 }
 
 .dark {
-  /* Mesmas variables com valores invertidos para dark mode */
+  /* Mesmas variables com valores invertidos */
 }
 ```
 
 ### Regras de derivacao
 
-- **background/foreground**: Derivar tons neutros da cor mais escura da paleta (dessaturar)
-- **card/popover**: Levemente mais claro que background
-- **muted**: Tom neutro dessaturado
-- **border/input**: Tom intermediario entre background e foreground
-- **ring**: Mesmo valor que primary
-- **chart-1 a chart-5**: Usar as 5 cores da paleta diretamente
-- **Dark mode**: Inverter lightness (L) no oklch, manter chroma (C) e hue (H)
+- **background/foreground**: tons neutros derivados da cor mais escura (dessaturar)
+- **card/popover**: levemente mais claro que background
+- **muted**: tom neutro dessaturado
+- **border/input**: intermediario entre background e foreground
+- **ring**: mesmo valor que primary
+- **chart-1 a chart-5**: as 5 cores da paleta diretamente
+- **Dark mode**: inverter lightness (L) no oklch, manter chroma (C) e hue (H)
 
 ---
 
 ## Iconografia
 
-Os icones devem ser escolhidos a partir de duas fontes complementares:
+**Lucide Animated** (https://lucide-animated.com/) — fonte **primaria** para icones animados. Usar em loading states, transicoes, feedback visual, onboarding, empty states. Importar via `lucide-react` com wrapper de animacao.
 
-### Lucide Animated — https://lucide-animated.com/
-
-- Fonte **primaria** para icones com animacao
-- Usar para: loading states, transicoes, feedback visual, onboarding, empty states
-- Importar via pacote `lucide-react` com wrapper de animacao
-- Priorizar icones animados em interacoes (hover, click, state change)
-
-### shadcn/ui Icons — https://www.shadcn.io/icons
-
-- Fonte **complementar** para icones estaticos
-- Usar para: navegacao, botoes, menus, labels, badges, tabelas
-- Consistencia com o ecossistema shadcn/ui
-- Importar via `lucide-react` (mesmo pacote base)
-
-### Especificacao no documento
-
-Ao preencher a secao de iconografia, defina:
+**shadcn/ui Icons** (https://www.shadcn.io/icons) — fonte **complementar** para icones estaticos. Usar em navegacao, botoes, menus, labels, badges, tabelas. Mesmo pacote base (`lucide-react`).
 
 | Token | Valor | Uso |
 |---|---|---|
@@ -207,27 +177,12 @@ Ao preencher a secao de iconografia, defina:
 | `icon-size-xl` | 32px | Empty states, hero |
 | `icon-stroke` | 1.5-2px | Espessura padrao |
 
-Regras:
-- Todos os icones devem usar `currentColor` para herdar cor do contexto
-- Icones animados (lucide-animated) para feedback e transicoes
-- Icones estaticos (shadcn/ui icons) para UI estrutural
-- Manter consistencia: nao misturar icon packs diferentes alem destes dois
+Regras: todos os icones usam `currentColor` para herdar a cor do contexto; animados para feedback e transicoes, estaticos para UI estrutural; nao misturar outros icon packs alem destes dois.
 
 ---
 
-## Geracao
+## Revisao e Proxima Etapa
 
-> **Escrita:** Primeira vez (so placeholders) → Write. Reexecucao (conteudo real) → Edit (preservar existente, inserir antes de `<!-- APPEND:... -->`). Feature isolada → `/frontend-increment`.
+Apresente o documento ao usuario. Aplique ajustes. Salve o arquivo final.
 
-Preencha `docs/frontend/shared/03-design-system.md` substituindo TODOS os `{{placeholders}}`. Mantenha a estrutura. Use:
-- Informacoes explicitas do blueprint tecnico
-- Respostas do usuario (se houve perguntas)
-- Inferencias logicas quando seguro (marque com `<!-- do blueprint: XX-arquivo.md -->`)
-
-## Revisao
-
-Apresente o documento preenchido ao usuario. Aplique ajustes solicitados. Salve o arquivo final.
-
-## Proxima Etapa
-
-> "Design System preenchido (compartilhado entre todos os clientes). Rode `/frontend-components {client}` para preencher Componentes do cliente desejado."
+> "Design System definido (compartilhado entre todos os clientes). Rode `/frontend-app {client}` para documentar a aplicacao do cliente desejado."

@@ -64,7 +64,7 @@ Apresente: tabela resumo (V1-V8: Total/OK/Divergencias) + tabela de divergencias
 
 Acoes sugeridas por divergencia:
 - Codigo errado → `/codegen-feature`
-- Doc desatualizado → `/blueprint-increment` ou `/frontend-increment`
+- Doc desatualizado → `/increment`
 - Ambiguo → pergunte ao dev
 
-> "Score: {{N}}%. Corrigir: codigo → `/codegen-feature`, docs → `/blueprint-increment`. Continuar: `/codegen`."
+> "Score: {{N}}%. Corrigir: codigo → `/codegen-feature`, docs → `/increment`. Continuar: `/codegen`."

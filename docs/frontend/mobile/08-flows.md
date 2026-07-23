@@ -52,7 +52,7 @@ Documenta os fluxos criticos de interacao do usuario com o app mobile. Cada flux
 - {{Erro possivel 2 — servidor indisponivel}} -> {{Toast de erro + botao de retry}}
 - {{Erro possivel 3 — sem conexao}} -> {{Banner de offline + desabilitar submit}}
 
-> Diagrama: [fluxo-1.mmd](../diagrams/mobile/fluxo-1.mmd)
+> Diagrama: [fluxo-1.mmd](../../diagrams/mobile/fluxo-1.mmd)
 
 ---
 
@@ -81,7 +81,7 @@ Documenta os fluxos criticos de interacao do usuario com o app mobile. Cada flux
 - {{Erro possivel 1}} -> {{Como o app responde}}
 - {{Erro possivel 2}} -> {{Como o app responde}}
 
-> Diagrama: [fluxo-2.mmd](../diagrams/mobile/fluxo-2.mmd)
+> Diagrama: [fluxo-2.mmd](../../diagrams/mobile/fluxo-2.mmd)
 
 ---
 
@@ -101,7 +101,7 @@ Documenta os fluxos criticos de interacao do usuario com o app mobile. Cada flux
 - {{Erro possivel 1}} -> {{Como o app responde}}
 - {{Erro possivel 2}} -> {{Como o app responde}}
 
-> Diagrama: [fluxo-3.mmd](../diagrams/mobile/fluxo-3.mmd)
+> Diagrama: [fluxo-3.mmd](../../diagrams/mobile/fluxo-3.mmd)
 
 <!-- APPEND:fluxos -->
 

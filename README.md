@@ -1,29 +1,32 @@
 # Blueprint Framework
 
-Framework de documentacao tecnica e de negocio para projetos SaaS. Utiliza templates estruturados + skills do Claude Code para documentar um produto de ponta a ponta — do modelo de negocio a arquitetura frontend.
+Framework de documentacao tecnica para projetos de software. Templates estruturados + skills do Claude Code que documentam um produto de ponta a ponta — do contexto do sistema a arquitetura de frontend — e depois geram codigo fiel a essa documentacao.
 
-**4 blueprints** | **63 documentos** | **60 skills**
+**3 blueprints** | **52 documentos** | **19 skills**
 
 ---
 
 ## O que e
 
-Um conjunto de templates Markdown com placeholders (`{{...}}`) e skills do Claude Code que preenchem automaticamente cada secao a partir do PRD (Product Requirements Document) do seu projeto.
+Um conjunto de templates Markdown com placeholders (`{{...}}`) e skills do Claude Code que preenchem cada secao a partir do PRD do seu projeto.
 
-| Blueprint | Foco | Docs | Quando usar |
-|-----------|------|------|-------------|
-| **Tecnico** | Arquitetura, dominio, dados, seguranca | 18 | Sistema ja validado, indo para producao |
-| **Frontend** | Componentes, estado, rotas, performance | 16 | Definir arquitetura frontend |
-| **Backend** | Classes, servicos, API, eventos, testes | 15 | Especificar implementacao backend |
-| **Business** | Proposta de valor, receita, marketing | 10 | Modelar o negocio (BMC + Lean Canvas) |
+| Blueprint | Foco | Docs | Skills |
+|-----------|------|------|--------|
+| **Tecnico** | Contexto, dominio, dados, arquitetura, seguranca | 17 | 7 |
+| **Backend** | Classes, servicos, API, eventos, integracoes, testes | 15 | 1 |
+| **Frontend** | Design system, componentes, estado, rotas, performance | 3 + 13/cliente | 4 |
+
+Mais 7 skills de apoio: incremento, patch global, backlog de tasks e geracao de codigo.
+
+Cada skill gera um **grupo de documentos** numa unica passada — le o contexto uma vez e escreve tudo que deriva dele. E isso que mantem o processo curto.
 
 ---
 
 ## Pre-requisitos
 
-1. **Claude Code** instalado e configurado
+1. **Claude Code** instalado
 2. **PRD do projeto** — sera salvo em `docs/prd.md`
-3. **MCP Context7** configurado — usado pelos skills para consultar versoes atualizadas de tecnologias. Adicione ao seu `claude_desktop_config.json` ou `.claude.json`:
+3. **MCP Context7** — usado pelas skills para consultar versoes atualizadas de tecnologias:
    ```json
    {
      "mcpServers": {
@@ -34,224 +37,166 @@ Um conjunto de templates Markdown com placeholders (`{{...}}`) e skills do Claud
      }
    }
    ```
-4. **MCP Paper** configurado — usado pelo skill `/paper` para criar designs visuais no Paper:
-   ```bash
-   claude mcp add paper --transport http http://127.0.0.1:29979/mcp --scope user
-   ```
-5. **MCP Pencil** configurado (opcional) — usado pelo skill `/pencil` para criar designs visuais no Pencil. Instale a extensao [Pencil](https://pencil.dev) no VS Code — o MCP server roda automaticamente quando o Pencil esta ativo.
 
 ---
 
 ## Quick Start
 
 ```
-# 1. Inicie o blueprint tecnico (ou qualquer outro)
-/blueprint
+/blueprint                    # salva o PRD, analisa cobertura, mostra o roadmap
+/blueprint-foundation         # 00, 01, 02, 03
+/blueprint-domain             # 04, 05, 09
+/blueprint-architecture       # 06, 10
+/blueprint-flows              # 07, 08
+/blueprint-quality            # 12, 13, 14, 15
+/blueprint-plan               # 11, 16
+```
 
-# 2. O orquestrador vai:
-#    - Pedir seu PRD (arquivo ou texto)
-#    - Salvar em docs/prd.md
-#    - Analisar cobertura
-#    - Mostrar roadmap de 18 skills
+Seis comandos e o blueprint tecnico esta completo. Depois:
 
-# 3. Siga a sequencia sugerida:
-/blueprint-context
-/blueprint-vision
-/blueprint-principles
-# ... ate completar
+```
+/backend                      # 15 docs de especificacao de implementacao
+/frontend                     # orquestrador + docs compartilhados
+/frontend-design-system       # tokens, tipografia, cores, iconografia
+/frontend-app web             # 8 docs do cliente
+/frontend-quality web         # 5 docs do cliente
 ```
 
 ---
 
-## Blueprints Disponiveis
-
-### Fluxo Recomendado
+## Fluxo
 
 ```
 PRD (docs/prd.md)
-  |
-  ├── /blueprint             ← Sistema validado (18 docs)
-  |
-  ├── /backend               ← Especificacao backend (15 docs)
-  |
-  ├── /frontend              ← Arquitetura frontend (16 docs)
-  |
-  ├── /business              ← Modelo de negocio (10 docs)
-  |
-  └── docs/shared/           ← Docs transversais (4 docs)
+  │
+  ▼
+/blueprint  ──►  docs/blueprint/     17 docs   ← fonte primaria
+  │
+  ├──►  /backend   ──►  docs/backend/    15 docs
+  ├──►  /frontend  ──►  docs/frontend/   3 shared + 13 por cliente
+  └──►                  docs/shared/     4 docs transversais
 
-  Depois:
-  ├── /xxx-incrementar       ← Adicionar features sem sobrescrever
-  ├── /patch                 ← Propagar mudancas globais
-  ├── /specs                 ← Gerar backlog integral de tasks (docs/specs/)
-  ├── /opensource            ← Transformar em projeto opensource
-  |
-  └── /codegen               ← Gerar codigo a partir dos blueprints (XP/TDD)
+Depois:
+  /increment   → adicionar feature ou corrigir sem reescrever
+  /patch       → propagar mudanca global (renomear entidade, trocar tecnologia)
+  /specs       → gerar backlog integral de tasks
+  /codegen     → gerar codigo a partir dos blueprints (XP/TDD)
 ```
+
+A ordem importa: cada fase le o que a anterior produziu.
 
 ---
 
-## Como Usar
-
-### 1. Blueprint Tecnico (`docs/blueprint/`)
+## 1. Blueprint Tecnico (`docs/blueprint/`)
 
 Inicio: `/blueprint`
 
-Sequencia de skills:
+| Skill | Docs gerados | Conteudo |
+|-------|--------------|----------|
+| `/blueprint-foundation` | `00-context`, `01-vision`, `02-architecture_principles`, `03-requirements` | Atores, limites, problema, metricas, principios, requisitos MoSCoW |
+| `/blueprint-domain` | `04-domain-model`, `05-data-model`, `09-state-models` | Glossario ubiquo, entidades, regras, tabelas, indices, maquinas de estado |
+| `/blueprint-architecture` | `06-system-architecture`, `10-architecture_decisions` | Componentes, comunicacao, infra, ADRs |
+| `/blueprint-flows` | `07-critical_flows`, `08-use_cases` | 3-5 fluxos criticos, casos de uso UC-XXX |
+| `/blueprint-quality` | `12-testing_strategy`, `13-security`, `14-scalability`, `15-observability` | Piramide de testes, STRIDE, OWASP, cache, rate limit, Golden Signals |
+| `/blueprint-plan` | `11-build_plan`, `16-evolution` | Entregas ENT-XXX, riscos, roadmap tecnico, tech debt |
 
-```
- 1. /blueprint-context        — Atores, sistemas externos, restricoes
- 2. /blueprint-vision         — Problema, pitch, objetivos, metricas
- 3. /blueprint-principles     — 3-7 principios arquiteturais
- 4. /blueprint-requirements   — Requisitos funcionais e nao-funcionais
- 5. /blueprint-domain         — Glossario, entidades, regras de negocio
- 6. /blueprint-data           — Tabelas, schemas, queries criticas
- 7. /blueprint-architecture   — Componentes, comunicacao, infra
- 8. /blueprint-flows          — 3-5 fluxos criticos
- 9. /blueprint-usecases       — Casos de uso estruturados
-10. /blueprint-states         — Maquinas de estado
-11. /blueprint-decisions      — ADRs (Architecture Decision Records)
-12. /blueprint-buildplan      — Entregas, milestones, riscos
-13. /blueprint-testing        — Piramide de testes, cobertura
-14. /blueprint-security       — STRIDE, auth, OWASP checklist
-15. /blueprint-scalability    — Escala, cache, rate limiting
-16. /blueprint-observability  — Logs, metricas, alertas, dashboards
-17. /blueprint-evolution      — Roadmap tecnico, debt, deprecacao
-18. /blueprint-communication  — Templates de email, SMS, WhatsApp
-```
+O agrupamento segue as dependencias reais: `05` e `09` sao projecoes de `04`; ADR escrito longe da arquitetura vira generico; os 4 atributos de qualidade leem a mesma base (`06` + `07`).
 
 ---
 
-### 2. Backend Blueprint (`docs/backend/`)
+## 2. Backend Blueprint (`docs/backend/`)
 
-Inicio: `/backend`
-
-Gera a especificacao de implementacao a partir do blueprint tecnico:
+Inicio: `/backend` — le o blueprint tecnico e gera os 15 docs numa passada.
 
 ```
- 1. 00-backend-vision.md      — Visao, stack, principios backend
- 2. 01-architecture.md        — Camadas, Clean Architecture, DI
- 3. 02-project-structure.md   — Pastas, modulos, convencoes
- 4. 03-domain.md              — Entidades, Value Objects, Aggregates
- 5. 04-data-layer.md          — Repositories, migrations, queries
- 6. 05-api-contracts.md       — Endpoints, request/response, OpenAPI
- 7. 06-services.md            — Application services, use cases
- 8. 07-controllers.md         — Controllers, handlers, routing
- 9. 08-middlewares.md          — Auth, logging, rate limiting
-10. 09-errors.md              — Error handling, codes, responses
-11. 10-validation.md          — Input validation, schemas
-12. 11-permissions.md         — RBAC, policies, guards
-13. 12-events.md              — Domain events, handlers, queues
-14. 13-integrations.md        — APIs externas, webhooks, SDKs
-15. 14-tests.md               — Estrategia de testes backend
+00-backend-vision      Stack, padrao, principios, metricas
+01-architecture        Camadas, Clean Architecture, DI
+02-project-structure   Pastas, modulos, convencoes
+03-domain              Entidades, Value Objects, Aggregates
+04-data-layer          Repositories, migrations, queries
+05-api-contracts       Endpoints, DTOs, status codes, OpenAPI
+06-services            Application services, use cases
+07-controllers         Controllers, handlers, routing
+08-middlewares         Auth, logging, rate limiting
+09-errors              Hierarquia de excecoes, catalogo
+10-validation          Regras por campo, sanitizacao
+11-permissions         RBAC, policies, guards
+12-events              Domain events, workers, filas, DLQ
+13-integrations        Clients externos, circuit breaker, canais de comunicacao
+14-tests               Piramide, cenarios, CI
 ```
+
+O blueprint tecnico e a fonte primaria — `/backend` so pergunta o que ele nao cobre (framework, ORM, estrutura de classes, metodos).
+
+**Canais de comunicacao** (email, SMS, WhatsApp) vivem em `13-integrations.md`: provedores, catalogo de templates, variaveis, prioridade entre canais, rate limits e convencoes por canal. Cada template e disparado por um evento declarado em `12-events.md`.
 
 ---
 
-### 3. Frontend Blueprint (`docs/frontend/`)
+## 3. Frontend Blueprint (`docs/frontend/`)
 
-Inicio: `/frontend`
-
-Sequencia de skills:
+Multi-client em monorepo. Inicio: `/frontend`
 
 ```
- 1. /frontend-visao           — Papel do frontend, stack, principios
- 2. /frontend-arquitetura     — Clean Architecture FE, camadas, dominios
- 3. /frontend-estrutura       — Pastas, features, monorepo
- 4. /frontend-design-system   — Tokens, cores, tipografia, Storybook
- 5. /frontend-componentes     — Primitive/Composite/Feature components
- 6. /frontend-estado          — UI/Server/Global/Domain state
- 7. /frontend-data-layer      — API client, TanStack Query, DTOs, BFF
- 8. /frontend-rotas           — Rotas, guards, layouts
- 9. /frontend-fluxos          — Fluxos criticos de interface
-10. /frontend-testes          — Piramide, Vitest, Playwright
-11. /frontend-performance     — Code splitting, Core Web Vitals
-12. /frontend-seguranca       — Auth, XSS, CSRF, CSP
-13. /frontend-observabilidade — Sentry, logging, feature flags
-14. /frontend-cicd            — Pipeline CI/CD, convencoes, docs viva
-15. /frontend-copies          — Textos, microcopy, i18n
-16. /frontend-api-deps        — Dependencias de API do backend
+docs/frontend/
+  shared/                          # gerados uma vez
+    03-design-system.md            /frontend-design-system
+    06-data-layer.md               /frontend
+    15-api-dependencies.md         /frontend
+
+  {web|mobile|desktop}/            # gerados por cliente
+    00-frontend-vision.md          ┐
+    01-architecture.md             │
+    02-project-structure.md        │
+    04-components.md               ├─ /frontend-app {client}
+    05-state.md                    │
+    07-routes.md                   │
+    08-flows.md                    │
+    14-copies.md                   ┘
+    09-tests.md                    ┐
+    10-performance.md              │
+    11-security.md                 ├─ /frontend-quality {client}
+    12-observability.md            │
+    13-cicd-conventions.md         ┘
 ```
+
+Cada skill adapta o conteudo a plataforma: `web` (Next.js/Remix, CSP, Core Web Vitals), `mobile` (Expo/React Native, Keychain, cold start), `desktop` (Electron/Tauri, IPC, code signing).
+
+`/frontend-design-system` e a unica skill de secao unica — escolhe o par de fontes (Fontpair), a paleta (Coolors → CSS variables oklch) e a iconografia (Lucide Animated + shadcn/ui).
 
 ---
 
-### 4. Business Blueprint (`docs/business/`)
-
-Inicio: `/business`
-
-Sequencia de skills:
-
-```
- 1. /business-contexto        — Mercado, concorrencia, SWOT, premissas
- 2. /business-proposta-valor  — Necessidades do cliente, diferencial
- 3. /business-segmentos       — ICP, personas, TAM/SAM/SOM
- 4. /business-canais          — Canais, funil, PLG, parcerias
- 5. /business-relacionamento  — Ciclo de vida, churn, expansion revenue
- 6. /business-receita         — MRR, NRR, pricing, unit economics
- 7. /business-custos          — COGS, margem bruta, runway, sensibilidade
- 8. /business-metricas        — North Star, AARRR, cohort, glossario SaaS
- 9. /business-marketing       — Posicionamento, GTM, growth loops
-10. /business-operacional     — Processos, equipe, timeline, DR
-```
-
----
-
-### 5. Documentacao Compartilhada (`docs/shared/`)
-
-Docs transversais que conectam os blueprints:
+## 4. Documentacao Compartilhada (`docs/shared/`)
 
 | Documento | Descricao |
 |-----------|-----------|
-| `MAPPING.md` | Mapeamento entre blueprints (tecnico ↔ frontend ↔ backend) |
+| `MAPPING.md` | Rastreabilidade blueprint ↔ backend ↔ frontend |
 | `glossary.md` | Glossario unificado do projeto |
-| `error-ux-mapping.md` | Mapeamento erro backend → UX frontend |
-| `event-mapping.md` | Mapeamento de eventos entre camadas |
+| `error-ux-mapping.md` | Erro do backend → UX do frontend |
+| `event-mapping.md` | Eventos entre camadas |
 
 ---
 
-## Atualizacoes Incrementais
+## Atualizacoes Incrementais (`/increment`)
 
-Quando uma nova feature surge, nao e preciso reescrever o documento inteiro. Use os skills de incremento:
+Uma skill para os tres blueprints. Nunca sobrescreve — sempre `Edit`.
 
-| Skill | Escopo | Comando |
-|-------|--------|---------|
-| Blueprint Tecnico | 18 docs | `/blueprint-incrementar` |
-| Frontend | 16 docs | `/frontend-incrementar` |
-| Business | 10 docs | `/business-incrementar` |
-
-### Tipos de alteracao suportados
-
-**Adicao** — Nova feature, novo componente, nova rota:
 ```
-/frontend-incrementar
+/increment
+> alvo: blueprint | backend | frontend | all
 > "Sistema de chat em tempo real"
-→ Adiciona componentes, estado, rotas, fluxos nos docs corretos
+→ adiciona entidades, eventos, componentes, estado e rotas nos docs corretos
 ```
 
-**Correcao** — Dado errado, prop renomeada:
-```
-/blueprint-incrementar
-> "Corrigir: campo 'email' na entidade User deve ser 'emailAddress'"
-→ Edit cirurgico na linha especifica
-```
+Quatro tipos de alteracao:
 
-**Atualizacao** — Versao mudou, rota renomeada:
-```
-/business-incrementar
-> "Atualizar: plano Pro de R$99 para R$129"
-→ Atualiza todas as referencias de preco
-```
+| Tipo | Exemplo | Comportamento |
+|------|---------|---------------|
+| **Adicao** | "Sistema de chat em tempo real" | Insere antes de `<!-- APPEND:... -->`, marca `<!-- adicionado: ... -->` |
+| **Correcao** | "campo `email` deve ser `emailAddress`" | Edit cirurgico na linha, marca `<!-- corrigido: ... -->` |
+| **Atualizacao** | "plano Pro de R$99 para R$129" | Atualiza todas as ocorrencias |
+| **Remocao** | "remover push notifications do escopo" | `~~strikethrough~~` com motivo |
 
-**Remocao** — Feature saiu do escopo:
-```
-/blueprint-incrementar
-> "Remover feature de notificacoes push do escopo"
-→ Marca como removida com strikethrough
-```
-
-### Como funciona
-
-Cada template tem marcadores `<!-- APPEND:section-id -->` que servem como ancora para insercao:
+Cada template tem marcadores `<!-- APPEND:section-id -->` como ancora de insercao:
 
 ```markdown
 | Button | variant, size | primary, secondary |
@@ -259,27 +204,24 @@ Cada template tem marcadores `<!-- APPEND:section-id -->` que servem como ancora
 <!-- APPEND:primitivos -->
 ```
 
-O skill insere novo conteudo **antes** do marcador, preservando tudo que ja existe.
+O conteudo novo entra **antes** do marcador, preservando tudo que ja existe.
 
 ---
 
-## Patch Global
+## Patch Global (`/patch`)
 
-Para mudancas que afetam **multiplos blueprints** simultaneamente:
+Para mudancas que atravessam varios blueprints ao mesmo tempo:
 
 ```
 /patch
 > "Renomear entidade Booking para Appointment"
 ```
 
-O `/patch` faz:
-1. **Varredura** em todos os 63 docs (Grep global)
-2. **Analise de impacto** — classifica em substituicao direta, contextual e indireta
-3. **Confirmacao** — mostra tabela com todos os arquivos afetados
-4. **Aplica patches** — respeita case (PascalCase, camelCase, kebab-case)
-5. **Relatorio** — resumo do que mudou
-
-Exemplos de uso:
+1. **Varredura** global (Grep em blueprint, backend, frontend, shared, adr, specs)
+2. **Analise de impacto** — direta, contextual ou indireta
+3. **Confirmacao** — tabela com todos os arquivos afetados
+4. **Aplica** respeitando case (PascalCase, camelCase, kebab-case, paths)
+5. **Relatorio** — indiretas ficam marcadas com `<!-- PATCH-REVIEW -->`
 
 | Caso | Comando |
 |------|---------|
@@ -287,320 +229,114 @@ Exemplos de uso:
 | Atualizar endpoint | `/patch` → "/api/users → /api/v2/users" |
 | Mudar tecnologia | `/patch` → "Zustand → Jotai" |
 | Atualizar versao | `/patch` → "Next.js 16 → Next.js 17" |
-| Renomear componente | `/patch` → "UserCard → ProfileCard" |
+
+`/increment` adiciona; `/patch` renomeia em cascata.
 
 ---
 
-## Code Generation (Blueprints → Codigo)
+## Specs — Backlog Integral (`/specs`)
 
-Apos preencher os blueprints, use os skills de codegen para gerar codigo fiel a documentacao. O workflow segue **Extreme Programming** (TDD, pair programming, small releases).
+Gera `docs/specs/TASKS.md` com **todas** as tasks de implementacao de uma vez, a partir de `docs/backend/` (fonte primaria), validando contra frontend e blueprint.
 
-### Workflow
+Tasks organizadas em 12 grupos:
 
-```
-/codegen-claudemd → Gera CLAUDE.md router no projeto-alvo (uma vez)
-       ↓
-/codegen-contracts → Setup inicial: tipos, schema, scaffold (uma vez)
-       ↓
-/codegen → Apresenta entregas do build plan (inicio de sessao)
-       ↓
-/codegen-feature [nome] → Implementa feature vertical com TDD
-       ↓                          ↑
-       ↓                    (repete por feature)
-       ↓
-/codegen-verify → Verifica aderencia ao blueprint (periodico)
-```
-
-### Estrategia de Contexto (2M+ tokens de blueprints)
-
-Os blueprints preenchidos ultrapassam 2M tokens — nao cabem no contexto de nenhum modelo. A solucao:
-
-1. **CLAUDE.md Router**: tabela que mapeia tipo de tarefa → 2-3 docs relevantes
-2. **Context Excerpting**: carrega apenas secoes relevantes de docs grandes (grep por headers)
-3. **Contracts as Cache**: `src/contracts/` e o "cache compilado" do domain model — tipos compactos vs docs verbosos
-4. **Budget por sessao**: max ~70-100k tokens de contexto, deixando 900k+ para geracao
-
-### Skills de Codegen (5)
-
-| Comando | Descricao | Quando |
-|---------|-----------|--------|
-| `/codegen-claudemd` | Gera CLAUDE.md router para o projeto-alvo | Setup (uma vez) |
-| `/codegen-contracts` | Gera tipos, schema e scaffold (setup inicial) | Setup (uma vez) |
-| `/codegen` | Apresenta entregas do build plan e guia execucao | Inicio de sessao |
-| `/codegen-feature` | Implementa feature vertical (TDD: RED→GREEN→REFACTOR) | Dia-a-dia |
-| `/codegen-verify` | Verifica codigo vs blueprint (score de aderencia) | A cada 3-5 features |
-
-### Templates (6)
-
-| Template | Descricao |
-|----------|-----------|
-| `docs/templates/claudemd-template.md` | Template do CLAUDE.md router |
-| `docs/templates/prd-template.md` | Template de PRD |
-| `docs/templates/epic-template.md` | Template de Epic |
-| `docs/templates/story-template.md` | Template de User Story |
-| `docs/templates/task-template.md` | Template de Task |
-| `docs/templates/use-case-template.md` | Template de Use Case |
-
----
-
-## Specs — Backlog Integral de Tasks (`/specs`)
-
-Gera um documento unico com **todas as tasks de implementacao** a partir dos 3 blueprints. Produz um backlog completo — sem fases, todas as tasks de uma vez.
-
-### Pre-requisitos
-
-Os 3 blueprints devem estar preenchidos:
-- `docs/backend/` (fonte primaria — define as tasks)
-- `docs/frontend/` (consistencia — valida alinhamento)
-- `docs/blueprint/` (validacao — confirma cobertura)
-
-### Como funciona
-
-```
-/specs
-
-# 1. Verifica pre-requisitos (backend, frontend, blueprint preenchidos)
-# 2. Le o backend (fonte primaria) — extrai tasks de cada doc
-# 3. Le o frontend (consistencia) — identifica gaps
-# 4. Gera docs/specs/TASKS.md com todas as tasks
-# 5. Valida contra o blueprint tecnico
-# 6. Apresenta dashboard com metricas e gaps
-```
-
-### O que gera
-
-O output e `docs/specs/TASKS.md` com tasks organizadas em **12 grupos**:
-
-| Grupo | Prefixo | Fonte primaria |
-|-------|---------|---------------|
-| Setup & Infra | TASK-SETUP | 00-backend-vision, 01-architecture, 02-project-structure |
-| Domain | TASK-DOM | 03-domain (1 task por entidade) |
-| Data Layer | TASK-DATA | 04-data-layer (1 task por repository + migrations) |
-| Services | TASK-SVC | 06-services (1 task por service) |
+| Grupo | Prefixo | Fonte |
+|-------|---------|-------|
+| Setup & Infra | TASK-SETUP | 00-vision, 01-architecture, 02-structure |
+| Domain | TASK-DOM | 03-domain (1 por entidade) |
+| Data Layer | TASK-DATA | 04-data-layer (1 por repository + migrations) |
+| Services | TASK-SVC | 06-services |
 | API & Controllers | TASK-API | 05-api-contracts, 07-controllers, 10-validation |
-| Auth & Permissions | TASK-AUTH | 11-permissions, 08-middlewares (auth) |
+| Auth & Permissions | TASK-AUTH | 11-permissions, 08-middlewares |
 | Error Handling | TASK-ERR | 09-errors |
-| Middlewares | TASK-MW | 08-middlewares (nao-auth) |
-| Events & Workers | TASK-EVT | 12-events (1 produtor + 1 consumidor por evento) |
+| Middlewares | TASK-MW | 08-middlewares |
+| Events & Workers | TASK-EVT | 12-events |
 | Integrations | TASK-INT | 13-integrations |
 | Tests | TASK-TEST | 14-tests |
 | Frontend Sync | TASK-FE | Cross-reference backend ↔ frontend |
 
-Cada task inclui: camada, entidade, prioridade (Must/Should/Could), origem, descricao, arquivos a criar, dependencias, regras de negocio, criterios de aceite, testes necessarios e consistencia com o frontend.
+Cada task inclui camada, entidade, prioridade, origem, arquivos a criar, dependencias, regras de negocio, criterios de aceite e testes.
 
-### Validacao
-
-Ao final, cruza as tasks geradas com o blueprint tecnico:
-- Cada requisito funcional tem task?
-- Cada fluxo critico tem service + teste E2E?
-- Cada use case tem endpoint + controller + service?
-- Cada ameaca STRIDE tem mitigacao?
-- Gaps sao listados com sugestoes de acao
+Ao final valida contra o blueprint: cada RF tem task? cada fluxo critico tem service + E2E? cada UC tem endpoint + controller + service? cada ameaca STRIDE tem mitigacao?
 
 ---
 
-## Opensource — Transformacao para Projeto OSS (`/opensource`)
+## Code Generation (`/codegen`)
 
-Transforma um projeto documentado com blueprints proprietarios em um **projeto opensource completo**. Adapta os 4 blueprints in-place e gera os arquivos raiz tipicos de projetos OSS.
-
-### Pre-requisitos
-
-Os 4 blueprints devem estar preenchidos:
-- `docs/blueprint/` (tecnico)
-- `docs/backend/` (backend)
-- `docs/frontend/` (frontend)
-- `docs/business/` (negocio)
-
-### Como funciona
+Gera codigo fiel a documentacao seguindo **Extreme Programming** (TDD, small releases).
 
 ```
-/opensource
-
-# 1. Le todos os documentos dos 4 blueprints
-# 2. Pergunta 5 definicoes ao usuario:
-#    - Modelo OSS (open-core, community-driven, dev-tool, foundation-backed)
-#    - Licenca (MIT, Apache 2.0, GPL v3, AGPL v3, Dual)
-#    - Governanca (BDFL, Committee, Foundation, Meritocracy)
-#    - Nome do projeto
-#    - Canais da comunidade (Discord, Discussions, Slack, etc.)
-# 3. Adapta os 10 docs do business blueprint para contexto OSS
-# 4. Adiciona secoes OSS nos docs tecnicos, backend e frontend
-# 5. Gera arquivos raiz do projeto OSS
+/codegen-setup            → CLAUDE.md router + tipos + schema + scaffold  (uma vez)
+       ↓
+/codegen                  → apresenta entregas do build plan              (inicio de sessao)
+       ↓
+/codegen-feature [nome]   → implementa feature vertical (RED→GREEN→REFACTOR)
+       ↓        ↑
+       ↓   (repete por feature)
+       ↓
+/codegen-verify           → verifica aderencia ao blueprint               (a cada 3-5 features)
 ```
 
-### O que transforma
+### Estrategia de contexto
 
-**Business Blueprint (10 docs adaptados):**
+Blueprints preenchidos ultrapassam 2M tokens — nao cabem em nenhum contexto. A solucao:
 
-| Doc original | Transformacao |
-|-------------|--------------|
-| Contexto de negocio | → Contexto do ecossistema (TAM→Total Addressable Developers) |
-| Proposta de valor | → Por que usar / Por que contribuir |
-| Segmentos | → Personas OSS (contributors, maintainers, sponsors) |
-| Canais | → Canais da comunidade (GitHub, registries, docs, conferences) |
-| Relacionamentos | → Engajamento (Newcomer→Contributor→Committer→Maintainer→TSC) |
-| Receita | → Modelo de sustentabilidade (varia por modelo OSS) |
-| Custos | → Custos do projeto (CI/CD, hosting, maintainer stipend) |
-| Metricas | → Metricas OSS (stars, contributors ativos, downloads, bus factor) |
-| Marketing | → Posicionamento e awareness (Product Hunt, HN, conferences) |
-| Operacoes | → Community ops (releases, RFCs, governanca, triage, security) |
+1. **CLAUDE.md Router** — tabela que mapeia tipo de tarefa → 2-3 docs relevantes
+2. **Context Excerpting** — carrega so as secoes relevantes (grep por headers)
+3. **Contracts as Cache** — `src/contracts/` e o "cache compilado" do domain model
+4. **Budget por sessao** — ~70-100k tokens de contexto, deixando o resto para geracao
 
-**Blueprint Tecnico (6 secoes adicionadas):**
-- Vulnerability Disclosure Policy (seguranca)
-- Contribution Architecture (arquitetura)
-- Public Roadmap (build plan)
-- Contributor Testing Guide (testes)
-- Operational Transparency (observabilidade)
-- Community Communication Templates (comunicacao)
+### Templates (6)
 
-**Backend Blueprint (9 secoes adicionadas):**
-- OSS Backend Principles (visao)
-- Contributor Architecture Guide (arquitetura)
-- Contributor Directory Guide (estrutura)
-- API Contribution Guidelines (contratos)
-- Error Handling for Contributors (erros)
-- Testing Guide for Contributors (testes)
-- Auth for Self-Hosted (permissoes)
-- Event System for Contributors (eventos)
-- Integration Development Guide (integracoes)
-
-**Frontend Blueprint (3 secoes adicionadas):**
-- Contributor Setup Guide (arquitetura)
-- CI for Contributors (cicd)
-- Design System for Contributors (design system)
-
-### Arquivos raiz gerados
-
-| Arquivo | Descricao |
-|---------|-----------|
-| `README.md` | README opensource com badges, features, quick start, community |
-| `CONTRIBUTING.md` | Guia de contribuicao (setup, PRs, code style, review) |
-| `CODE_OF_CONDUCT.md` | Contributor Covenant v2.1 |
-| `LICENSE` | Texto completo da licenca escolhida |
-| `SECURITY.md` | Politica de divulgacao de vulnerabilidades |
-| `.github/ISSUE_TEMPLATE/bug_report.md` | Template de bug report |
-| `.github/ISSUE_TEMPLATE/feature_request.md` | Template de feature request |
-| `.github/ISSUE_TEMPLATE/config.yml` | Config de issues |
-| `.github/PULL_REQUEST_TEMPLATE.md` | Template de PR |
-
-### Modelos OSS suportados
-
-| Aspecto | Open-core | Community-driven | Dev tool | Foundation-backed |
-|---------|-----------|-----------------|----------|-------------------|
-| Receita | Enterprise + hosted | Sponsors + grants | Marketplace + premium | Membership + sponsors |
-| Personas | Users + enterprise | Contributors + power users | Plugin devs + end users | Corporate adopters |
-| Metricas | Conversao free→paid | Contributors ativos | Downloads + installs | Deployments producao |
-| Governanca | Company-led | Community-led | Company-led + ecosystem | Charter fundacao |
-| Riscos | Erosao de confianca | Burnout maintainer | Fragmentacao ecosystem | Burocracia |
-
-### Todo conteudo gerado e em ingles
-
-A skill transforma o conteudo para ingles, mantendo o padrao de projetos OSS internacionais.
+`docs/templates/`: `claudemd-template.md`, `prd-template.md`, `epic-template.md`, `story-template.md`, `task-template.md`, `use-case-template.md`
 
 ---
 
-## Referencia Rapida de Skills
+## Referencia Rapida — 19 Skills
 
-### Orquestradores (4)
+### Blueprint Tecnico (7)
 
-| Comando | Descricao |
-|---------|-----------|
-| `/blueprint` | Inicia blueprint tecnico (18 docs) |
-| `/backend` | Gera especificacao backend (15 docs) |
-| `/frontend` | Inicia blueprint frontend (16 docs) |
-| `/business` | Inicia blueprint business (10 docs) |
+| Comando | Docs |
+|---------|------|
+| `/blueprint` | Orquestrador — PRD, cobertura, roadmap |
+| `/blueprint-foundation` | 00, 01, 02, 03 |
+| `/blueprint-domain` | 04, 05, 09 |
+| `/blueprint-architecture` | 06, 10 |
+| `/blueprint-flows` | 07, 08 |
+| `/blueprint-quality` | 12, 13, 14, 15 |
+| `/blueprint-plan` | 11, 16 |
 
-### Incremento (3)
+### Backend (1)
 
-| Comando | Descricao |
-|---------|-----------|
-| `/blueprint-incrementar` | Adiciona/corrige nos docs tecnicos |
-| `/frontend-incrementar` | Adiciona/corrige nos docs frontend |
-| `/business-incrementar` | Adiciona/corrige nos docs business |
+| Comando | Docs |
+|---------|------|
+| `/backend` | 00 a 14 (15 docs) |
 
-### Transformacao e Backlog (2)
+### Frontend (4)
 
-| Comando | Descricao |
-|---------|-----------|
-| `/opensource` | Transforma blueprints em projeto opensource (adapta 4 blueprints + gera arquivos raiz) |
-| `/specs` | Gera backlog integral de tasks a partir de backend + frontend + blueprint (`docs/specs/TASKS.md`) |
+| Comando | Docs |
+|---------|------|
+| `/frontend` | Orquestrador + `shared/06`, `shared/15` |
+| `/frontend-design-system` | `shared/03` |
+| `/frontend-app {client}` | 00, 01, 02, 04, 05, 07, 08, 14 |
+| `/frontend-quality {client}` | 09, 10, 11, 12, 13 |
 
-### Utilitario (3)
-
-| Comando | Descricao |
-|---------|-----------|
-| `/patch` | Propaga mudanca em cascata nos 63 docs |
-| `/paper` | Cria paginas visuais no Paper a partir do blueprint |
-| `/pencil` | Cria paginas visuais no Pencil (pencil.dev) a partir do blueprint |
-
-### Code Generation (5)
+### Manutencao e Backlog (3)
 
 | Comando | Descricao |
 |---------|-----------|
-| `/codegen` | Orquestrador — apresenta entregas do build plan |
-| `/codegen-claudemd` | Gera CLAUDE.md router para o projeto-alvo |
-| `/codegen-contracts` | Setup inicial — tipos, schema, scaffold |
-| `/codegen-feature` | Implementa feature vertical (TDD/XP) |
-| `/codegen-verify` | Verifica codigo gerado vs blueprint |
+| `/increment` | Adiciona, corrige, atualiza ou remove em qualquer blueprint |
+| `/patch` | Propaga mudanca em cascata por todos os docs |
+| `/specs` | Backlog integral de tasks (`docs/specs/TASKS.md`) |
 
-### Blueprint Tecnico (18)
+### Code Generation (4)
 
-| Comando | Doc |
-|---------|-----|
-| `/blueprint-context` | 00-context.md |
-| `/blueprint-vision` | 01-vision.md |
-| `/blueprint-principles` | 02-architecture_principles.md |
-| `/blueprint-requirements` | 03-requirements.md |
-| `/blueprint-domain` | 04-domain-model.md |
-| `/blueprint-data` | 05-data-model.md |
-| `/blueprint-architecture` | 06-system-architecture.md |
-| `/blueprint-flows` | 07-critical_flows.md |
-| `/blueprint-usecases` | 08-use_cases.md |
-| `/blueprint-states` | 09-state-models.md |
-| `/blueprint-decisions` | 10-architecture_decisions.md |
-| `/blueprint-buildplan` | 11-build_plan.md |
-| `/blueprint-testing` | 12-testing_strategy.md |
-| `/blueprint-security` | 13-security.md |
-| `/blueprint-scalability` | 14-scalability.md |
-| `/blueprint-observability` | 15-observability.md |
-| `/blueprint-evolution` | 16-evolution.md |
-| `/blueprint-communication` | 17-communication.md |
-
-### Frontend (16)
-
-| Comando | Doc |
-|---------|-----|
-| `/frontend-visao` | 00-visao-frontend.md |
-| `/frontend-arquitetura` | 01-arquitetura.md |
-| `/frontend-estrutura` | 02-estrutura-projeto.md |
-| `/frontend-design-system` | 03-design-system.md |
-| `/frontend-componentes` | 04-componentes.md |
-| `/frontend-estado` | 05-estado.md |
-| `/frontend-data-layer` | 06-data-layer.md |
-| `/frontend-rotas` | 07-rotas.md |
-| `/frontend-fluxos` | 08-fluxos.md |
-| `/frontend-testes` | 09-testes.md |
-| `/frontend-performance` | 10-performance.md |
-| `/frontend-seguranca` | 11-seguranca.md |
-| `/frontend-observabilidade` | 12-observabilidade.md |
-| `/frontend-cicd` | 13-cicd-convencoes.md |
-| `/frontend-copies` | 14-copies.md |
-| `/frontend-api-deps` | 15-api-dependencies.md |
-
-### Business (10)
-
-| Comando | Doc |
-|---------|-----|
-| `/business-contexto` | 00-contexto-negocio.md |
-| `/business-proposta-valor` | 01-proposta-valor.md |
-| `/business-segmentos` | 02-segmentos-personas.md |
-| `/business-canais` | 03-canais-distribuicao.md |
-| `/business-relacionamento` | 04-relacionamento.md |
-| `/business-receita` | 05-modelo-receita.md |
-| `/business-custos` | 06-estrutura-custos.md |
-| `/business-metricas` | 07-metricas-kpis.md |
-| `/business-marketing` | 08-estrategia-marketing.md |
-| `/business-operacional` | 09-plano-operacional.md |
+| Comando | Descricao | Quando |
+|---------|-----------|--------|
+| `/codegen-setup` | CLAUDE.md router + contratos + schema + scaffold | Setup (uma vez) |
+| `/codegen` | Apresenta entregas do build plan | Inicio de sessao |
+| `/codegen-feature` | Implementa feature vertical com TDD | Dia-a-dia |
+| `/codegen-verify` | Score de aderencia codigo vs blueprint | A cada 3-5 features |
 
 ---
 
@@ -609,59 +345,43 @@ A skill transforma o conteudo para ingles, mantendo o padrao de projetos OSS int
 ```
 blueprint/
 ├── docs/
-│   ├── prd.md                    # PRD do projeto (entrada principal)
-│   ├── blueprint/                # 18 docs — arquitetura tecnica
-│   │   ├── 00-context.md
-│   │   ├── 01-vision.md
-│   │   └── ... (ate 17-communication.md)
+│   ├── prd.md                    # entrada principal
+│   ├── blueprint/                # 17 docs — arquitetura tecnica
 │   ├── backend/                  # 15 docs — especificacao backend
-│   │   ├── 00-backend-vision.md
-│   │   ├── 01-architecture.md
-│   │   └── ... (ate 14-tests.md)
-│   ├── frontend/                 # 16 docs — arquitetura frontend
-│   │   ├── 00-visao-frontend.md
-│   │   ├── 01-arquitetura.md
-│   │   └── ... (ate 15-api-dependencies.md)
-│   ├── business/                 # 10 docs — modelo de negocio
-│   │   ├── 00-contexto-negocio.md
-│   │   ├── 01-proposta-valor.md
-│   │   └── ... (ate 09-plano-operacional.md)
+│   ├── frontend/
+│   │   ├── shared/               # 3 docs — design system, data layer, API deps
+│   │   ├── web/                  # 13 docs (se selecionado)
+│   │   ├── mobile/               # 13 docs (se selecionado)
+│   │   └── desktop/              # 13 docs (se selecionado)
 │   ├── shared/                   # 4 docs — mapeamentos transversais
-│   │   ├── MAPPING.md
-│   │   ├── glossary.md
-│   │   ├── error-ux-mapping.md
-│   │   └── event-mapping.md
-│   ├── specs/                    # Backlog integral de tasks (gerado por /specs)
-│   │   └── TASKS.md
-│   ├── diagrams/                 # Diagramas Mermaid
-│   ├── templates/                # 6 templates (PRD, Epic, Story, Task, etc.)
+│   ├── specs/                    # TASKS.md (gerado por /specs)
+│   ├── diagrams/                 # diagramas Mermaid
+│   ├── templates/                # 6 templates
 │   └── adr/                      # Architecture Decision Records
-├── .claude/
-│   └── skills/                   # 60 skills do Claude Code
-│       ├── blueprint/            # Orquestrador tecnico
-│       ├── backend/              # Orquestrador backend
-│       ├── frontend/             # Orquestrador frontend
-│       ├── business/             # Orquestrador business
-│       ├── opensource/           # Transformacao para projeto OSS
-│       ├── specs/                # Geracao de backlog integral de tasks
-│       ├── patch/                # Propagacao global
-│       ├── paper/                # Paginas visuais no Paper
-│       ├── pencil/              # Paginas visuais no Pencil
-│       ├── blueprint-*/          # 18 skills de secao + incrementar
-│       ├── frontend-*/           # 16 skills de secao + incrementar
-│       ├── business-*/           # 10 skills de secao + incrementar
-│       └── codegen*/             # 5 skills de geracao de codigo
-└── README.md                     # Este arquivo
+├── .claude/skills/               # 19 skills
+└── README.md
 ```
+
+---
+
+## Convencoes das Skills
+
+Todas seguem o mesmo contrato:
+
+- **Escrita** — doc so com `{{placeholders}}` → `Write`. Doc com conteudo real → `Edit`, inserindo antes de `<!-- APPEND:... -->`
+- **Origem** — conteudo derivado marcado com `<!-- do blueprint: XX-arquivo.md -->`
+- **Versoes** — tecnologias consultadas via MCP Context7 (`resolve-library-id` → `query-docs`)
+- **Nunca inventar** numeros, metricas, SLAs ou nomes proprios — extrair ou perguntar
+- **Maximo 3 perguntas por skill** (nao por documento), agrupadas e feitas antes de gerar
+- **Idioma** — identificadores tecnicos (tabelas, campos, IDs) em ingles; descricoes em portugues
 
 ---
 
 ## Dicas
 
-- **Comece pelo PRD**: sem PRD, os skills nao tem de onde extrair informacoes
-- **Siga a ordem**: os orquestradores sugerem a sequencia ideal
-- **Nao repita skills**: use `/xxx-incrementar` para adicionar, nao reexecute o skill original
-- **Use `/patch` para mudancas globais**: renomear entidade, mudar versao, etc.
-- **Versoes atualizadas**: skills usam o MCP context7 (`mcp__context7__resolve-library-id` + `mcp__context7__query-docs`) para consultar documentacao atualizada de tecnologias
-- **Templates sao templates**: os `{{placeholders}}` sao substituidos pelos skills, nao edite manualmente
-- **Docs compartilhados**: `docs/shared/` conecta os blueprints com glossario, mapeamentos de erro e eventos
+- **Comece pelo PRD** — sem ele, as skills nao tem de onde extrair
+- **Siga a ordem** — cada fase le o que a anterior produziu; pular quebra as dependencias
+- **Nao reexecute uma skill para adicionar** — use `/increment`
+- **Use `/patch` para renomear** — entidade, endpoint, tecnologia, versao
+- **Templates sao templates** — os `{{placeholders}}` sao substituidos pelas skills, nao edite a mao
+- **`docs/shared/`** conecta os blueprints com glossario e mapeamentos de erro e eventos

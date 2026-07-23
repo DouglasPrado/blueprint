@@ -2,8 +2,8 @@
 
 Define a arquitetura em camadas do frontend desktop, inspirada em Clean Architecture adaptada para aplicacoes desktop com Electron / Tauri. Estabelece fronteiras claras entre UI, logica de aplicacao, dominio e infraestrutura, alem da separacao fundamental entre main process e renderer process.
 
-> **Implementa:** [docs/blueprint/06-system-architecture.md](../blueprint/06-system-architecture.md) (componentes e deploy) e [docs/blueprint/02-architecture_principles.md](../blueprint/02-architecture_principles.md) (principios).
-> **Complementa:** [docs/backend/01-architecture.md](../backend/01-architecture.md) (camadas do backend).
+> **Implementa:** [docs/blueprint/06-system-architecture.md](../../blueprint/06-system-architecture.md) (componentes e deploy) e [docs/blueprint/02-architecture_principles.md](../../blueprint/02-architecture_principles.md) (principios).
+> **Complementa:** [docs/backend/01-architecture.md](../../backend/01-architecture.md) (camadas do backend).
 
 ---
 
@@ -156,7 +156,7 @@ export const ipcClient = {
 
 ## Diagrama de Arquitetura
 
-> Diagrama: [desktop-architecture.mmd](../diagrams/frontend/desktop-architecture.mmd)
+> Diagrama: [desktop-architecture.mmd](../../diagrams/desktop/desktop-architecture.mmd)
 
 {{Descreva o diagrama de arquitetura ou referencie o arquivo Mermaid}}
 

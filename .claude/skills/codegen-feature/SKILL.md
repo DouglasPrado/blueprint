@@ -9,8 +9,7 @@ Implementa UMA feature como vertical slice: banco, API, frontend e testes. Ciclo
 
 ## Pre-requisitos
 
-- `/codegen-contracts` executado (tipos e schema existem)
-- CLAUDE.md presente (via `/codegen-claudemd`)
+- `/codegen-setup` executado (CLAUDE.md, tipos e schema existem)
 
 ## Passo 1: Receber a Feature
 

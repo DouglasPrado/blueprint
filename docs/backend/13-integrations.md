@@ -102,6 +102,74 @@ Define os clients de APIs externas — metodos, timeout, retry, circuit breaker 
 
 ---
 
+## Canais de Comunicacao
+
+> Provedores, templates e regras de envio de email, SMS e WhatsApp. Cada template e disparado por um evento de dominio de [12-events.md](12-events.md).
+
+### Provedores por Canal
+
+| Canal | Provedor | Fallback | Limite | Custo por envio |
+| --- | --- | --- | --- | --- |
+| {{Email transacional}} | {{Resend}} | {{SES}} | {{100k/mes}} | {{$0.001}} |
+| {{SMS}} | {{Twilio}} | {{—}} | {{10k/mes}} | {{$0.05}} |
+| {{WhatsApp}} | {{Meta Cloud API}} | {{—}} | {{1k conversas/mes}} | {{$0.03}} |
+
+<!-- APPEND:provedores-comunicacao -->
+
+### Catalogo de Templates
+
+> Um template por evento que gera notificacao. O `Evento` deve existir em [12-events.md](12-events.md).
+
+| ID | Canal | Evento disparador | Assunto / Primeira linha | Variaveis | Obrigatorio |
+| --- | --- | --- | --- | --- | --- |
+| {{TPL-001}} | {{Email}} | {{user.created}} | {{Bem-vindo ao {{produto}}}} | {{name, activationUrl}} | {{Sim}} |
+| {{TPL-002}} | {{Email}} | {{password.reset_requested}} | {{Redefinicao de senha}} | {{name, resetUrl, expiresIn}} | {{Sim}} |
+| {{TPL-003}} | {{SMS}} | {{phone.verification_sent}} | {{Seu codigo e {{code}}}} | {{code}} | {{Sim}} |
+| {{TPL-004}} | {{WhatsApp}} | {{order.completed}} | {{Pedido confirmado}} | {{orderId, total}} | {{Nao}} |
+
+<!-- APPEND:templates-comunicacao -->
+
+### Variaveis e Personalizacao
+
+| Variavel | Origem | Fallback | Exemplo |
+| --- | --- | --- | --- |
+| {{name}} | {{User.firstName}} | {{"voce"}} | {{Maria}} |
+| {{produto}} | {{config}} | {{—}} | {{Acme}} |
+| {{activationUrl}} | {{gerado com token}} | {{—}} | {{https://app/activate?t=...}} |
+
+<!-- APPEND:variaveis-comunicacao -->
+
+### Regras de Envio
+
+**Prioridade entre canais** — quando o mesmo evento pode ir por mais de um canal:
+
+| Evento | 1a opcao | 2a opcao | Condicao de fallback |
+| --- | --- | --- | --- |
+| {{phone.verification_sent}} | {{SMS}} | {{WhatsApp}} | {{SMS falhou 2x}} |
+| {{order.completed}} | {{WhatsApp}} | {{Email}} | {{usuario sem opt-in}} |
+
+**Rate limits e throttling:**
+
+| Regra | Limite | Janela | Acao ao exceder |
+| --- | --- | --- | --- |
+| {{Por usuario, por canal}} | {{5}} | {{1h}} | {{Enfileirar}} |
+| {{Marketing por usuario}} | {{2}} | {{7d}} | {{Descartar}} |
+| {{Global por provedor}} | {{1000}} | {{1min}} | {{Backpressure na fila}} |
+
+<!-- APPEND:regras-envio -->
+
+### Convencoes por Canal
+
+| Canal | Limite de tamanho | Tom | Regras |
+| --- | --- | --- | --- |
+| {{Email}} | {{assunto <= 50 chars}} | {{Direto, 2a pessoa}} | {{1 CTA principal; link de descadastro obrigatorio em marketing}} |
+| {{SMS}} | {{160 chars}} | {{Objetivo, sem emoji}} | {{Sem links encurtados; identificar o remetente}} |
+| {{WhatsApp}} | {{1024 chars}} | {{Conversacional}} | {{Template pre-aprovado pela Meta; respeitar janela de 24h}} |
+
+<!-- APPEND:convencoes-comunicacao -->
+
+---
+
 ## Health Checks de Integracoes
 
 > Como verificar se as integracoes estao funcionando?

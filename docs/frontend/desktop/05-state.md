@@ -2,8 +2,8 @@
 
 Define a estrategia de gerenciamento de estado separando claramente os tipos de estado, as ferramentas responsaveis por cada um e os anti-patterns a evitar. Em aplicacoes desktop, o estado inclui tambem persistencia em disco e sincronizacao entre main process e renderer process via IPC.
 
-> **Implementa:** [docs/blueprint/09-state-models.md](../blueprint/09-state-models.md) (maquinas de estado).
-> **Conectado a:** [docs/shared/event-mapping.md](../shared/event-mapping.md) (eventos backend que atualizam stores).
+> **Implementa:** [docs/blueprint/09-state-models.md](../../blueprint/09-state-models.md) (maquinas de estado).
+> **Conectado a:** [docs/shared/event-mapping.md](../../shared/event-mapping.md) (eventos backend que atualizam stores).
 
 ---
 

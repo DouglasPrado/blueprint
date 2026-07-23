@@ -13,8 +13,7 @@ PRD (docs/prd.md)
 Blueprint Tecnico (docs/blueprint/)     ← FONTE PRIMARIA
   │
   ├──► Backend (docs/backend/)          ← Implementacao server
-  ├──► Frontend (docs/frontend/)        ← Implementacao client
-  ├──► Business (docs/business/)        ← Modelo de negocio
+  ├──► Frontend (docs/frontend/)        ← Implementacao client (shared/ + por cliente)
   └──► Shared (docs/shared/)            ← Conectores cross-suite
          ├── glossary.md                ← Termos unicos
          ├── event-mapping.md           ← Backend eventos → Frontend estado
@@ -45,7 +44,6 @@ Blueprint Tecnico (docs/blueprint/)     ← FONTE PRIMARIA
 | 14-scalability.md | 08-middlewares.md | Cache, rate limit → config de middleware |
 | 15-observability.md | 08-middlewares.md | Logs, traces → pipeline de request |
 | 16-evolution.md | 05-api-contracts.md | Versionamento API |
-| 17-communication.md | 12-events.md, 13-integrations.md | Canais → workers; Provedores → clients |
 
 ---
 
@@ -66,23 +64,10 @@ Blueprint Tecnico (docs/blueprint/)     ← FONTE PRIMARIA
 | 13-security.md | 11-security.md | Auth → protecao de rotas |
 | 14-scalability.md | 10-performance.md | Cache → estrategia client-side |
 | 15-observability.md | 12-observability.md | Metricas → error tracking frontend |
-| 17-communication.md | 14-copies.md | Templates → copies e mensagens |
-| backend/05-api-contracts.md | 15-api-dependencies.md | Endpoints → dependencias consumidas pelo frontend |
+| backend/05-api-contracts.md | shared/15-api-dependencies.md | Endpoints → dependencias consumidas pelo frontend |
+| backend/13-integrations.md | 14-copies.md | Templates de comunicacao → copies e mensagens |
 
----
-
-## Mapeamento Blueprint → Business
-
-| Blueprint | Business | O que flui |
-| --- | --- | --- |
-| 00-context.md | 00-business-context.md | Atores → mercado, segmento |
-| 01-vision.md | 01-value-proposition.md, 05-revenue-model.md | Problema → proposta de valor |
-| 03-requirements.md | 05-revenue-model.md | Features → pricing tiers |
-| 06-system-architecture.md | 06-cost-structure.md, 09-operational-plan.md | Infra → custos; Deploy → operacoes |
-| 11-build_plan.md | 09-operational-plan.md | Fases → timeline operacional |
-| 14-scalability.md | 06-cost-structure.md | Escala → projecao de custos |
-| 15-observability.md | 07-metrics-kpis.md | Metricas tecnicas → KPIs de negocio |
-| 17-communication.md | 03-channels-distribution.md, 04-relationships.md | Canais → distribuicao e relacionamento |
+> **Estrutura multi-client:** `03-design-system.md`, `06-data-layer.md` e `15-api-dependencies.md` vivem em `docs/frontend/shared/`. Os demais vivem em `docs/frontend/{web,mobile,desktop}/`.
 
 ---
 

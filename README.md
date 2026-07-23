@@ -2,7 +2,7 @@
 
 Framework de documentacao tecnica para projetos de software. Templates estruturados + skills do Claude Code que documentam um produto de ponta a ponta — do contexto do sistema a arquitetura de frontend — e depois geram codigo fiel a essa documentacao.
 
-**3 blueprints** | **52 documentos** | **19 skills**
+**3 blueprints** | **52 documentos** | **20 skills**
 
 ---
 
@@ -16,7 +16,7 @@ Um conjunto de templates Markdown com placeholders (`{{...}}`) e skills do Claud
 | **Backend** | Classes, servicos, API, eventos, integracoes, testes | 15 | 1 |
 | **Frontend** | Design system, componentes, estado, rotas, performance | 3 + 13/cliente | 4 |
 
-Mais 7 skills de apoio: incremento, patch global, backlog de tasks e geracao de codigo.
+Mais 8 skills de apoio: pipeline automatico, incremento, patch global, backlog de tasks e geracao de codigo.
 
 Cada skill gera um **grupo de documentos** numa unica passada — le o contexto uma vez e escreve tudo que deriva dele. E isso que mantem o processo curto.
 
@@ -41,6 +41,18 @@ Cada skill gera um **grupo de documentos** numa unica passada — le o contexto 
 ---
 
 ## Quick Start
+
+### Automatico — um comando
+
+```
+/pipeline docs/prd.md web
+```
+
+Roda as 11 fases em sequencia sem parar para perguntar, gera os 52 documentos e consolida cada inferencia em `docs/ASSUMPTIONS.md` classificada por risco. Cada fase executa num subagente com contexto limpo.
+
+Bom para: primeira versao rapida, PRD ja detalhado. Ruim para: projeto critico com PRD raso — sem perguntas, o que o PRD nao cobre vira suposicao. Veja [limites](#pipeline--execucao-automatica).
+
+### Manual — fase a fase
 
 ```
 /blueprint                    # salva o PRD, analisa cobertura, mostra o roadmap
@@ -84,6 +96,61 @@ Depois:
 ```
 
 A ordem importa: cada fase le o que a anterior produziu.
+
+---
+
+## Pipeline — Execucao Automatica
+
+`/pipeline` roda todas as fases de documentacao de uma vez, sem intervencao.
+
+```
+/pipeline                          # usa docs/prd.md, infere os clientes do PRD
+/pipeline docs/prd.md web,mobile   # explicito
+```
+
+### Como funciona
+
+Cada fase executa num **subagente com contexto limpo** — le so o que precisa, escreve seus documentos e devolve um resumo. O orquestrador guarda apenas os resumos, nunca os documentos gerados. E isso que permite produzir 52 documentos sem estourar o contexto.
+
+```
+[1/11] blueprint-foundation   → 00, 01, 02, 03
+[2/11] blueprint-domain       → 04, 05, 09
+...
+[7/11] backend                → 15 docs
+[8/11] frontend-design-system → shared/03
+[9/11] frontend               → shared/06, shared/15
+[10/11] frontend-app web      → 8 docs
+[11/11] frontend-quality web  → 5 docs
+```
+
+**Retomavel:** se a sessao cair no meio, rode `/pipeline` de novo — ele detecta quais documentos ja tem conteudo real e pula as fases concluidas.
+
+### Modo autonomo — o trade-off
+
+As skills individuais fazem ate 3 perguntas cada. O pipeline **nao faz nenhuma** — infere tudo do PRD. Onde o PRD e vago, o conteudo gerado e suposicao, nao fato.
+
+A compensacao e tornar cada suposicao auditavel:
+
+1. Marcada no proprio documento: `<!-- assumido: {valor} — base: {de onde inferiu} -->`
+2. Consolidada em `docs/ASSUMPTIONS.md`, classificada por risco
+3. As de risco alto aparecem no relatorio final
+
+| Risco | Quando | Exemplo |
+|-------|--------|---------|
+| **Alto** | Numero, SLA ou nome proprio sem base no PRD | `p95 < 300ms` quando o PRD nao fala de latencia |
+| **Medio** | Escolha tecnica plausivel mas nao declarada | `PostgreSQL` inferido de "dados relacionais" |
+| **Baixo** | Derivacao logica direta | Entidade `Order` porque o PRD fala em pedidos |
+
+Corrija as suposicoes com `/increment` (um blueprint) ou `/patch` (mudanca global).
+
+### Limites
+
+- **Qualidade depende do PRD** — PRD raso gera muitas suposicoes de risco alto. O pipeline extrapola o que existe; nao inventa contexto de negocio.
+- **Nao substitui as skills individuais** — para projeto critico, rode fase a fase e responda as perguntas.
+- **Nao inclui codegen** — geracao de codigo exige validacao humana a cada feature (ciclo TDD).
+- **Custo** — um subagente por fase consome mais tokens que rodar tudo numa sessao. E o preco por nao estourar o contexto.
+
+Trate o resultado como **rascunho completo**, nao como documentacao final.
 
 ---
 
@@ -292,7 +359,13 @@ Blueprints preenchidos ultrapassam 2M tokens — nao cabem em nenhum contexto. A
 
 ---
 
-## Referencia Rapida — 19 Skills
+## Referencia Rapida — 20 Skills
+
+### Automacao (1)
+
+| Comando | Descricao |
+|---------|-----------|
+| `/pipeline` | Roda todas as fases automaticamente (subagente por fase, zero perguntas) |
 
 ### Blueprint Tecnico (7)
 
@@ -354,11 +427,12 @@ blueprint/
 │   │   ├── mobile/               # 13 docs (se selecionado)
 │   │   └── desktop/              # 13 docs (se selecionado)
 │   ├── shared/                   # 4 docs — mapeamentos transversais
+│   ├── ASSUMPTIONS.md            # suposicoes do /pipeline, por risco
 │   ├── specs/                    # TASKS.md (gerado por /specs)
 │   ├── diagrams/                 # diagramas Mermaid
 │   ├── templates/                # 6 templates
 │   └── adr/                      # Architecture Decision Records
-├── .claude/skills/               # 19 skills
+├── .claude/skills/               # 20 skills
 └── README.md
 ```
 
@@ -379,8 +453,9 @@ Todas seguem o mesmo contrato:
 
 ## Dicas
 
-- **Comece pelo PRD** — sem ele, as skills nao tem de onde extrair
+- **Comece pelo PRD** — sem ele, as skills nao tem de onde extrair. Quanto mais detalhado, menos o `/pipeline` precisa supor
 - **Siga a ordem** — cada fase le o que a anterior produziu; pular quebra as dependencias
+- **Depois do `/pipeline`, leia `docs/ASSUMPTIONS.md`** antes de tratar a documentacao como definitiva
 - **Nao reexecute uma skill para adicionar** — use `/increment`
 - **Use `/patch` para renomear** — entidade, endpoint, tecnologia, versao
 - **Templates sao templates** — os `{{placeholders}}` sao substituidos pelas skills, nao edite a mao

@@ -1,71 +1,67 @@
 ---
 name: blueprint
-description: Inicia blueprint tecnico a partir de um PRD. Analisa lacunas e guia o preenchimento.
+description: Inicia blueprint tecnico a partir de um PRD. Analisa lacunas e guia o preenchimento em 6 fases.
 ---
 
-# Blueprint — Orquestrador de Documentacao
+# Blueprint — Orquestrador
 
-Voce e o orquestrador do preenchimento do Blueprint de Software. Sua funcao e receber o PRD, salva-lo e guiar o usuario pela documentacao passo a passo.
+Recebe o PRD, salva, analisa cobertura e guia o preenchimento dos 17 documentos de `docs/blueprint/` em **6 fases**. Cada fase e uma skill que gera varios documentos lendo o contexto uma unica vez.
 
 ## Passo 1: Receber o PRD
 
-Verifique se o usuario passou um argumento (caminho de arquivo). Se sim, leia o arquivo. Se nao, pergunte:
+Se o usuario passou um caminho de arquivo, leia. Se nao:
 
-> "Para iniciar o blueprint, preciso do seu PRD (Product Requirements Document). Voce pode:
-> 1. Passar o caminho do arquivo: `/blueprint docs/prd.md`
-> 2. Colar o conteudo do PRD aqui no chat
+> "Para iniciar o blueprint, preciso do seu PRD. Voce pode:
+> 1. Passar o caminho: `/blueprint docs/prd.md`
+> 2. Colar o conteudo aqui no chat
 >
 > Como prefere?"
 
-Aguarde a resposta do usuario.
+Aguarde a resposta.
 
 ## Passo 2: Salvar o PRD
 
-Salve o conteudo do PRD em `docs/prd.md` na raiz do projeto. Se o arquivo ja existir, pergunte se deve sobrescrever.
+Salve em `docs/prd.md`. Se ja existir, pergunte antes de sobrescrever.
 
-## Passo 3: Analisar o PRD
+## Passo 3: Analisar Cobertura por Fase
 
-Leia o PRD e analise a cobertura para cada secao do blueprint. Para cada secao, classifique:
+Leia o PRD e classifique cada fase como **Coberto** (da para preencher), **Parcial** (falta detalhe) ou **Lacuna** (PRD nao cobre):
 
-- **Coberto**: o PRD tem informacao suficiente para preencher
-- **Parcial**: o PRD tem alguma informacao mas faltam detalhes
-- **Lacuna**: o PRD nao cobre esta secao
+| Fase | Docs | Cobertura | Observacao |
+|------|------|-----------|------------|
+| 1. Fundacao | 00, 01, 02, 03 | Coberto/Parcial/Lacuna | breve nota |
+| 2. Dominio | 04, 05, 09 | ... | ... |
+| 3. Arquitetura | 06, 10 | ... | ... |
+| 4. Fluxos | 07, 08 | ... | ... |
+| 5. Qualidade | 12, 13, 14, 15 | ... | ... |
+| 6. Plano | 11, 16 | ... | ... |
 
-Apresente o resultado em tabela:
-
-| # | Secao | Cobertura | Observacao |
-|---|-------|-----------|------------|
-| 1 | Contexto | Coberto/Parcial/Lacuna | breve nota |
-| 2 | Visao | ... | ... |
-| ... | ... | ... | ... |
+Indique nas observacoes o que provavelmente sera perguntado em cada fase (max 3 perguntas por fase).
 
 ## Passo 4: Apresentar o Roadmap
 
-Apresente a ordem recomendada de preenchimento:
-
 ```
-1.  /blueprint-context        — Contexto do Sistema
-2.  /blueprint-vision         — Visao e Objetivos
-3.  /blueprint-principles     — Principios Arquiteturais
-4.  /blueprint-requirements   — Requisitos
-5.  /blueprint-domain         — Modelo de Dominio
-6.  /blueprint-data           — Modelo de Dados
-7.  /blueprint-architecture   — Arquitetura do Sistema
-8.  /blueprint-flows          — Fluxos Criticos
-9.  /blueprint-usecases       — Casos de Uso
-10. /blueprint-states         — Modelos de Estado
-11. /blueprint-decisions      — Decisoes Arquiteturais
-12. /blueprint-buildplan      — Plano de Construcao
-13. /blueprint-testing        — Estrategia de Testes
-14. /blueprint-security       — Seguranca
-15. /blueprint-scalability    — Escalabilidade
-16. /blueprint-observability  — Observabilidade
-17. /blueprint-evolution      — Evolucao e Migracao
-18. /blueprint-communication — Comunicacao (Email, SMS, WhatsApp)
+1. /blueprint-foundation    → 00-context, 01-vision, 02-principles, 03-requirements
+2. /blueprint-domain        → 04-domain-model, 05-data-model, 09-state-models
+3. /blueprint-architecture  → 06-system-architecture, 10-architecture_decisions
+4. /blueprint-flows         → 07-critical_flows, 08-use_cases
+5. /blueprint-quality       → 12-testing, 13-security, 14-scalability, 15-observability
+6. /blueprint-plan          → 11-build_plan, 16-evolution
 ```
 
-## Passo 5: Orientar o Proximo Passo
+A ordem importa: cada fase le o que a anterior produziu. Nao pule fases.
 
-Diga ao usuario:
+## Passo 5: Orientar
 
-> "PRD salvo e analisado. Rode `/blueprint-context` para comecar pelo Contexto do Sistema."
+> "PRD salvo e analisado. Rode `/blueprint-foundation` para comecar pela Fundacao (contexto, visao, principios e requisitos)."
+
+## Depois do Blueprint
+
+| Skill | Para que |
+|-------|----------|
+| `/backend` | Especificacao de implementacao backend (15 docs) |
+| `/frontend` | Arquitetura frontend multi-client |
+| `/increment` | Adicionar feature ou corrigir sem reescrever |
+| `/patch` | Propagar mudanca global (renomear entidade, trocar tecnologia) |
+| `/specs` | Gerar backlog integral de tasks |
+| `/codegen` | Gerar codigo a partir dos blueprints |

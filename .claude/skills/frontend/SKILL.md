@@ -1,57 +1,41 @@
 ---
 name: frontend
-description: Gera frontend blueprint a partir do blueprint tecnico. Multi-client (web/mobile/desktop).
+description: Orquestrador do frontend blueprint multi-client. Analisa cobertura e gera os docs compartilhados.
 ---
 
-# Frontend Blueprint — Orquestrador de Documentacao de Frontend
+# Frontend — Orquestrador e Docs Compartilhados
 
-Voce e o orquestrador do preenchimento do Frontend Blueprint. Sua funcao e ler o blueprint tecnico (docs/blueprint/), analisar a cobertura de informacoes de frontend e guiar o usuario pela documentacao passo a passo. O sistema suporta multiplos clientes (web, mobile, desktop) em estrutura de monorepo.
+Le o blueprint tecnico, define quais clientes documentar e gera os **docs compartilhados** entre eles. Depois orienta as skills por cliente.
+
+O sistema suporta multiplos clientes (web, mobile, desktop) em monorepo. Cada cliente recebe 13 docs proprios; 3 docs sao compartilhados.
 
 ## Passo 1: Ler o Blueprint Tecnico
 
-Leia todos os arquivos do blueprint tecnico em `docs/blueprint/` como fonte primaria:
+Leia `docs/blueprint/` como fonte primaria. Para esta skill importam especialmente:
 
-1. `docs/blueprint/00-context.md` — atores, sistemas externos, limites
-2. `docs/blueprint/01-vision.md` — problema, metricas, nao-objetivos
-3. `docs/blueprint/02-architecture_principles.md` — principios e restricoes
-4. `docs/blueprint/03-requirements.md` — requisitos funcionais e nao-funcionais
-5. `docs/blueprint/04-domain-model.md` — entidades, regras, relacionamentos
-6. `docs/blueprint/05-data-model.md` — banco, tabelas, migrations
-7. `docs/blueprint/06-system-architecture.md` — componentes, comunicacao, deploy
-8. `docs/blueprint/07-critical_flows.md` — fluxos criticos com happy/error path
-9. `docs/blueprint/08-use_cases.md` — casos de uso estruturados
-10. `docs/blueprint/09-state-models.md` — maquinas de estado
-11. `docs/blueprint/10-architecture_decisions.md` — ADRs
-12. `docs/blueprint/11-build_plan.md` — entregas e milestones
-13. `docs/blueprint/12-testing_strategy.md` — piramide e cobertura
-14. `docs/blueprint/13-security.md` — STRIDE, auth, OWASP
-15. `docs/blueprint/14-scalability.md` — cache, rate limit, escala
-16. `docs/blueprint/15-observability.md` — logs, metricas, traces
-17. `docs/blueprint/16-evolution.md` — roadmap, deprecacao
-18. `docs/blueprint/17-communication.md` — email, SMS, WhatsApp
+- `00-context.md`, `01-vision.md`, `02-architecture_principles.md` — atores, problema, principios
+- `03-requirements.md` — RNFs de latencia e cache
+- `04-domain-model.md` — entidades que viram tipos e componentes
+- `05-data-model.md` — modelo de dados e queries
+- `06-system-architecture.md` — API, comunicacao e deploy
+- `07-critical_flows.md`, `08-use_cases.md` — jornadas que viram telas
 
-Se o blueprint tecnico estiver vazio ou incompleto, use `docs/prd.md` como fallback. Se nenhum dos dois estiver disponivel, pergunte:
+Se o blueprint estiver vazio, use `docs/prd.md` como fallback. Se nenhum existir:
 
-> "Para iniciar o frontend blueprint, preciso do blueprint tecnico preenchido (docs/blueprint/). Voce pode:
+> "Para iniciar o frontend blueprint, preciso do blueprint tecnico preenchido (`docs/blueprint/`). Voce pode:
 > 1. Rodar `/blueprint` para preencher o blueprint tecnico primeiro
 > 2. Passar o caminho do PRD como fallback: `/frontend docs/prd.md`
 >
 > Como prefere?"
 
-Aguarde a resposta do usuario.
+## Passo 2: Deteccao de Estrutura Existente
 
-## Passo 1.5: Deteccao de Estrutura Existente
+Se existirem `.md` diretamente em `docs/frontend/` (sem subpasta), ofereca migracao:
 
-Verifique se existem arquivos `.md` diretamente em `docs/frontend/` (sem subpastas). Se sim, oferecer migracao:
+> "Detectei documentos em formato flat em `docs/frontend/`. O sistema usa estrutura multi-client.
+> Deseja migrar para `docs/frontend/web/`? Os compartilhados (design-system, data-layer, api-dependencies) irao para `docs/frontend/shared/`."
 
-> "Detectei documentos em formato flat em `docs/frontend/`. O sistema agora usa estrutura multi-client.
-> Deseja migrar os docs existentes para `docs/frontend/web/`? Os arquivos compartilhados (design-system, data-layer, api-dependencies) irao para `docs/frontend/shared/`."
-
-Se o usuario aceitar, mova os arquivos correspondentes.
-
-## Passo 2: Selecao de Clientes
-
-Pergunte ao usuario quais clientes frontend ele precisa documentar:
+## Passo 3: Selecao de Clientes
 
 > "Quais clientes frontend voce precisa documentar?
 > 1. **Web** (Next.js / Remix / SPA)
@@ -60,143 +44,83 @@ Pergunte ao usuario quais clientes frontend ele precisa documentar:
 >
 > Escolha um ou mais (ex: 1,2). Monorepo sera usado como padrao."
 
-Aguarde a resposta. Armazene os clientes selecionados.
-
-A estrutura de saida sera:
+Estrutura de saida:
 
 ```
 docs/frontend/
-  shared/                          # Docs compartilhados entre clientes
-    03-design-system.md            # Tokens, cores, tipografia (agnostico)
-    06-data-layer.md               # API client, DTOs, contratos
-    15-api-dependencies.md         # Mapa de endpoints
+  shared/                     # esta skill + /frontend-design-system
+    03-design-system.md
+    06-data-layer.md
+    15-api-dependencies.md
 
-  web/                             # Se web selecionado
-    00-frontend-vision.md
-    01-architecture.md
-    02-project-structure.md
-    04-components.md
-    05-state.md
-    07-routes.md
-    08-flows.md
-    09-tests.md
-    10-performance.md
-    11-security.md
-    12-observability.md
-    13-cicd-conventions.md
-    14-copies.md
-
-  mobile/                          # Se mobile selecionado
-    (mesmos 13 arquivos)
-
-  desktop/                         # Se desktop selecionado
-    (mesmos 13 arquivos)
+  {client}/                   # /frontend-app + /frontend-quality, por cliente
+    00-frontend-vision.md   04-components.md   09-tests.md      13-cicd-conventions.md
+    01-architecture.md      05-state.md        10-performance.md 14-copies.md
+    02-project-structure.md 07-routes.md       11-security.md
+                            08-flows.md        12-observability.md
 ```
 
-## Passo 3: Salvar o PRD
+## Passo 4: Analisar Cobertura
 
-Se o PRD ainda nao existir em `docs/prd.md`, salve o conteudo la. Se o arquivo ja existir, nao sobrescreva.
+Classifique cada grupo como **Coberto** / **Parcial** / **Lacuna**:
 
-## Passo 4: Analisar o Blueprint Tecnico
+| Grupo | Docs | Cobertura | Observacao |
+|-------|------|-----------|------------|
+| Compartilhados | 03, 06, 15 | ... | ... |
+| App ({client}) | 00, 01, 02, 04, 05, 07, 08, 14 | ... | ... |
+| Qualidade ({client}) | 09, 10, 11, 12, 13 | ... | ... |
 
-Leia o blueprint tecnico e analise a cobertura para cada secao do frontend blueprint. Para cada secao, classifique:
+Repita as duas ultimas linhas para cada cliente selecionado.
 
-- **Coberto**: o blueprint tecnico tem informacao suficiente para preencher
-- **Parcial**: o blueprint tecnico tem alguma informacao mas faltam detalhes
-- **Lacuna**: o blueprint tecnico nao cobre esta secao
+---
 
-Apresente uma tabela de cobertura por cliente selecionado:
+## Passo 5: Gerar os Docs Compartilhados (06 e 15)
 
-### Documentos Compartilhados (shared)
+### Convencoes
 
-| # | Secao | Cobertura | Observacao |
-|---|-------|-----------|------------|
-| 03 | Design System | Coberto/Parcial/Lacuna | breve nota |
-| 06 | Data Layer | ... | ... |
-| 15 | Dependencias de API | ... | ... |
+- **Escrita:** doc so com `{{placeholders}}` → Write. Doc com conteudo real → Edit, inserindo antes de `<!-- APPEND:... -->`. Alteracao pontual → `/increment`.
+- **Origem:** marque conteudo derivado com `<!-- do blueprint: XX-arquivo.md -->`.
+- **Versoes:** tecnologias com versao → `mcp__context7__resolve-library-id` → `mcp__context7__query-docs`.
+- **Perguntas: maximo 3 nesta skill inteira.**
 
-### Documentos por Cliente
+### 06 — Data Layer (`docs/frontend/shared/06-data-layer.md`)
 
-Para CADA cliente selecionado (web, mobile, desktop), apresente:
+Preencha:
+- **API Client**: biblioteca e configuracao do client HTTP (interceptors, base URL, headers)
+- **Data Fetching**: estrategia (SSR, SSG, CSR, ISR) e ferramentas
+- **Contratos de API (DTOs)**: como sao definidos e validados
+- **BFF**: existe Backend for Frontend? Escopo e responsabilidades
+- **Estrategia de Cache**: stale-while-revalidate, TTL, invalidacao
 
-> **Cliente: {{web/mobile/desktop}}**
+### 15 — Dependencias de API (`docs/frontend/shared/15-api-dependencies.md`)
 
-| # | Secao | Cobertura | Observacao |
-|---|-------|-----------|------------|
-| 00 | Visao do Frontend | Coberto/Parcial/Lacuna | breve nota |
-| 01 | Arquitetura | ... | ... |
-| 02 | Estrutura do Projeto | ... | ... |
-| 04 | Componentes | ... | ... |
-| 05 | Gerenciamento de Estado | ... | ... |
-| 07 | Rotas e Navegacao | ... | ... |
-| 08 | Fluxos de Interface | ... | ... |
-| 09 | Estrategia de Testes | ... | ... |
-| 10 | Performance | ... | ... |
-| 11 | Seguranca | ... | ... |
-| 12 | Observabilidade | ... | ... |
-| 13 | CI/CD e Convencoes | ... | ... |
-| 14 | Copies | ... | ... |
+Mapa de endpoints que o frontend consome. Derive de `08-use_cases.md` e `06-system-architecture.md`; se `docs/backend/05-api-contracts.md` existir, use-o como fonte autoritativa.
 
-## Passo 5: Apresentar o Roadmap
+Preencha: endpoint, metodo, tela/feature consumidora, request, response, erros tratados e criticidade.
 
-Apresente a ordem recomendada de preenchimento. Documentos compartilhados primeiro, depois por cliente sequencialmente:
+---
+
+## Passo 6: Roadmap
 
 ```
-DOCUMENTOS COMPARTILHADOS (rodar uma vez):
-1.  /frontend-design-system        — Tokens e design system (shared)
-2.  /frontend-data-layer           — API client e contratos (shared)
+COMPARTILHADOS (rodar uma vez):
+1. /frontend                  → 06-data-layer, 15-api-dependencies  [feito nesta sessao]
+2. /frontend-design-system    → 03-design-system
 
-DOCUMENTOS POR CLIENTE (rodar para cada cliente selecionado):
-Para cada cliente [web|mobile|desktop]:
-3.  /frontend-vision {client}      — Visao e stack
-4.  /frontend-architecture {client} — Camadas e fronteiras de dominio
-5.  /frontend-structure {client}   — Estrutura de pastas e modulos
-6.  /frontend-components {client}  — Hierarquia e padroes de componentes
-7.  /frontend-state {client}       — Gerenciamento de estado
-8.  /frontend-routes {client}      — Rotas e navegacao
-9.  /frontend-flows {client}       — Fluxos criticos de interface
-10. /frontend-tests {client}       — Piramide e estrategia de testes
-11. /frontend-performance {client} — Otimizacao e metricas
-12. /frontend-security {client}    — Autenticacao e protecao
-13. /frontend-observability {client} — Monitoramento e feature flags
-14. /frontend-cicd {client}        — Pipeline e convencoes de codigo
-15. /frontend-copies {client}      — Textos e copies de todas as telas
+POR CLIENTE (rodar para cada cliente selecionado):
+3. /frontend-app {client}     → 00, 01, 02, 04, 05, 07, 08, 14
+4. /frontend-quality {client} → 09, 10, 11, 12, 13
 ```
 
-**Recomendacao**: preencher todos os documentos de um cliente antes de passar para o proximo.
+**Recomendacao:** termine todos os docs de um cliente antes de passar ao proximo.
 
-## Passo 6: Orientar o Proximo Passo
-
-Diga ao usuario:
-
-> "Blueprint tecnico analisado. Comece pelos documentos compartilhados:
->
-> Rode `/frontend-design-system` para preencher o Design System (compartilhado entre todos os clientes).
->
-> Depois, para cada cliente selecionado, rode os skills passando o cliente como parametro.
-> Exemplo: `/frontend-vision web`, `/frontend-vision mobile`"
-
-## Nota sobre Hierarquia
-
-A hierarquia de documentacao segue o fluxo: **PRD** -> **Blueprint Tecnico** (`docs/blueprint/`) -> **Frontend Blueprint** (`docs/frontend/`). O PRD define o produto, o blueprint tecnico detalha a arquitetura e decisoes do sistema, e o frontend blueprint documenta como a interface sera arquitetada e implementada. O frontend blueprint usa o blueprint tecnico como fonte primaria, garantindo alinhamento com as decisoes tecnicas ja tomadas.
+> "Docs compartilhados de dados prontos. Rode `/frontend-design-system` para definir tokens, tipografia, cores e iconografia — depois `/frontend-app web` (ou o cliente que preferir)."
 
 ## Nota sobre Monorepo
 
-O projeto utiliza estrutura de monorepo como padrao. A organizacao de clientes segue:
-
 ```
-apps/
-  api/                    # Backend
-  web/                    # Cliente web (se selecionado)
-  mobile/                 # Cliente mobile (se selecionado)
-  desktop/                # Cliente desktop (se selecionado)
-
-packages/
-  ui/                     # Design system compartilhado
-  api-client/             # Cliente de API compartilhado
-  config/                 # Configs compartilhadas (ESLint, TS, Tailwind)
-  utils/                  # Utilitarios compartilhados
-  types/                  # Tipos compartilhados
+apps/       api/  web/  mobile/  desktop/
+packages/   ui/  api-client/  config/  utils/  types/
 ```
 
-Essa estrutura e documentada em `docs/frontend/shared/` (partes compartilhadas) e `docs/frontend/{client}/` (partes especificas de cada cliente).
+`docs/frontend/shared/` documenta o que vive em `packages/`; `docs/frontend/{client}/` documenta o que vive em `apps/{client}/`.

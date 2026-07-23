@@ -42,7 +42,7 @@ Documenta os fluxos criticos de interacao do usuario com o frontend. Cada fluxo 
 - {{Erro possivel 1 — credenciais invalidas}} → {{Exibe mensagem inline no form}}
 - {{Erro possivel 2 — servidor indisponivel}} → {{Toast de erro + retry button}}
 
-> 📐 Diagrama: [fluxo-1.mmd](../diagrams/frontend/fluxo-1.mmd)
+> 📐 Diagrama: [fluxo-1.mmd](../../diagrams/web/fluxo-1.mmd)
 
 ---
 
@@ -62,7 +62,7 @@ Documenta os fluxos criticos de interacao do usuario com o frontend. Cada fluxo 
 - {{Erro possivel 1}} → {{Como o frontend responde}}
 - {{Erro possivel 2}} → {{Como o frontend responde}}
 
-> 📐 Diagrama: [fluxo-2.mmd](../diagrams/frontend/fluxo-2.mmd)
+> 📐 Diagrama: [fluxo-2.mmd](../../diagrams/web/fluxo-2.mmd)
 
 ---
 
@@ -82,7 +82,7 @@ Documenta os fluxos criticos de interacao do usuario com o frontend. Cada fluxo 
 - {{Erro possivel 1}} → {{Como o frontend responde}}
 - {{Erro possivel 2}} → {{Como o frontend responde}}
 
-> 📐 Diagrama: [fluxo-3.mmd](../diagrams/frontend/fluxo-3.mmd)
+> 📐 Diagrama: [fluxo-3.mmd](../../diagrams/web/fluxo-3.mmd)
 
 <!-- APPEND:fluxos -->
 

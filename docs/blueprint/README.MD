@@ -23,12 +23,12 @@ Para equipes que preferem documentação modular, as mesmas seções estão disp
 | [01-vision.md](01-vision.md) | 3. Visão, Objetivos e Não-Objetivos |
 | [02-architecture_principles.md](02-architecture_principles.md) | 6. Princípios Arquiteturais |
 | [03-requirements.md](03-requirements.md) | 7. Requisitos |
-| [04-domain_model.md](04-domain_model.md) | 8. Modelo de Domínio |
-| [05-data_model.md](05-data_model.md) | 9. Modelo de Dados |
-| [06-system_architecture.md](06-system_architecture.md) | 10. Arquitetura do Sistema |
+| [04-domain-model.md](04-domain-model.md) | 8. Modelo de Domínio |
+| [05-data-model.md](05-data-model.md) | 9. Modelo de Dados |
+| [06-system-architecture.md](06-system-architecture.md) | 10. Arquitetura do Sistema |
 | [07-critical_flows.md](07-critical_flows.md) | 12. Fluxos Críticos |
 | [08-use_cases.md](08-use_cases.md) | 13. Casos de Uso |
-| [09-state_models.md](09-state_models.md) | 14. Modelos de Estado |
+| [09-state-models.md](09-state-models.md) | 14. Modelos de Estado |
 | [10-architecture_decisions.md](10-architecture_decisions.md) | 16. Decisões Arquiteturais |
 | [11-build_plan.md](11-build_plan.md) | 17. Plano de Construção |
 | [12-testing_strategy.md](12-testing_strategy.md) | 18. Estratégia de Testes |

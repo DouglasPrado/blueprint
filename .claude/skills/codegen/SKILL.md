@@ -12,14 +12,11 @@ Voce e o orquestrador do workflow de geracao de codigo a partir dos blueprints. 
 Verifique se os blueprints estao preenchidos:
 
 1. Leia `docs/blueprint/11-build_plan.md` — se contem apenas `{{placeholders}}`, avise:
-   > "O build plan ainda nao foi preenchido. Rode `/blueprint-buildplan` primeiro para definir as entregas do projeto."
+   > "O build plan ainda nao foi preenchido. Rode `/blueprint-plan` primeiro para definir as entregas do projeto."
    E pare aqui.
 
-2. Verifique se o CLAUDE.md existe no projeto-alvo. Se nao:
-   > "CLAUDE.md nao encontrado. Rode `/codegen-claudemd` para gerar o router de contexto."
-
-3. Verifique se `src/contracts/` existe. Se nao:
-   > "Contratos compartilhados nao encontrados. Rode `/codegen-contracts` para gerar o scaffold inicial."
+2. Verifique se o CLAUDE.md existe no projeto-alvo e se `src/contracts/` existe. Se faltar algum:
+   > "Setup inicial nao encontrado. Rode `/codegen-setup` para gerar o CLAUDE.md router e o scaffold com os contratos."
 
 ## Passo 2: Leitura de Contexto
 
@@ -104,4 +101,4 @@ Quando todas as entregas Must estiverem concluidas:
 
 ## Workflow
 
-`/codegen-claudemd` (1x) → `/codegen-contracts` (1x) → `/codegen` (inicio sessao) → `/codegen-feature [nome]` (por feature) → `/codegen-verify` (periodico)
+`/codegen-setup` (1x) → `/codegen` (inicio de sessao) → `/codegen-feature [nome]` (por feature) → `/codegen-verify` (periodico)

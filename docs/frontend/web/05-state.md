@@ -2,8 +2,8 @@
 
 Define a estrategia de gerenciamento de estado separando claramente os tipos de estado, as ferramentas responsaveis por cada um e os anti-patterns a evitar. A separacao correta de estado e uma das decisoes arquiteturais mais importantes do frontend — estado mal gerenciado e a principal causa de bugs e complexidade desnecessaria.
 
-> **Implementa:** [docs/blueprint/09-state-models.md](../blueprint/09-state-models.md) (maquinas de estado).
-> **Conectado a:** [docs/shared/event-mapping.md](../shared/event-mapping.md) (eventos backend que atualizam stores).
+> **Implementa:** [docs/blueprint/09-state-models.md](../../blueprint/09-state-models.md) (maquinas de estado).
+> **Conectado a:** [docs/shared/event-mapping.md](../../shared/event-mapping.md) (eventos backend que atualizam stores).
 
 ---
 

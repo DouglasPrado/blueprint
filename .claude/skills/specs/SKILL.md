@@ -44,7 +44,7 @@ Leia TODOS os 15 arquivos de `docs/backend/`. Mapa de extracao:
 
 ## Passo 3: Cross-reference com Frontend
 
-Leia `docs/frontend/` (04-components, 05-state, 06-data-layer, 08-flows, 11-security, 15-api-dependencies) e `docs/shared/` (event-mapping, error-ux-mapping, glossary).
+Leia `docs/frontend/shared/` (06-data-layer, 15-api-dependencies) e, para cada cliente existente, `docs/frontend/{client}/` (04-components, 05-state, 08-flows, 11-security). Leia tambem `docs/shared/` (event-mapping, error-ux-mapping, glossary).
 
 Para cada endpoint/evento/erro do backend, identifique consumidor no frontend. Sem consumidor → marque como **gap de frontend**.
 
@@ -81,7 +81,9 @@ Crie `docs/specs/TASKS.md` com Write. Estrutura:
 
 ## Passo 5: Validacao contra Blueprint
 
-Cruze tasks com `docs/blueprint/` (03-requirements, 04-domain, 07-flows, 08-use_cases, 09-states, 13-security, 17-communication). Gere tabela de cobertura (%) + lista de gaps no final do TASKS.md.
+Cruze tasks com `docs/blueprint/` (03-requirements, 04-domain, 07-flows, 08-use_cases, 09-states, 13-security). Gere tabela de cobertura (%) + lista de gaps no final do TASKS.md.
+
+Checklist: cada RF tem task? Cada fluxo critico tem service + teste E2E? Cada use case tem endpoint + controller + service? Cada ameaca STRIDE tem mitigacao? Cada template de comunicacao (13-integrations) tem evento disparador em 12-events?
 
 ## Passo 6: Resultado
 

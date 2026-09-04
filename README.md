@@ -1,496 +1,1059 @@
-# Blueprint Framework
+<div align="center">
 
-Framework de documentacao tecnica para projetos de software. Templates estruturados + skills do Claude Code que documentam um produto de ponta a ponta — do contexto do sistema a arquitetura de frontend — e depois geram codigo fiel a essa documentacao.
+# Blueprint
 
-**3 blueprints** | **52 documentos** | **21 skills**
+**Documentation-driven software engineering for Claude Code.**
 
----
+Turn a product requirements document into a traceable technical blueprint, backend and frontend specifications, implementation backlog, typed scaffold and guarded build loop.
 
-## O que e
+**3 blueprints · 52 documents · 21 Claude Code skills**
 
-Um conjunto de templates Markdown com placeholders (`{{...}}`) e skills do Claude Code que preenchem cada secao a partir do PRD do seu projeto.
-
-| Blueprint | Foco | Docs | Skills |
-|-----------|------|------|--------|
-| **Tecnico** | Contexto, dominio, dados, arquitetura, seguranca | 17 | 7 |
-| **Backend** | Classes, servicos, API, eventos, integracoes, testes | 15 | 1 |
-| **Frontend** | Design system, componentes, estado, rotas, performance | 3 + 13/cliente | 4 |
-
-Mais 9 skills de apoio: dois loops automaticos (`/pipeline` e `/build`), incremento, patch global, backlog de tasks e geracao de codigo.
-
-Cada skill gera um **grupo de documentos** numa unica passada — le o contexto uma vez e escreve tudo que deriva dele. E isso que mantem o processo curto.
+</div>
 
 ---
 
-## Pre-requisitos
+## What is Blueprint?
 
-1. **Claude Code** instalado
-2. **PRD do projeto** — sera salvo em `docs/prd.md`
-3. **MCP Context7** — usado pelas skills para consultar versoes atualizadas de tecnologias:
-   ```json
-   {
-     "mcpServers": {
-       "context7": {
-         "command": "npx",
-         "args": ["-y", "@upstreamapi/context7-mcp@latest"]
-       }
-     }
-   }
-   ```
+Blueprint is a software engineering framework built around **structured Markdown templates + Claude Code skills**.
 
----
+It turns a PRD into an explicit engineering system that describes:
 
-## Quick Start
+- product and system context
+- domain and data models
+- architecture and ADRs
+- critical flows and use cases
+- backend contracts and services
+- frontend architecture and design system
+- security, testing, scalability and observability
+- implementation tasks
+- code-generation context
+- architectural verification
 
-### Automatico — dois comandos
+The documentation is not treated as a one-time artifact.
 
-```
-/pipeline docs/prd.md web ../meu-saas/    # 52 docs + scaffold tipado
-/build                                     # implementa as features com TDD
-```
+Blueprint is designed so the same specification can be **incremented, patched, converted into backlog and used as the source of truth for implementation**.
 
-O `/pipeline` roda as 12 fases sem parar para perguntar, gera os 52 documentos, o scaffold do codigo, e consolida cada inferencia em `docs/ASSUMPTIONS.md` classificada por risco. O `/build` implementa as features em loop, parando na primeira suite vermelha.
-
-Bom para: primeira versao rapida, PRD ja detalhado. Ruim para: projeto critico com PRD raso — sem perguntas, o que o PRD nao cobre vira suposicao. Veja [limites](#pipeline--execucao-automatica).
-
-### Manual — fase a fase
-
-```
-/blueprint                    # salva o PRD, analisa cobertura, mostra o roadmap
-/blueprint-foundation         # 00, 01, 02, 03
-/blueprint-domain             # 04, 05, 09
-/blueprint-architecture       # 06, 10
-/blueprint-flows              # 07, 08
-/blueprint-quality            # 12, 13, 14, 15
-/blueprint-plan               # 11, 16
-```
-
-Seis comandos e o blueprint tecnico esta completo. Depois:
-
-```
-/backend                      # 15 docs de especificacao de implementacao
-/frontend                     # orquestrador + docs compartilhados
-/frontend-design-system       # tokens, tipografia, cores, iconografia
-/frontend-app web             # 8 docs do cliente
-/frontend-quality web         # 5 docs do cliente
+```text
+PRD
+ │
+ ▼
+Technical Blueprint
+ │
+ ├──────────────► Backend Blueprint
+ │
+ ├──────────────► Frontend Blueprint
+ │
+ └──────────────► Shared Contracts
+                      │
+                      ▼
+                 Implementation Specs
+                      │
+                      ▼
+                 Typed Scaffold
+                      │
+                      ▼
+                  Build Loop
+                      │
+                      ▼
+               Architecture Verify
 ```
 
 ---
 
-## Fluxo
+## Why Blueprint?
 
-```
-PRD (docs/prd.md)
-  │
-  ▼
-/blueprint  ──►  docs/blueprint/     17 docs   ← fonte primaria
-  │
-  ├──►  /backend   ──►  docs/backend/    15 docs
-  ├──►  /frontend  ──►  docs/frontend/   3 shared + 13 por cliente
-  └──►                  docs/shared/     4 docs transversais
+AI can generate code quickly.
 
-Depois:
-  /increment   → adicionar feature ou corrigir sem reescrever
-  /patch       → propagar mudanca global (renomear entidade, trocar tecnologia)
-  /specs       → gerar backlog integral de tasks
-  /codegen     → gerar codigo a partir dos blueprints (XP/TDD)
-```
+The difficult part is keeping the generated system coherent when the project grows.
 
-A ordem importa: cada fase le o que a anterior produziu.
+Without an explicit engineering model, AI-assisted development tends to accumulate:
 
----
+- duplicated assumptions
+- inconsistent domain language
+- architecture drift
+- endpoints that do not match frontend needs
+- undocumented security decisions
+- tests that validate implementation but not intent
+- context windows filled with irrelevant documentation
+- changes applied in one layer but forgotten in another
 
-## Pipeline — Execucao Automatica
+Blueprint moves the source of truth **before the code**.
 
-`/pipeline` roda todas as fases de documentacao de uma vez, sem intervencao.
+Instead of repeatedly explaining the architecture to an agent, the framework creates a structured specification that future agents can query and follow.
 
-```
-/pipeline                          # usa docs/prd.md, infere os clientes do PRD
-/pipeline docs/prd.md web,mobile   # explicito
-```
-
-### Como funciona
-
-Cada fase executa num **subagente com contexto limpo** — le so o que precisa, escreve seus documentos e devolve um resumo. O orquestrador guarda apenas os resumos, nunca os documentos gerados. E isso que permite produzir 52 documentos sem estourar o contexto.
-
-```
-[1/12] blueprint-foundation   → 00, 01, 02, 03
-[2/12] blueprint-domain       → 04, 05, 09
-...
-[7/12] backend                → 15 docs
-[8/12] frontend-design-system → shared/03
-[9/12] frontend               → shared/06, shared/15
-[10/12] frontend-app web      → 8 docs
-[11/12] frontend-quality web  → 5 docs
-[12/12] codegen-setup         → CLAUDE.md, src/contracts/, schema, scaffold
-```
-
-A fase 12 e a unica com **portao objetivo**: type check, lint e validacao de schema. Se falhar apos correcao, o pipeline reporta o erro em vez de declarar sucesso. Ela escreve fora deste repositorio — informe o projeto-alvo como argumento, ou responda `pular` no kickoff.
-
-**Retomavel:** se a sessao cair no meio, rode `/pipeline` de novo — ele detecta quais documentos ja tem conteudo real e pula as fases concluidas.
-
-### Modo autonomo — o trade-off
-
-As skills individuais fazem ate 3 perguntas cada. O pipeline **nao faz nenhuma** — infere tudo do PRD. Onde o PRD e vago, o conteudo gerado e suposicao, nao fato.
-
-A compensacao e tornar cada suposicao auditavel:
-
-1. Marcada no proprio documento: `<!-- assumido: {valor} — base: {de onde inferiu} -->`
-2. Consolidada em `docs/ASSUMPTIONS.md`, classificada por risco
-3. As de risco alto aparecem no relatorio final
-
-| Risco | Quando | Exemplo |
-|-------|--------|---------|
-| **Alto** | Numero, SLA ou nome proprio sem base no PRD | `p95 < 300ms` quando o PRD nao fala de latencia |
-| **Medio** | Escolha tecnica plausivel mas nao declarada | `PostgreSQL` inferido de "dados relacionais" |
-| **Baixo** | Derivacao logica direta | Entidade `Order` porque o PRD fala em pedidos |
-
-Corrija as suposicoes com `/increment` (um blueprint) ou `/patch` (mudanca global).
-
-### Limites
-
-- **Qualidade depende do PRD** — PRD raso gera muitas suposicoes de risco alto. O pipeline extrapola o que existe; nao inventa contexto de negocio.
-- **Nao substitui as skills individuais** — para projeto critico, rode fase a fase e responda as perguntas.
-- **Vai ate o scaffold, nao ate as features** — implementar features e outro loop, com outros portoes: `/build`.
-- **O scaffold herda as suposicoes** — se `05-data-model.md` supos PostgreSQL, o schema nasce em PostgreSQL. Revise `ASSUMPTIONS.md` antes de construir em cima.
-- **Custo** — um subagente por fase consome mais tokens que rodar tudo numa sessao. E o preco por nao estourar o contexto.
-
-Trate o resultado como **rascunho completo**, nao como documentacao final.
+> **The blueprint describes the system. The code implements the blueprint.**
 
 ---
 
-## 1. Blueprint Tecnico (`docs/blueprint/`)
+## Core ideas
 
-Inicio: `/blueprint`
+### Documentation as system state
 
-| Skill | Docs gerados | Conteudo |
-|-------|--------------|----------|
-| `/blueprint-foundation` | `00-context`, `01-vision`, `02-architecture_principles`, `03-requirements` | Atores, limites, problema, metricas, principios, requisitos MoSCoW |
-| `/blueprint-domain` | `04-domain-model`, `05-data-model`, `09-state-models` | Glossario ubiquo, entidades, regras, tabelas, indices, maquinas de estado |
-| `/blueprint-architecture` | `06-system-architecture`, `10-architecture_decisions` | Componentes, comunicacao, infra, ADRs |
-| `/blueprint-flows` | `07-critical_flows`, `08-use_cases` | 3-5 fluxos criticos, casos de uso UC-XXX |
-| `/blueprint-quality` | `12-testing_strategy`, `13-security`, `14-scalability`, `15-observability` | Piramide de testes, STRIDE, OWASP, cache, rate limit, Golden Signals |
-| `/blueprint-plan` | `11-build_plan`, `16-evolution` | Entregas ENT-XXX, riscos, roadmap tecnico, tech debt |
+Blueprint documentation is meant to evolve with the application.
 
-O agrupamento segue as dependencias reais: `05` e `09` sao projecoes de `04`; ADR escrito longe da arquitetura vira generico; os 4 atributos de qualidade leem a mesma base (`06` + `07`).
+It is not a frozen design document.
 
----
+Changes can be applied incrementally and propagated across related specifications.
 
-## 2. Backend Blueprint (`docs/backend/`)
+### Traceability
 
-Inicio: `/backend` — le o blueprint tecnico e gera os 15 docs numa passada.
+Requirements, domain concepts, backend contracts, frontend dependencies and implementation tasks are connected through explicit mappings.
 
-```
-00-backend-vision      Stack, padrao, principios, metricas
-01-architecture        Camadas, Clean Architecture, DI
-02-project-structure   Pastas, modulos, convencoes
-03-domain              Entidades, Value Objects, Aggregates
-04-data-layer          Repositories, migrations, queries
-05-api-contracts       Endpoints, DTOs, status codes, OpenAPI
-06-services            Application services, use cases
-07-controllers         Controllers, handlers, routing
-08-middlewares         Auth, logging, rate limiting
-09-errors              Hierarquia de excecoes, catalogo
-10-validation          Regras por campo, sanitizacao
-11-permissions         RBAC, policies, guards
-12-events              Domain events, workers, filas, DLQ
-13-integrations        Clients externos, circuit breaker, canais de comunicacao
-14-tests               Piramide, cenarios, CI
-```
+### Bounded context for agents
 
-O blueprint tecnico e a fonte primaria — `/backend` so pergunta o que ele nao cobre (framework, ORM, estrutura de classes, metodos).
+Agents do not load the complete documentation set into every session.
 
-**Canais de comunicacao** (email, SMS, WhatsApp) vivem em `13-integrations.md`: provedores, catalogo de templates, variaveis, prioridade entre canais, rate limits e convencoes por canal. Cada template e disparado por um evento declarado em `12-events.md`.
+Skills read only the documents required for the current task.
+
+### Auditable assumptions
+
+Autonomous generation does not silently turn missing information into facts.
+
+Inferred values are marked and consolidated by risk.
+
+### Independent verification
+
+A green test suite proves internal consistency.
+
+It does not prove that the implementation still matches the intended architecture.
+
+Blueprint adds a separate code-vs-specification verification step.
 
 ---
 
-## 3. Frontend Blueprint (`docs/frontend/`)
+# The system
 
-Multi-client em monorepo. Inicio: `/frontend`
+Blueprint is composed of three primary specification layers plus shared cross-layer documents.
 
-```
-docs/frontend/
-  shared/                          # gerados uma vez
-    03-design-system.md            /frontend-design-system
-    06-data-layer.md               /frontend
-    15-api-dependencies.md         /frontend
+| Layer | Focus | Output |
+| --- | --- | ---: |
+| **Technical Blueprint** | Context, domain, architecture, quality attributes and delivery plan | 17 docs |
+| **Backend Blueprint** | Domain implementation, data, APIs, services, events and integrations | 15 docs |
+| **Frontend Blueprint** | Design system, architecture, state, flows, quality and platform concerns | 3 shared + 13 per client |
+| **Shared** | Cross-layer mappings and terminology | 4 docs |
 
-  {web|mobile|desktop}/            # gerados por cliente
-    00-frontend-vision.md          ┐
-    01-architecture.md             │
-    02-project-structure.md        │
-    04-components.md               ├─ /frontend-app {client}
-    05-state.md                    │
-    07-routes.md                   │
-    08-flows.md                    │
-    14-copies.md                   ┘
-    09-tests.md                    ┐
-    10-performance.md              │
-    11-security.md                 ├─ /frontend-quality {client}
-    12-observability.md            │
-    13-cicd-conventions.md         ┘
-```
-
-Cada skill adapta o conteudo a plataforma: `web` (Next.js/Remix, CSP, Core Web Vitals), `mobile` (Expo/React Native, Keychain, cold start), `desktop` (Electron/Tauri, IPC, code signing).
-
-`/frontend-design-system` e a unica skill de secao unica — escolhe o par de fontes (Fontpair), a paleta (Coolors → CSS variables oklch) e a iconografia (Lucide Animated + shadcn/ui).
+With one frontend client, the standard flow produces **52 documents**.
 
 ---
 
-## 4. Documentacao Compartilhada (`docs/shared/`)
+# Workflow
 
-| Documento | Descricao |
-|-----------|-----------|
-| `MAPPING.md` | Rastreabilidade blueprint ↔ backend ↔ frontend |
-| `glossary.md` | Glossario unificado do projeto |
-| `error-ux-mapping.md` | Erro do backend → UX do frontend |
-| `event-mapping.md` | Eventos entre camadas |
+Blueprint supports two main ways of working.
+
+## Autonomous workflow
+
+For a detailed PRD and a fast first pass:
+
+```text
+/pipeline docs/prd.md web ../my-app/
+/build
+```
+
+`/pipeline` generates the documentation and typed scaffold.
+
+`/build` implements the planned features using guarded TDD loops.
+
+```text
+PRD
+ │
+ ▼
+/pipeline
+ │
+ ├── Technical Blueprint
+ ├── Backend Blueprint
+ ├── Frontend Blueprint
+ ├── Shared mappings
+ ├── Assumption report
+ └── Typed scaffold
+       │
+       ▼
+     /build
+       │
+       ├── Feature
+       ├── Tests
+       ├── Architecture verification
+       └── Commit
+```
+
+This mode favors automation.
+
+It does **not** stop to ask the questions that individual skills normally ask.
+
+Missing PRD information becomes explicit assumptions instead.
 
 ---
 
-## Atualizacoes Incrementais (`/increment`)
+## Guided workflow
 
-Uma skill para os tres blueprints. Nunca sobrescreve — sempre `Edit`.
+For critical systems or shallow PRDs, run the framework phase by phase.
 
+```text
+/blueprint
+/blueprint-foundation
+/blueprint-domain
+/blueprint-architecture
+/blueprint-flows
+/blueprint-quality
+/blueprint-plan
+
+/backend
+
+/frontend
+/frontend-design-system
+/frontend-app web
+/frontend-quality web
 ```
+
+Individual skills can ask up to three grouped questions before generating their documents.
+
+This mode gives the engineer more control over decisions before they become dependencies for later phases.
+
+---
+
+# Autonomous pipeline
+
+`/pipeline` runs the documentation phases in isolated subagents.
+
+Each phase:
+
+1. starts with a clean context
+2. reads only its required inputs
+3. writes its own documents
+4. returns a compact summary to the orchestrator
+
+The orchestrator keeps the summaries instead of loading all generated documents into its own context.
+
+Conceptually:
+
+```text
+Orchestrator
+    │
+    ├──► Agent 01 → Foundation docs → summary
+    │
+    ├──► Agent 02 → Domain docs     → summary
+    │
+    ├──► Agent 03 → Architecture    → summary
+    │
+    ├──► ...
+    │
+    ├──► Agent 11 → Frontend quality
+    │
+    └──► Agent 12 → Typed scaffold + objective gate
+```
+
+This is what allows the pipeline to produce a large specification without trying to fit the entire project model into one context window.
+
+The final scaffold phase has an objective gate:
+
+```text
+typecheck
+   +
+lint
+   +
+schema validation
+```
+
+If the scaffold still fails after correction, the pipeline reports failure instead of declaring the phase successful.
+
+---
+
+## Resumable execution
+
+The pipeline is designed to be rerunnable.
+
+If a session ends halfway through, running `/pipeline` again detects documents that already contain real generated content and skips completed phases.
+
+---
+
+# Assumptions are explicit
+
+Autonomous generation always has a trade-off:
+
+> If the PRD does not answer a question, the agent either has to stop or infer.
+
+The pipeline chooses inference, but makes it visible.
+
+An assumption is marked in the generated document:
+
+```html
+<!-- assumed: PostgreSQL — basis: relational data requirements -->
+```
+
+It is also consolidated into:
+
+```text
+docs/ASSUMPTIONS.md
+```
+
+Assumptions are classified by risk:
+
+| Risk | Meaning | Example |
+| --- | --- | --- |
+| **High** | Numeric target, SLA or proper noun without PRD evidence | `p95 < 300ms` when latency was never specified |
+| **Medium** | Plausible technical choice that was not explicitly requested | PostgreSQL inferred from relational requirements |
+| **Low** | Direct logical derivation | `Order` entity derived from order requirements |
+
+High-risk assumptions are surfaced in the final report.
+
+Review `docs/ASSUMPTIONS.md` before treating an autonomous run as authoritative.
+
+---
+
+# 1. Technical Blueprint
+
+The technical blueprint is the primary architectural source.
+
+It contains 17 documents generated by seven skills.
+
+| Skill | Documents | Focus |
+| --- | --- | --- |
+| `/blueprint` | orchestration | PRD, coverage analysis, roadmap |
+| `/blueprint-foundation` | `00`, `01`, `02`, `03` | context, vision, principles, requirements |
+| `/blueprint-domain` | `04`, `05`, `09` | domain, data and state models |
+| `/blueprint-architecture` | `06`, `10` | system architecture and ADRs |
+| `/blueprint-flows` | `07`, `08` | critical flows and use cases |
+| `/blueprint-quality` | `12`, `13`, `14`, `15` | testing, security, scalability, observability |
+| `/blueprint-plan` | `11`, `16` | build plan and evolution |
+
+The grouping follows dependency relationships.
+
+For example, the data and state models derive from the domain model, while quality attributes consume architecture and critical flows rather than being generated in isolation.
+
+---
+
+# 2. Backend Blueprint
+
+`/backend` reads the technical blueprint and produces 15 implementation-oriented documents.
+
+```text
+00-backend-vision
+01-architecture
+02-project-structure
+03-domain
+04-data-layer
+05-api-contracts
+06-services
+07-controllers
+08-middlewares
+09-errors
+10-validation
+11-permissions
+12-events
+13-integrations
+14-tests
+```
+
+The backend blueprint covers:
+
+- architecture and dependency direction
+- entities, value objects and aggregates
+- repositories, migrations and queries
+- endpoints and DTOs
+- application services and use cases
+- controllers and routing
+- authentication and middleware
+- validation and error contracts
+- permissions and policies
+- domain events, workers and queues
+- external integrations
+- test strategy
+
+The technical blueprint remains the primary source.
+
+The backend layer should specify implementation details without redefining the product model.
+
+---
+
+# 3. Frontend Blueprint
+
+The frontend layer supports multiple application clients inside the same project.
+
+Supported client categories include:
+
+```text
+web
+mobile
+desktop
+```
+
+Shared documents are generated once:
+
+```text
+docs/frontend/shared/
+├── 03-design-system.md
+├── 06-data-layer.md
+└── 15-api-dependencies.md
+```
+
+Each client receives its own specification:
+
+```text
+docs/frontend/{client}/
+├── 00-frontend-vision.md
+├── 01-architecture.md
+├── 02-project-structure.md
+├── 04-components.md
+├── 05-state.md
+├── 07-routes.md
+├── 08-flows.md
+├── 09-tests.md
+├── 10-performance.md
+├── 11-security.md
+├── 12-observability.md
+├── 13-cicd-conventions.md
+└── 14-copies.md
+```
+
+The skills adapt platform concerns to the selected client.
+
+Examples include:
+
+- web: CSP, browser architecture and Core Web Vitals
+- mobile: secure storage and cold-start concerns
+- desktop: IPC, signing and desktop security boundaries
+
+---
+
+# 4. Shared documentation
+
+Cross-layer documents live under `docs/shared/`.
+
+| Document | Purpose |
+| --- | --- |
+| `MAPPING.md` | Traceability between technical, backend and frontend blueprints |
+| `glossary.md` | Unified project terminology |
+| `error-ux-mapping.md` | Backend errors mapped to frontend behavior |
+| `event-mapping.md` | Events that cross application layers |
+
+These documents exist to prevent each blueprint from becoming an independent interpretation of the same product.
+
+---
+
+# Incremental evolution
+
+Generating good documentation once is not enough.
+
+Real systems change.
+
+Blueprint provides separate operations for **local evolution** and **cross-system change**.
+
+---
+
+## `/increment`
+
+Use `/increment` to add, correct, update or remove something without regenerating an entire blueprint.
+
+Example:
+
+```text
 /increment
-> alvo: blueprint | backend | frontend | all
-> "Sistema de chat em tempo real"
-→ adiciona entidades, eventos, componentes, estado e rotas nos docs corretos
+target: all
+"Add real-time chat"
 ```
 
-Quatro tipos de alteracao:
+A feature can affect multiple documents:
 
-| Tipo | Exemplo | Comportamento |
-|------|---------|---------------|
-| **Adicao** | "Sistema de chat em tempo real" | Insere antes de `<!-- APPEND:... -->`, marca `<!-- adicionado: ... -->` |
-| **Correcao** | "campo `email` deve ser `emailAddress`" | Edit cirurgico na linha, marca `<!-- corrigido: ... -->` |
-| **Atualizacao** | "plano Pro de R$99 para R$129" | Atualiza todas as ocorrencias |
-| **Remocao** | "remover push notifications do escopo" | `~~strikethrough~~` com motivo |
+```text
+Domain
+  ├── entities
+  └── events
 
-Cada template tem marcadores `<!-- APPEND:section-id -->` como ancora de insercao:
+Backend
+  ├── services
+  ├── API
+  └── workers
 
-```markdown
-| Button | variant, size | primary, secondary |
-| Input | type, placeholder | text, password |
-<!-- APPEND:primitivos -->
+Frontend
+  ├── components
+  ├── state
+  └── routes
 ```
 
-O conteudo novo entra **antes** do marcador, preservando tudo que ja existe.
+Templates include stable insertion markers:
+
+```html
+<!-- APPEND:primitives -->
+```
+
+New content is inserted around these anchors rather than replacing the whole document.
 
 ---
 
-## Patch Global (`/patch`)
+## `/patch`
 
-Para mudancas que atravessam varios blueprints ao mesmo tempo:
+Use `/patch` for a global change that needs impact analysis and propagation.
 
+Examples:
+
+```text
+Booking → Appointment
+/api/users → /api/v2/users
+Zustand → Jotai
+Next.js 16 → Next.js 17
 ```
-/patch
-> "Renomear entidade Booking para Appointment"
+
+The patch workflow:
+
+```text
+Global search
+     │
+     ▼
+Impact analysis
+     │
+     ▼
+Affected-file preview
+     │
+     ▼
+Confirmation
+     │
+     ▼
+Case-aware changes
+     │
+     ▼
+Review markers for indirect impact
 ```
 
-1. **Varredura** global (Grep em blueprint, backend, frontend, shared, adr, specs)
-2. **Analise de impacto** — direta, contextual ou indireta
-3. **Confirmacao** — tabela com todos os arquivos afetados
-4. **Aplica** respeitando case (PascalCase, camelCase, kebab-case, paths)
-5. **Relatorio** — indiretas ficam marcadas com `<!-- PATCH-REVIEW -->`
+Direct replacements preserve forms such as:
 
-| Caso | Comando |
-|------|---------|
-| Renomear entidade | `/patch` → "Booking → Appointment" |
-| Atualizar endpoint | `/patch` → "/api/users → /api/v2/users" |
-| Mudar tecnologia | `/patch` → "Zustand → Jotai" |
-| Atualizar versao | `/patch` → "Next.js 16 → Next.js 17" |
+- PascalCase
+- camelCase
+- kebab-case
+- paths
 
-`/increment` adiciona; `/patch` renomeia em cascata.
+Indirect effects that require human review are marked with:
+
+```html
+<!-- PATCH-REVIEW -->
+```
+
+`/increment` evolves a feature.
+
+`/patch` propagates a systemic change.
 
 ---
 
-## Specs — Backlog Integral (`/specs`)
+# Implementation backlog
 
-Gera `docs/specs/TASKS.md` com **todas** as tasks de implementacao de uma vez, a partir de `docs/backend/` (fonte primaria), validando contra frontend e blueprint.
+`/specs` converts the specification into a full implementation backlog:
 
-Tasks organizadas em 12 grupos:
+```text
+docs/specs/TASKS.md
+```
 
-| Grupo | Prefixo | Fonte |
-|-------|---------|-------|
-| Setup & Infra | TASK-SETUP | 00-vision, 01-architecture, 02-structure |
-| Domain | TASK-DOM | 03-domain (1 por entidade) |
-| Data Layer | TASK-DATA | 04-data-layer (1 por repository + migrations) |
-| Services | TASK-SVC | 06-services |
-| API & Controllers | TASK-API | 05-api-contracts, 07-controllers, 10-validation |
-| Auth & Permissions | TASK-AUTH | 11-permissions, 08-middlewares |
-| Error Handling | TASK-ERR | 09-errors |
-| Middlewares | TASK-MW | 08-middlewares |
-| Events & Workers | TASK-EVT | 12-events |
-| Integrations | TASK-INT | 13-integrations |
-| Tests | TASK-TEST | 14-tests |
-| Frontend Sync | TASK-FE | Cross-reference backend ↔ frontend |
+Tasks are derived primarily from the backend blueprint and validated against frontend and technical documentation.
 
-Cada task inclui camada, entidade, prioridade, origem, arquivos a criar, dependencias, regras de negocio, criterios de aceite e testes.
+The backlog is grouped into:
 
-Ao final valida contra o blueprint: cada RF tem task? cada fluxo critico tem service + E2E? cada UC tem endpoint + controller + service? cada ameaca STRIDE tem mitigacao?
+1. Setup & Infrastructure
+2. Domain
+3. Data Layer
+4. Services
+5. API & Controllers
+6. Authentication & Permissions
+7. Error Handling
+8. Middlewares
+9. Events & Workers
+10. Integrations
+11. Tests
+12. Frontend Sync
+
+Each task can include:
+
+- source document
+- layer
+- entity
+- priority
+- dependencies
+- files to create
+- business rules
+- acceptance criteria
+- required tests
+
+A final coverage pass checks questions such as:
+
+```text
+Does every functional requirement have implementation work?
+Does every critical flow have a service and E2E coverage?
+Does every use case map to endpoint + controller + service?
+Does every documented threat have a mitigation?
+```
 
 ---
 
-## Code Generation (`/codegen`)
+# Code generation
 
-Gera codigo fiel a documentacao seguindo **Extreme Programming** (TDD, small releases).
+Blueprint can move from specification to implementation through a set of code-generation skills.
 
-```
-/codegen-setup            → CLAUDE.md router + tipos + schema + scaffold  (uma vez)
-       ↓
-/codegen                  → apresenta entregas do build plan              (inicio de sessao)
-       ↓
-/codegen-feature [nome]   → implementa feature vertical (RED→GREEN→REFACTOR)
-       ↓        ↑
-       ↓   (repete por feature)
-       ↓
-/codegen-verify           → verifica aderencia ao blueprint               (a cada 3-5 features)
-```
-
-Ou `/build`, que roda esse ciclo inteiro em loop — veja abaixo.
-
-### `/build` — loop de features com portoes
-
-```
-/build                      # todas as entregas Must, em ordem de dependencia
-/build ENT-001 ENT-002      # entregas especificas
-/build --max 5              # limita a 5 features nesta sessao
+```text
+/codegen-setup
+      │
+      ▼
+Contracts + schema + scaffold + CLAUDE.md router
+      │
+      ▼
+/codegen
+      │
+      ▼
+/codegen-feature
+      │
+      ▼
+RED → GREEN → REFACTOR
+      │
+      ▼
+/codegen-verify
 ```
 
-Cada feature roda num subagente e passa por dois portoes:
+`/codegen-feature` implements vertical features using TDD.
 
-| Portao | Frequencia | Reprova se |
-|--------|-----------|------------|
-| **Suite completa** | Toda feature | Qualquer teste vermelho, ou a contagem de testes caiu (sinal de teste apagado/pulado) |
-| **`/codegen-verify`** | A cada 3 features | Score de aderencia < 90% |
-
-Suite vermelha → 1 retry com o output real do erro → ainda vermelha → **para**. Commit por feature, para `git revert` granular.
-
-**Por que este loop para e o `/pipeline` nao:** o pipeline pula uma fase que falha, porque um documento ruim nao contamina o proximo. Aqui e o oposto — a feature 1 estabelece abstracoes que a feature 8 herda. Uma feature errada contamina todas as seguintes e voce termina com um codigo internamente consistente, todo verde, e arquiteturalmente errado.
-
-**A regra que mais protege:** e proibido apagar, pular (`skip`/`only`) ou afrouxar qualquer teste para deixar a suite verde. O portao compara a contagem de testes contra o baseline justamente para detectar isso.
-
-**Por que `/codegen-verify` e obrigatorio no loop:** teste escrito pelo mesmo agente que escreveu o codigo nao e verificacao independente. Suite verde prova consistencia interna, nao conformidade com o blueprint. O `verify` compara o codigo com os *documentos* — e a unica checagem externa.
-
-Limites: verde nao e correto (revise o diff); deriva arquitetural so aparece no verify da 3a feature — rode `/build --max 3` nas primeiras e revise antes de soltar o loop inteiro.
-
-### Estrategia de contexto
-
-Blueprints preenchidos ultrapassam 2M tokens — nao cabem em nenhum contexto. A solucao:
-
-1. **CLAUDE.md Router** — tabela que mapeia tipo de tarefa → 2-3 docs relevantes
-2. **Context Excerpting** — carrega so as secoes relevantes (grep por headers)
-3. **Contracts as Cache** — `src/contracts/` e o "cache compilado" do domain model
-4. **Budget por sessao** — ~70-100k tokens de contexto, deixando o resto para geracao
-
-### Templates (6)
-
-`docs/templates/`: `claudemd-template.md`, `prd-template.md`, `epic-template.md`, `story-template.md`, `task-template.md`, `use-case-template.md`
+`/codegen-verify` independently evaluates whether the code still follows the blueprint.
 
 ---
 
-## Referencia Rapida — 21 Skills
+# `/build` — guarded implementation loop
 
-### Automacao (2)
+`/build` automates the feature loop.
 
-| Comando | Descricao |
-|---------|-----------|
-| `/pipeline` | Documentacao completa + scaffold, automatico (subagente por fase, zero perguntas) |
-| `/build` | Implementa as features em loop com TDD e portoes de teste (para na primeira falha) |
+```text
+/build
+/build ENT-001 ENT-002
+/build --max 5
+```
 
-### Blueprint Tecnico (7)
+Each feature runs in its own subagent and passes through two gates.
 
-| Comando | Docs |
-|---------|------|
-| `/blueprint` | Orquestrador — PRD, cobertura, roadmap |
-| `/blueprint-foundation` | 00, 01, 02, 03 |
-| `/blueprint-domain` | 04, 05, 09 |
-| `/blueprint-architecture` | 06, 10 |
-| `/blueprint-flows` | 07, 08 |
-| `/blueprint-quality` | 12, 13, 14, 15 |
-| `/blueprint-plan` | 11, 16 |
+| Gate | Frequency | Failure condition |
+| --- | --- | --- |
+| **Full test suite** | every feature | any red test or reduced test count |
+| **Blueprint verification** | every 3 features | adherence score below 90% |
 
-### Backend (1)
+A failing test run receives one retry with the real failure output.
 
-| Comando | Docs |
-|---------|------|
-| `/backend` | 00 a 14 (15 docs) |
+If the suite remains red, the build loop stops.
 
-### Frontend (4)
-
-| Comando | Docs |
-|---------|------|
-| `/frontend` | Orquestrador + `shared/06`, `shared/15` |
-| `/frontend-design-system` | `shared/03` |
-| `/frontend-app {client}` | 00, 01, 02, 04, 05, 07, 08, 14 |
-| `/frontend-quality {client}` | 09, 10, 11, 12, 13 |
-
-### Manutencao e Backlog (3)
-
-| Comando | Descricao |
-|---------|-----------|
-| `/increment` | Adiciona, corrige, atualiza ou remove em qualquer blueprint |
-| `/patch` | Propaga mudanca em cascata por todos os docs |
-| `/specs` | Backlog integral de tasks (`docs/specs/TASKS.md`) |
-
-### Code Generation (4)
-
-| Comando | Descricao | Quando |
-|---------|-----------|--------|
-| `/codegen-setup` | CLAUDE.md router + contratos + schema + scaffold | Setup (uma vez, ou via `/pipeline`) |
-| `/codegen` | Apresenta entregas do build plan | Inicio de sessao |
-| `/codegen-feature` | Implementa feature vertical com TDD | Dia-a-dia (ou em loop via `/build`) |
-| `/codegen-verify` | Score de aderencia codigo vs blueprint | A cada 3-5 features |
+Each feature receives its own commit so changes remain granular and revertible.
 
 ---
 
-## Estrutura de Pastas
+## Why the loop stops on failure
 
+The documentation pipeline can skip a failed documentation phase because an incomplete document does not necessarily corrupt later generated text.
+
+Implementation is different.
+
+A bad early abstraction can become a dependency for every later feature.
+
+```text
+Wrong Feature 1
+      │
+      ▼
+Wrong abstraction
+      │
+      ├──► Feature 4
+      ├──► Feature 8
+      └──► Feature 15
 ```
+
+Stopping early is cheaper than allowing a coherent but architecturally incorrect codebase to emerge.
+
+---
+
+## Tests cannot be weakened to pass the gate
+
+The build loop explicitly protects against making the suite green by deleting or bypassing tests.
+
+The gate treats reductions in test count as a failure signal.
+
+Patterns such as weakening, skipping or removing tests to make implementation pass are outside the intended workflow.
+
+---
+
+# Architecture verification
+
+Tests written by the same agent that wrote the implementation are not an independent architecture check.
+
+A green suite means:
+
+> the implementation satisfies its tests.
+
+It does not necessarily mean:
+
+> the implementation satisfies the blueprint.
+
+`/codegen-verify` compares implementation against the specification and produces an adherence score.
+
+That verification is intentionally separate from feature generation.
+
+---
+
+# Context strategy
+
+A filled project blueprint can grow far beyond what should be loaded into a single model context.
+
+Blueprint uses four mechanisms to keep implementation context bounded.
+
+### 1. `CLAUDE.md` router
+
+Maps task types to the small set of documents most likely to be relevant.
+
+```text
+Task type
+   │
+   ▼
+2–3 relevant documents
+```
+
+### 2. Context excerpting
+
+Skills load relevant sections instead of entire large documents when possible.
+
+### 3. Contracts as cache
+
+`src/contracts/` acts as a compiled representation of important domain contracts.
+
+### 4. Context budget
+
+Implementation sessions target a bounded documentation context so enough room remains for reasoning and code generation.
+
+The goal is not to make every agent know everything.
+
+The goal is to make each agent read the **right things**.
+
+---
+
+# Quick start
+
+## Prerequisites
+
+You need:
+
+1. **Claude Code**
+2. a product requirements document
+3. **Context7 MCP** for up-to-date technology documentation
+
+Example Context7 configuration:
+
+```json
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstreamapi/context7-mcp@latest"]
+    }
+  }
+}
+```
+
+Clone Blueprint:
+
+```bash
+git clone https://github.com/DouglasPrado/blueprint.git
+cd blueprint
+```
+
+Place your PRD at:
+
+```text
+docs/prd.md
+```
+
+Then choose an execution mode.
+
+### Fast autonomous pass
+
+```text
+/pipeline docs/prd.md web ../my-app/
+```
+
+After reviewing the generated documentation and `docs/ASSUMPTIONS.md`:
+
+```text
+/build
+```
+
+### Guided pass
+
+Start with:
+
+```text
+/blueprint
+```
+
+Then run the technical, backend and frontend phases in order.
+
+---
+
+# Command reference
+
+## Automation
+
+| Command | Purpose |
+| --- | --- |
+| `/pipeline` | Generate the complete documentation set and scaffold through isolated phases |
+| `/build` | Implement planned features in a guarded TDD loop |
+
+## Technical Blueprint
+
+| Command | Purpose |
+| --- | --- |
+| `/blueprint` | PRD intake, coverage analysis and roadmap |
+| `/blueprint-foundation` | Context, vision, principles and requirements |
+| `/blueprint-domain` | Domain, data and state models |
+| `/blueprint-architecture` | System architecture and ADRs |
+| `/blueprint-flows` | Critical flows and use cases |
+| `/blueprint-quality` | Testing, security, scalability and observability |
+| `/blueprint-plan` | Build plan and evolution |
+
+## Backend
+
+| Command | Purpose |
+| --- | --- |
+| `/backend` | Generate the 15 backend specification documents |
+
+## Frontend
+
+| Command | Purpose |
+| --- | --- |
+| `/frontend` | Frontend orchestration and shared data/API documents |
+| `/frontend-design-system` | Design tokens, typography, colors and iconography |
+| `/frontend-app {client}` | Client architecture, structure, state, routes and flows |
+| `/frontend-quality {client}` | Client testing, performance, security, observability and CI/CD |
+
+## Evolution and backlog
+
+| Command | Purpose |
+| --- | --- |
+| `/increment` | Add, correct, update or remove scoped specification content |
+| `/patch` | Propagate a global change through the documentation graph |
+| `/specs` | Generate the implementation backlog |
+
+## Code generation
+
+| Command | Purpose |
+| --- | --- |
+| `/codegen-setup` | Generate routing context, contracts, schema and scaffold |
+| `/codegen` | Present build-plan deliveries for implementation |
+| `/codegen-feature` | Implement one vertical feature with TDD |
+| `/codegen-verify` | Measure implementation adherence to the blueprint |
+
+---
+
+# Output structure
+
+A generated project follows this documentation model:
+
+```text
+docs/
+├── prd.md
+│
+├── blueprint/                 # 17 technical documents
+│
+├── backend/                   # 15 backend documents
+│
+├── frontend/
+│   ├── shared/                # shared frontend contracts
+│   ├── web/                   # optional client
+│   ├── mobile/                # optional client
+│   └── desktop/               # optional client
+│
+├── shared/                    # cross-layer mappings
+│
+├── ASSUMPTIONS.md             # autonomous inference report
+│
+├── specs/
+│   └── TASKS.md               # implementation backlog
+│
+├── diagrams/
+├── templates/
+└── adr/
+```
+
+The Blueprint repository itself currently contains:
+
+```text
 blueprint/
+├── .claude/
+│   └── skills/                # 21 Claude Code skills
 ├── docs/
-│   ├── prd.md                    # entrada principal
-│   ├── blueprint/                # 17 docs — arquitetura tecnica
-│   ├── backend/                  # 15 docs — especificacao backend
+│   ├── adr/
+│   ├── backend/
+│   ├── blueprint/
+│   ├── diagrams/
 │   ├── frontend/
-│   │   ├── shared/               # 3 docs — design system, data layer, API deps
-│   │   ├── web/                  # 13 docs (se selecionado)
-│   │   ├── mobile/               # 13 docs (se selecionado)
-│   │   └── desktop/              # 13 docs (se selecionado)
-│   ├── shared/                   # 4 docs — mapeamentos transversais
-│   ├── ASSUMPTIONS.md            # suposicoes do /pipeline, por risco
-│   ├── specs/                    # TASKS.md (gerado por /specs)
-│   ├── diagrams/                 # diagramas Mermaid
-│   ├── templates/                # 6 templates
-│   └── adr/                      # Architecture Decision Records
-├── .claude/skills/               # 21 skills
+│   ├── shared/
+│   └── templates/
 └── README.md
 ```
 
 ---
 
-## Convencoes das Skills
+# Skill contract
 
-Todas seguem o mesmo contrato:
+All Blueprint skills follow a common set of conventions.
 
-- **Escrita** — doc so com `{{placeholders}}` → `Write`. Doc com conteudo real → `Edit`, inserindo antes de `<!-- APPEND:... -->`
-- **Origem** — conteudo derivado marcado com `<!-- do blueprint: XX-arquivo.md -->`
-- **Versoes** — tecnologias consultadas via MCP Context7 (`resolve-library-id` → `query-docs`)
-- **Nunca inventar** numeros, metricas, SLAs ou nomes proprios — extrair ou perguntar
-- **Maximo 3 perguntas por skill** (nao por documento), agrupadas e feitas antes de gerar
-- **Idioma** — identificadores tecnicos (tabelas, campos, IDs) em ingles; descricoes em portugues
+### Write vs edit
+
+A template containing only placeholders can be written as a new generated document.
+
+A document containing real project content should be edited rather than blindly replaced.
+
+### Traceability
+
+Derived content can include source markers that identify which blueprint document produced it.
+
+### Current technology information
+
+Technology-specific guidance is queried through Context7 instead of assuming stale versions from model training.
+
+### Numbers are evidence-sensitive
+
+Skills should not invent:
+
+- SLAs
+- performance targets
+- business metrics
+- proper nouns
+- numeric constraints
+
+These values should come from the PRD, a source, a direct answer or be explicitly marked as assumptions in autonomous mode.
+
+### Questions are bounded
+
+Interactive skills group uncertainty into a maximum of three questions per skill rather than repeatedly interrupting generation.
 
 ---
 
-## Dicas
+# When to use Blueprint
 
-- **Comece pelo PRD** — sem ele, as skills nao tem de onde extrair. Quanto mais detalhado, menos o `/pipeline` precisa supor
-- **Siga a ordem** — cada fase le o que a anterior produziu; pular quebra as dependencias
-- **Depois do `/pipeline`, leia `docs/ASSUMPTIONS.md`** antes de tratar a documentacao como definitiva — o scaffold e o codigo herdam as suposicoes
-- **Rode `/build --max 3` primeiro** e revise o diff antes de soltar o loop inteiro; deriva arquitetural so aparece depois de algumas features
-- **Nao reexecute uma skill para adicionar** — use `/increment`
-- **Use `/patch` para renomear** — entidade, endpoint, tecnologia, versao
-- **Templates sao templates** — os `{{placeholders}}` sao substituidos pelas skills, nao edite a mao
-- **`docs/shared/`** conecta os blueprints com glossario e mapeamentos de erro e eventos
+Blueprint works best when:
+
+- you already have a PRD
+- several layers need to remain aligned
+- AI agents will participate in implementation
+- architecture decisions need to be explicit
+- the project is large enough that repeated prompting becomes expensive
+- backend and frontend contracts must remain traceable
+- you want generated code to have an external specification to verify against
+
+---
+
+# When not to use it
+
+Blueprint is intentionally heavyweight for very small work.
+
+It may be unnecessary when:
+
+- the project is a tiny experiment
+- the architecture is disposable
+- there is no meaningful product specification
+- you are exploring a problem before defining requirements
+- a single short-lived agent session is sufficient
+
+The autonomous pipeline is also a poor fit for a **critical system with a shallow PRD**.
+
+In that case, use the guided skills and resolve uncertainty before implementation.
+
+---
+
+# Trade-offs and limitations
+
+### Output quality depends on input quality
+
+A weak PRD creates more assumptions.
+
+The framework can structure uncertainty, but it cannot recover business knowledge that was never provided.
+
+### Automation costs context and tokens
+
+Using isolated subagents is more expensive than asking one agent to do everything in one session.
+
+The trade-off is better context isolation and less risk of overflowing a single context window.
+
+### The pipeline produces a complete draft, not unquestionable truth
+
+Generated documentation still requires engineering review.
+
+### Scaffold decisions inherit assumptions
+
+If an autonomous documentation phase infers a technology or architectural choice, the generated scaffold can inherit that choice.
+
+Review high-risk assumptions before building on top of them.
+
+### Tests are not architecture verification
+
+A green suite is necessary but not sufficient.
+
+Blueprint intentionally keeps specification adherence as a separate gate.
+
+---
+
+# Design principles
+
+## Specification before implementation
+
+Important system decisions should exist somewhere inspectable before becoming implicit in code.
+
+## One primary source per decision
+
+Backend and frontend documents derive from the technical blueprint instead of independently redefining product behavior.
+
+## Context should be intentional
+
+More context is not automatically better context.
+
+Agents should receive the smallest coherent slice needed for a task.
+
+## Changes should propagate
+
+A renamed domain concept should not remain stale in another layer because the engineer forgot where it was referenced.
+
+## Assumptions should be visible
+
+Autonomy is useful only when uncertainty can still be audited.
+
+## Verification should be independent
+
+The agent producing a feature should not be the only mechanism deciding whether the feature respects the architecture.
+
+---
+
+# Repository status
+
+Blueprint is under active development.
+
+The current repository contains:
+
+- 3 blueprint layers
+- 52 standard documents for a single-client flow
+- 21 Claude Code skills
+- autonomous documentation pipeline
+- resumable phases
+- assumption tracking
+- incremental updates
+- global patch propagation
+- implementation backlog generation
+- typed scaffold generation
+- guarded feature build loop
+- architecture adherence verification
+
+The framework, templates and skill contracts may evolve as the workflow is used on more projects.
+
+---
+
+# Philosophy
+
+AI makes producing code cheaper.
+
+That makes **clarity, traceability and architectural consistency** more important, not less.
+
+A large model can generate thousands of lines quickly, but speed does not solve the harder questions:
+
+- What is the system supposed to do?
+- Which layer owns each rule?
+- Which decisions are facts and which are assumptions?
+- What depends on this change?
+- Does the implementation still match the design?
+- What context does the next agent actually need?
+
+Blueprint exists to make those answers explicit.
+
+> **Don't ask the agent to remember the architecture. Give it an architecture it can read.**

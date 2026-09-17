@@ -46,7 +46,19 @@ Se algum doc passar de 50k tokens, use **Context Excerpting**: grep pelos header
 
 > **Versoes:** tecnologias com versao → `mcp__context7__resolve-library-id` → `mcp__context7__query-docs`.
 
-## Passo 3: Identificar Clientes Frontend
+## Passo 2.5: Reaproveitar o Prototipo (se existir)
+
+Se houver um prototipo construido no projeto-alvo, parte do scaffold **ja existe** — e reescreve-lo do zero desperdicaria a unica parte nao descartavel da fase de prototipo.
+
+| Artefato do prototipo | O que fazer |
+|---|---|
+| `src/types/` (entidades tipadas) | **Promova para `src/contracts/`**, conferindo contra `blueprint/04-domain-model.md` e o glossario. Nao recrie do zero |
+| `components/ui/` (design system implementado) | **Mantenha.** Foi construido a partir de `03-design-system.md` e e codigo de producao |
+| `src/mocks/fixtures/` | **Converta em seeds** (`backend/04-data-layer.md`) e fixtures de teste (`backend/14-tests.md`) |
+| `src/mocks/handlers/` | **Descarte** — o backend real os substitui. Mantenha so o que serve a teste |
+| Rotas e telas | **Mantenha como esqueleto**; a integracao troca a origem dos dados, nao o layout |
+
+> Conflito entre um tipo do prototipo e `04-domain-model.md` significa que `/prototype-api` deixou um achado passar. Registre em `docs/prototype/05-findings.md` e resolva no blueprint — nunca no tipo.
 
 Verifique quais existem **com docs preenchidos** (nao apenas templates):
 

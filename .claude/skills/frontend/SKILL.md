@@ -20,6 +20,8 @@ Leia `docs/blueprint/` como fonte primaria. Para esta skill importam especialmen
 - `06-system-architecture.md` — API, comunicacao e deploy
 - `07-critical_flows.md`, `08-use_cases.md` — jornadas que viram telas
 
+Se `docs/prototype/` existir (frontend completo mockado construido antes do backend), leia tambem `01-screens.md`, `03-api-requirements.md` e `04-interaction-states.md` — eles ja responderam, com evidencia de codigo, boa parte do que estas skills perguntariam.
+
 Se o blueprint estiver vazio, use `docs/prd.md` como fallback. Se nenhum existir:
 
 > "Para iniciar o frontend blueprint, preciso do blueprint tecnico preenchido (`docs/blueprint/`). Voce pode:
@@ -94,7 +96,15 @@ Preencha:
 
 ### 15 — Dependencias de API (`docs/frontend/shared/15-api-dependencies.md`)
 
-Mapa de endpoints que o frontend consome. Derive de `08-use_cases.md` e `06-system-architecture.md`; se `docs/backend/05-api-contracts.md` existir, use-o como fonte autoritativa.
+Mapa de endpoints que o frontend consome. Ordem de autoridade das fontes:
+
+| Prioridade | Fonte | Por que |
+|---|---|---|
+| 1 | **`docs/prototype/03-api-requirements.md`** | Ja traz endpoint, campos consumidos e tela consumidora — extraidos de codigo que funciona. Copie o mapa de campos criticos praticamente pronto |
+| 2 | `docs/backend/05-api-contracts.md` | Contrato implementado. Se divergir do prototipo, registre a divergencia em vez de escolher em silencio |
+| 3 | `08-use_cases.md` + `06-system-architecture.md` | Derivacao, quando nao ha nem prototipo nem backend |
+
+> Quando o prototipo existe, a secao **Campos Criticos por Endpoint** ja foi respondida: `03-api-requirements.md` lista, por campo, onde ele e renderizado e o que acontece se vier ausente. Transporte em vez de reinventar.
 
 Preencha: endpoint, metodo, tela/feature consumidora, request, response, erros tratados e criticidade.
 

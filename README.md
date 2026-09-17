@@ -6,7 +6,7 @@
 
 Turn a product requirements document into a traceable technical blueprint, backend and frontend specifications, implementation backlog, typed scaffold and guarded build loop.
 
-**3 blueprints · 52 documents · 21 Claude Code skills**
+**3 blueprints + optional prototype · 58 documents · 24 Claude Code skills**
 
 </div>
 
@@ -39,7 +39,13 @@ PRD
  ▼
 Technical Blueprint
  │
- ├──────────────► Backend Blueprint
+ ├──────────────► Prototype (optional)
+ │                 mocked frontend, built first
+ │                      │
+ │                      ▼
+ │                 Discovered API contract
+ │                      │
+ ├──────────────► Backend Blueprint ◄──┘
  │
  ├──────────────► Frontend Blueprint
  │
@@ -128,11 +134,12 @@ Blueprint is composed of three primary specification layers plus shared cross-la
 | Layer | Focus | Output |
 | --- | --- | ---: |
 | **Technical Blueprint** | Context, domain, architecture, quality attributes and delivery plan | 17 docs |
+| **Prototype** *(optional)* | Screens, mock data, **discovered API contract**, interaction states, findings | 6 docs + running app |
 | **Backend Blueprint** | Domain implementation, data, APIs, services, events and integrations | 15 docs |
 | **Frontend Blueprint** | Design system, architecture, state, flows, quality and platform concerns | 3 shared + 13 per client |
 | **Shared** | Cross-layer mappings and terminology | 4 docs |
 
-With one frontend client, the standard flow produces **52 documents**.
+With one frontend client, the standard flow produces **52 documents**; with the prototype phase, **58**.
 
 ---
 
@@ -146,6 +153,13 @@ For a detailed PRD and a fast first pass:
 
 ```text
 /pipeline docs/prd.md web ../my-app/
+/build
+```
+
+To discover the API contract by building the interface first:
+
+```text
+/pipeline docs/prd.md web ../my-app/ --prototype
 /build
 ```
 
@@ -202,6 +216,23 @@ For critical systems or shallow PRDs, run the framework phase by phase.
 /frontend-design-system
 /frontend-app web
 /frontend-quality web
+```
+
+With the prototype phase, the design system moves up and the backend moves down —
+the interface is built first, and the contract comes out of it:
+
+```text
+/blueprint  →  the six blueprint phases
+
+/frontend-design-system          tokens first — the prototype needs them
+
+/prototype web                   plan: screens, navigation, mock data
+/prototype-build web ../my-app/  code: the mocked app
+/prototype-api web ../my-app/    the discovered contract
+
+/backend                         now with a real consumer for every endpoint
+
+/frontend  →  /frontend-app web  →  /frontend-quality web
 ```
 
 Individual skills can ask up to three grouped questions before generating their documents.
@@ -321,7 +352,57 @@ For example, the data and state models derive from the domain model, while quali
 
 ---
 
-# 2. Backend Blueprint
+# 2. Prototype — discovering the contract instead of inventing it
+
+The prototype is an **optional phase that runs before the backend**. It produces a complete, navigable frontend backed entirely by mocked data.
+
+Its purpose is narrow and specific:
+
+> An API contract written before the interface is a prediction. A contract extracted from an interface that works is an observation.
+
+| Without prototype | With prototype |
+| --- | --- |
+| The backend exposes what the domain model suggests | The backend exposes what the screen needs |
+| Fields that are never consumed, and fields discovered missing at the end | Every field has a named consumer |
+| Calls per screen discovered in production | Calls per screen known before the first line of backend |
+| Error states invented | Error states derived from what the UI must display |
+| Domain gaps surface during implementation | Domain gaps surface while wiring up a form |
+
+Three skills, three distinct responsibilities:
+
+| Skill | Produces | Reads |
+| --- | --- | --- |
+| `/prototype` | `00-vision`, `01-screens`, `02-mock-data` | Technical blueprint + design system |
+| `/prototype-build` | **Code** — the mocked app | The plan above |
+| `/prototype-api` | `03-api-requirements`, `04-interaction-states`, `05-findings` | **The code**, not the plan |
+
+The separation matters. `/prototype-api` reads the source of the prototype — mock handlers, application calls, components that render fields — and cross-references three independent inventories:
+
+```text
+handler exists, nobody calls it   → endpoint without consumer, excluded from the contract
+call exists, no handler           → broken call, a bug to fix before continuing
+field returned, never rendered    → unnecessary payload, removal proposed
+field rendered, never returned    → domain gap, high risk
+```
+
+Two rules give the phase its discipline:
+
+- **Nothing enters the contract without a named consumer.** An endpoint with no screen calling it, or a field with no render site, is an idea — and ideas go to `05-findings.md`.
+- **The mock answers, it does not decide.** Any business rule belongs to the backend. When a mock handler needs to compute in order to reply, that is a rule nobody had written down — and it gets recorded.
+
+## The gate before the backend
+
+No **high-risk** finding may remain open when `/backend` runs. A contract built on a known gap propagates that gap into the schema, and a schema with data in it is not fixed with `/increment`.
+
+## Cost
+
+The prototype builds the UI twice — once mocked, once integrated. For a familiar CRUD with a detailed PRD, that likely does not pay for itself. For a new domain, long flows, or a SaaS with many screens, it usually does: the rework happens in disposable code rather than in a production schema.
+
+What survives the phase: the design system implementation, the typed entities (which become `src/contracts/`), the fixtures (which become seeds and test fixtures), and the screens as a layout skeleton.
+
+---
+
+# 3. Backend Blueprint
 
 `/backend` reads the technical blueprint and produces 15 implementation-oriented documents.
 
@@ -364,7 +445,7 @@ The backend layer should specify implementation details without redefining the p
 
 ---
 
-# 3. Frontend Blueprint
+# 4. Frontend Blueprint
 
 The frontend layer supports multiple application clients inside the same project.
 
@@ -414,7 +495,7 @@ Examples include:
 
 ---
 
-# 4. Shared documentation
+# 5. Shared documentation
 
 Cross-layer documents live under `docs/shared/`.
 
@@ -788,7 +869,7 @@ Then run the technical, backend and frontend phases in order.
 
 | Command | Purpose |
 | --- | --- |
-| `/pipeline` | Generate the complete documentation set and scaffold through isolated phases |
+| `/pipeline` | Generate the complete documentation set and scaffold through isolated phases (`--prototype` inserts the prototype phase and moves the backend after it) |
 | `/build` | Implement planned features in a guarded TDD loop |
 
 ## Technical Blueprint
@@ -802,6 +883,14 @@ Then run the technical, backend and frontend phases in order.
 | `/blueprint-flows` | Critical flows and use cases |
 | `/blueprint-quality` | Testing, security, scalability and observability |
 | `/blueprint-plan` | Build plan and evolution |
+
+## Prototype
+
+| Command | Purpose |
+| --- | --- |
+| `/prototype {client}` | Plan the mocked frontend — screens, navigation, mock data |
+| `/prototype-build {client} {target}` | Build the mocked app, screen by screen, with a coverage gate |
+| `/prototype-api {client} {target}` | Extract the required API contract **from the code** |
 
 ## Backend
 
@@ -847,6 +936,8 @@ docs/
 │
 ├── blueprint/                 # 17 technical documents
 │
+├── prototype/                 # 6 documents (optional phase, runs before backend)
+│
 ├── backend/                   # 15 backend documents
 │
 ├── frontend/
@@ -872,13 +963,14 @@ The Blueprint repository itself currently contains:
 ```text
 blueprint/
 ├── .claude/
-│   └── skills/                # 21 Claude Code skills
+│   └── skills/                # 24 Claude Code skills
 ├── docs/
 │   ├── adr/
 │   ├── backend/
 │   ├── blueprint/
 │   ├── diagrams/
 │   ├── frontend/
+│   ├── prototype/
 │   ├── shared/
 │   └── templates/
 └── README.md
@@ -1022,9 +1114,10 @@ Blueprint is under active development.
 
 The current repository contains:
 
-- 3 blueprint layers
-- 52 standard documents for a single-client flow
-- 21 Claude Code skills
+- 3 blueprint layers plus an optional prototype phase
+- 52 standard documents for a single-client flow, 58 with the prototype
+- 24 Claude Code skills
+- contract discovery through a mocked frontend built before the backend
 - autonomous documentation pipeline
 - resumable phases
 - assumption tracking

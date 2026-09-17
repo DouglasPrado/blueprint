@@ -12,7 +12,7 @@
 | --- | --- |
 | Versão | v1.0.0 |
 | Fonte | Repositório Blueprint — `README.md`, `docs/**`, `.claude/skills/**` |
-| Cobertura | 52 documentos padrão (1 cliente frontend) · 21 skills · 10 diagramas `.mmd` + 4 READMEs de diagramas |
+| Cobertura | 52 documentos padrão (1 cliente frontend), 58 com a fase de protótipo · 24 skills · 10 diagramas `.mmd` + 4 READMEs de diagramas |
 | Idioma | Descrições em português; identificadores técnicos em inglês |
 
 ---
@@ -29,6 +29,7 @@
 | **5** | [Domínio, dados e estados](#5-domínio-dados-e-estados) | O coração conceitual |
 | **6** | [Arquitetura do sistema e ADRs](#6-arquitetura-do-sistema-e-adrs) | Como o sistema é montado e por quê |
 | **7** | [Fluxos críticos e casos de uso](#7-fluxos-críticos-e-casos-de-uso) | Como o sistema se comporta |
+| **7.5** | [A fase de protótipo](#75-a-fase-de-protótipo-opcional) *(opcional)* | O frontend mockado que descobre o contrato de API |
 | **8** | [Backend — especificação de implementação](#8-backend--especificação-de-implementação) | Os 15 documentos do servidor |
 | **9** | [Frontend — multi-client](#9-frontend--multi-client) | Design system + 13 docs por cliente |
 | **10** | [Camada cross-layer](#10-camada-cross-layer-o-que-impede-divergência) | O que impede os blueprints de divergirem |
@@ -154,10 +155,15 @@ Nem todos têm o mesmo custo de errar. A ordem abaixo é a ordem de **irreversib
 docs/prd.md                                   ENTRADA — única fonte de negócio
       │
       ▼
-docs/blueprint/  (17 docs)                    FONTE PRIMÁRIA — o QUÊ
+docs/blueprint/  (17 docs)                    FONTE PRIMÁRIA do DOMÍNIO
       │  fases: foundation → domain → architecture → flows → quality → plan
       │
-      ├──────────► docs/backend/  (15 docs)          COMO, no servidor
+      ├──────────► docs/prototype/ (6 docs)    OPCIONAL — roda ANTES do backend
+      │              frontend completo mockado  FONTE PRIMÁRIA do CONTRATO DE API
+      │                      │
+      │                      └──► 03-api-requirements.md — descoberto, não inventado
+      │                                    │
+      ├──────────► docs/backend/  (15 docs) ◄┘        COMO, no servidor
       │
       ├──────────► docs/frontend/ (3 shared + 13/cliente)  COMO, no cliente
       │
@@ -194,6 +200,22 @@ Cada fase consome o que a anterior produziu. Pular gera documento genérico — 
 | 10 | `/frontend-app {client}` | 8 docs do cliente | blueprint + shared |
 | 11 | `/frontend-quality {client}` | 5 docs do cliente | `blueprint/12,13,14,15` + docs do cliente |
 | 12 | `/codegen-setup` | `CLAUDE.md`, `src/contracts/`, schema, scaffold | `02` (patterns e convenções), `04`, `05`, `06`, `backend/00-04`, **`shared/glossary.md`** e, por cliente ativo, `{client}/02-project-structure` + `shared/03-design-system` |
+
+**Com a fase de protótipo** (`/pipeline --prototype`), a ordem muda em três pontos — o design system sobe, o protótipo entra, e o backend desce:
+
+| # | Skill | Produz | Consome obrigatoriamente |
+| --- | --- | --- | --- |
+| 1-6 | `/blueprint-*` | os 17 docs do blueprint técnico | `prd.md` |
+| **7** | `/frontend-design-system` | `frontend/shared/03` | `01-vision` — **antecipada: o protótipo precisa dos tokens** |
+| **7.5a** | `/prototype {client}` | `prototype/00`, `01`, `02` | `00`, `04`, `07`, `08`, `09`, `13`, `shared/03` |
+| **7.5b** | `/prototype-build` | **código** — o app mockado | `prototype/00`, `01`, `02`, `shared/03`, `glossary` |
+| **7.5c** | `/prototype-api` | `prototype/03`, `04`, `05` | **o código do protótipo** |
+| 8 | `/backend` | `backend/00-14` | os 17 docs **+ `prototype/03` como fonte do contrato** |
+| 9 | `/frontend` | `shared/06`, `15` | blueprint + `prototype/03` (prioridade) ou `backend/05` |
+| 10-11 | `/frontend-app`, `/frontend-quality` | docs do cliente | blueprint + shared + `prototype/01`, `04` |
+| 12 | `/codegen-setup` | scaffold | idem, **reaproveitando tipos e design system do protótipo** |
+
+> **A inversão é o ponto.** Sem protótipo, a fase 9 roda depois da 7 porque `backend/05-api-contracts` é a fonte autoritativa dos endpoints. Com protótipo, quem passa a ser autoritativo é `prototype/03-api-requirements` — e o backend vira o **consumidor** do contrato, não o autor.
 
 > **Detalhe crítico da ordem:** a fase 9 (`/frontend`, que gera `shared/15-api-dependencies.md`) roda **depois** da fase 7 (`/backend`), porque `backend/05-api-contracts.md` é a fonte autoritativa dos endpoints. Inverter a ordem produz um frontend que consome endpoints que não existem.
 
@@ -235,6 +257,33 @@ Esta é a correlação integral entre arquivos. É o conteúdo de `docs/shared/M
 | `15-observability` | `08-middlewares` | Logs, métricas, traces → RequestId + Logger no pipeline |
 | `16-evolution` | `05-api-contracts` | Estratégia de versionamento → `/v1/` na URL ou header |
 
+### 3.1.5 Blueprint técnico → Protótipo → Backend *(quando a fase existe)*
+
+| Blueprint | Protótipo | O que flui |
+| --- | --- | --- |
+| `00-context` | `02-mock-data` | Atores → personas de teste |
+| `04-domain-model` | `01-screens`, `02-mock-data` | Entidades → dados de tela e fixtures tipadas |
+| `07-critical_flows` | `01-screens` | Fluxos → sequências percorríveis ponta a ponta |
+| `08-use_cases` | `01-screens` | **UC → tela. Fonte primária do inventário** |
+| `09-state-models` | `04-interaction-states` | Estados → badges e filtros; transições → gatilhos na UI |
+| `13-security` | `02-mock-data` | Roles → personas; matriz RBAC → o que cada persona vê |
+| `frontend/shared/03-design-system` | código do protótipo | Tokens e primitivos → componentes reaproveitáveis |
+
+| Protótipo | Backend | O que flui |
+| --- | --- | --- |
+| **`03-api-requirements`** | **`05-api-contracts`** | **Endpoints, DTOs e campos — com consumidor nomeado. Fonte primária do contrato** |
+| `03` §atômicas | `04-data-layer`, `06-services` | Operações atômicas → transação ou saga |
+| `03` §idempotência | `04-data-layer` | Mutação otimista na UI → chave de idempotência |
+| `03` §agregações | `05-api-contracts` | Tela com N chamadas → endpoint agregado ou BFF |
+| `03` §tempo real | `12-events` | O que a UI precisa saber sem perguntar → evento e canal |
+| `03` §latência | `04-data-layer`, `00-backend-vision` | Latência tolerada → índice, cache e meta de p95 |
+| `04-interaction-states` | `09-errors` | **Erro que a UI trata → código que o backend precisa emitir** |
+| `04` §derivados | `09-errors` | `details[]`, `Retry-After`, `requestId` → formato obrigatório |
+| `02-mock-data` §personas | `04-data-layer`, `11-permissions` | Personas → seeds; matriz RBAC já exercitada |
+| `02` §bordas | `14-tests` | Casos de borda → fixtures de teste |
+| `01-screens` §validação | `10-validation` | Validação exercida no formulário → regra por campo |
+| `05-findings` | **todos** | Achado de risco alto **bloqueia** `/backend` |
+
 ### 3.2 Blueprint técnico → Frontend
 
 | Blueprint | Frontend | O que flui concretamente |
@@ -253,6 +302,9 @@ Esta é a correlação integral entre arquivos. É o conteúdo de `docs/shared/M
 | `14-scalability` | `{client}/10-performance` | Cache → estratégia client-side (TTL, invalidação) |
 | `15-observability` | `{client}/12-observability` | Métricas → error tracking, RUM, user flow monitoring |
 | `backend/05-api-contracts` | `shared/15-api-dependencies` | Endpoints → mapa de dependências consumidas |
+| `prototype/03-api-requirements` | `shared/15-api-dependencies` | **Prioridade 1 quando existe** — endpoints e campos críticos já com consumidor |
+| `prototype/01-screens` | `{client}/07-routes`, `04-components` | Rotas, guards, layouts, deep links, componentes por tela |
+| `prototype/04-interaction-states` | `{client}/08-flows`, `14-copies` | Estados por fluxo; mensagens de sucesso, erro e vazio |
 | `backend/09-errors` | `shared/error-ux-mapping` | Código de erro → comportamento visual |
 | `backend/12-events` | `shared/event-mapping` | Evento de domínio → store afetada + update de UI |
 | `backend/13-integrations` | `{client}/14-copies` | Templates de comunicação → copies e mensagens |
@@ -309,6 +361,10 @@ Estas conexões não aparecem no `MAPPING.md` mas são obrigatórias segundo as 
 | Toda lista e tela com dados dinâmicos tem **empty state** definido em `{client}/14-copies` | `/frontend-app` — checklist de cobertura |
 | `shared/glossary.md` é a fonte única consumida por `blueprint/04-domain-model`, `backend/03-domain`, `{client}/04-components` e `{client}/14-copies` | rodapé do próprio `glossary.md` — nenhum deles cria glossário próprio |
 | Débitos de `16-evolution` alimentam os **limites conhecidos** de `backend/00-backend-vision` (além do versionamento → `05-api-contracts`) | `/backend` — mapa de extração |
+| Todo `UC-XXX` precisa de tela em `prototype/01-screens` ou de justificativa explícita | `/prototype` — a terceira opção ("esquecido") vira achado |
+| Nada entra em `prototype/03-api-requirements` sem consumidor nomeado | `/prototype-api` — endpoint sem tela e campo sem render vão para `05-findings` |
+| Todo erro tratado em `prototype/04-interaction-states` precisa existir em `backend/09-errors` | `/backend` — a UI já sabe exibir; o backend precisa emitir |
+| Nenhum achado de risco **alto** de `prototype/05-findings` pode estar aberto quando `/backend` rodar | `/backend` — portão bloqueante |
 | Todo erro de `backend/09-errors` precisa de linha em `shared/error-ux-mapping` | `docs/shared/error-ux-mapping.md` — *"Para CADA código de erro do backend, documente a resposta no frontend"*. o Passo 3 de `/specs` manda identificar consumidor de frontend "para cada endpoint/evento/erro do backend", mas o **checklist final de cobertura não inclui esse cruzamento** — a validação depende do zelo do passo intermediário |
 
 ---
@@ -622,6 +678,115 @@ Por caso de uso: **UC-{ID}** · ator principal e secundários · pré-condição
 **Consistência obrigatória:** casos de uso que alteram estado usam exatamente os gatilhos nomeados em `09-state-models.md`. Transição sem caso de uso — ou caso de uso exigindo transição não documentada — é reportado ao usuário, nunca resolvido por invenção.
 
 Os casos de uso são a ponte para o frontend: `08-use_cases` → `{client}/07-routes` (cada UC vira tela) e → `backend/05-api-contracts` (cada UC vira endpoint + controller + service).
+
+---
+
+## 7.5 A fase de protótipo (opcional)
+
+> **Numeração:** esta parte é `7.5` porque a fase é **opcional** e roda **entre** os fluxos (parte 7) e o backend (parte 8). Quando existe, ela inverte a relação entre frontend e backend.
+
+**Skills:** `/prototype` · `/prototype-build` · `/prototype-api` · **Gera:** `docs/prototype/` (6 docs) + um app mockado que roda.
+
+### 7.5.1 Por que a interface vem antes do contrato
+
+> Um contrato de API escrito antes da interface é uma **previsão**. Um contrato extraído de uma interface que funciona é uma **observação**.
+
+| Sem protótipo | Com protótipo |
+| --- | --- |
+| O backend expõe o que o modelo de domínio sugere | O backend expõe o que a tela precisa |
+| Campos sobrando (nunca consumidos) e faltando (descobertos no fim) | Cada campo tem consumidor nomeado |
+| Número de chamadas por tela descoberto em produção | Número de chamadas por tela conhecido antes da primeira linha de backend |
+| Estados de erro inventados | Estados de erro derivados do que a UI precisa exibir |
+| Lacuna do domínio aparece durante a implementação | Lacuna do domínio aparece ao montar o formulário |
+| Regra de negócio descoberta no incidente | Regra descoberta ao decidir se um botão fica habilitado |
+
+**O custo é real:** a UI é construída duas vezes — mockada e integrada. **O retorno:** o retrabalho acontece em código descartável, não em schema com dados. Migração de produção não se desfaz com `/increment`.
+
+### 7.5.2 As três skills
+
+A separação não é burocrática: cada uma tem uma fonte de verdade diferente, e é isso que impede a fase de virar autoconfirmação.
+
+| Skill | Produz | **Lê** |
+| --- | --- | --- |
+| `/prototype` | `00-vision`, `01-screens`, `02-mock-data` — o **plano** | Blueprint técnico + design system |
+| `/prototype-build` | **Código** — o app mockado, tela por tela | O plano acima |
+| `/prototype-api` | `03-api-requirements`, `04-interaction-states`, `05-findings` | **O código**, nunca o plano |
+
+> **A regra que define `/prototype-api`:** se `03-api-requirements.md` sair idêntico a `01-screens.md`, a fase falhou — copiou a intenção em vez de extrair o fato. `01-screens` diz o que se pretendia construir; o código diz o que foi construído. Onde divergem, **o código vence e a divergência vira achado**.
+
+### 7.5.3 Os seis documentos
+
+| Doc | Conteúdo | Alimenta |
+| --- | --- | --- |
+| `00-prototype-vision` | O que é real e o que é mockado · stack (a mesma da final) · **critérios de saída** · não-objetivos | — |
+| `01-screens` | Mapa `UC → tela` · detalhamento **campo a campo** · navegação com guards · deep links · fluxos percorríveis | `{client}/07-routes`, `04-components` |
+| `02-mock-data` | Personas por perfil · fixtures com casos de borda · cenários acionáveis | `backend/04-data-layer` (seeds), `14-tests` (fixtures) |
+| **`03-api-requirements`** | **O contrato descoberto** — endpoints com consumidor, campos com ponto de renderização, latência tolerada, idempotência, operações atômicas, agregações | **`backend/05-api-contracts`** |
+| `04-interaction-states` | Matriz de estados por tela · catálogo de erros exercidos · mutações otimistas · transições disparáveis | `backend/09-errors`, `shared/error-ux-mapping` |
+| `05-findings` | Lacunas do domínio · regras descobertas · contradições · suposições · **encaminhamento** | `/increment`, `/patch` |
+
+### 7.5.4 Como o contrato é extraído
+
+`/prototype-api` coleta **três inventários independentes** do código e os cruza. As lacunas entre eles são o achado mais valioso da fase:
+
+| Inventário | Onde |
+| --- | --- |
+| Endpoints servidos | `src/mocks/handlers/` |
+| Chamadas feitas | Camada de dados da aplicação |
+| Campos renderizados | Componentes |
+
+```
+handler existe, ninguém chama    → endpoint sem consumidor  → fora do contrato
+chamada existe, sem handler      → chamada quebrada         → bug, corrigir antes
+campo devolvido, nunca exibido   → payload desnecessário    → propor remoção
+campo exibido, nunca devolvido   → lacuna de domínio        → RISCO ALTO
+```
+
+**Duas regras dão disciplina à fase:**
+
+1. **Nada entra no contrato sem consumidor nomeado.** Endpoint sem tela que o chame e campo sem ponto de renderização são ideia, não requisito — e ideia vai para `05-findings.md`.
+2. **O mock responde, ele não decide.** Toda regra de negócio pertence ao backend. Quando um handler precisa **calcular** para responder, isso é uma regra que ninguém tinha escrito — e é registrada.
+
+### 7.5.5 O portão antes do backend
+
+```
+Nenhum achado de risco ALTO pode permanecer aberto quando /backend rodar.
+```
+
+`/backend` lê `05-findings.md` **antes** de gerar qualquer documento e **para** se houver achado alto em aberto. O motivo é assimetria de custo: um contrato construído sobre lacuna conhecida propaga a lacuna para o schema, e schema com dados não se corrige com `/increment`.
+
+Resolver significa: `/increment` (local) ou `/patch` (global) no **blueprint técnico**, depois `/prototype-api` de novo para regenerar o contrato. O protótipo é evidência; o blueprint continua sendo a fonte de verdade.
+
+### 7.5.6 O que sobrevive à fase
+
+O protótipo é majoritariamente descartável — mas não inteiramente:
+
+| Artefato | Destino | Por quê |
+| --- | --- | --- |
+| **Design system implementado** (`components/ui/`) | **Mantido** | Construído a partir de `03-design-system.md`; é código de produção |
+| **Tipos das entidades** (`src/types/`) | **Promovidos a `src/contracts/`** | Já nomeados pelo glossário; `/codegen-setup` os confere contra `04-domain-model` |
+| **Fixtures** | **Viram seeds** (dev/staging) e **fixtures de teste** | Já cobrem os estados e os casos de borda |
+| **Telas** | Esqueleto de layout | A integração troca a origem dos dados, não o layout |
+| **Handlers de mock** | **Descartados** | O backend real os substitui |
+
+> **A tentação mais perigosa da fase:** transformar o mock em backend. Se o mock ganhar regra de negócio, transação ou cálculo derivado, ele virou um segundo backend que ninguém vai manter.
+
+### 7.5.7 Quando não usar
+
+| Situação | Vale? |
+| --- | --- |
+| Domínio novo, fluxos longos, SaaS com muitas telas | **Sim** — é o caso que paga o custo |
+| CRUD conhecido com PRD detalhado | **Provavelmente não** — o contrato já é previsível |
+| Sistema sem interface (API pública, worker, integração) | **Não** — não há o que prototipar |
+| Prazo que não comporta construir a UI duas vezes | **Não** — mas então o contrato é previsão; assuma isso conscientemente |
+
+**Limites conhecidos:**
+
+- **O protótipo não substitui o blueprint.** Ele o testa. Onde discordam, o blueprint é corrigido — nunca o contrário em silêncio.
+- **Cobre o que a UI pede, não o sistema inteiro.** Webhooks, jobs, integrações e endpoints administrativos continuam vindo de `07-critical_flows` e `13-integrations`.
+- **Um cliente só.** Gestos, offline, push e IPC não aparecem num protótipo web, e o contrato extraído não os cobre.
+- **Autorização mockada não é autorização.** O seletor de persona exercita a matriz; a imposição real é sempre do backend.
+- **Latência tolerada é percepção, não medição.** Serve para priorizar índice e cache; não substitui teste de carga.
 
 ---
 
@@ -1647,7 +1812,7 @@ O framework cobre a engenharia de um SaaS com profundidade, mas há temas de Saa
 
 ## 14. Contrato das skills e automação
 
-### 14.1 As 21 skills
+### 14.1 As 24 skills
 
 | Grupo | Skill | Produz |
 | --- | --- | --- |
@@ -1660,6 +1825,9 @@ O framework cobre a engenharia de um SaaS com profundidade, mas há temas de Saa
 | | `/blueprint-flows` | `07`, `08` + diagramas de sequência |
 | | `/blueprint-quality` | `12`, `13`, `14`, `15` + deployment scaled |
 | | `/blueprint-plan` | `11`, `16` |
+| **Protótipo** *(opcional)* | `/prototype {client}` | `prototype/00`, `01`, `02` — plano de telas e dados |
+| | `/prototype-build {client} {alvo}` | **Código** — o app mockado, com portão de cobertura |
+| | `/prototype-api {client} {alvo}` | `prototype/03`, `04`, `05` — contrato extraído do código |
 | **Backend** | `/backend` | 15 documentos |
 | **Frontend** | `/frontend` | `shared/06`, `shared/15` + orquestração |
 | | `/frontend-design-system` | `shared/03` |
@@ -1718,6 +1886,9 @@ O framework cobre a engenharia de um SaaS com profundidade, mas há temas de Saa
 **Frontend** — 60 marcadores distintos entre `shared/` e os clientes:
 `cores` · `a11y` · `catalogo` · `hooks` · `dtos` · `cache` · `dependencias` · `campos-criticos` · `principios` · `usuarios` · `dominios` · `features` · `regras-importacao` · `primitivos` · `compostos` · `feature-components` · `desktop-components` · `stores` · `eventos` · `rotas` · `layouts` · `janelas` · `menus` · `tray` · `shortcuts` · `fluxos` · `flows` · `cobertura` · `estrategias` · `budget` · `vulnerabilidades` · `checklist` · `flags` · `ambientes` · `glossario` · `convencoes` · `decisoes` · `notifications` · `feedback-sucesso` · `feedback-erro` · `feedback-validacao` · `feedback-aviso` · e a família `copies-*` (`login`, `cadastro`, `dashboard`, `telas`, `navbar`, `sidebar`, `footer`, `modais`, `empty-states`, `tabbar`, `header`, `permissoes`, `alertas`, `titlebar`, `menubar`, `tray`, `notifications`, `dialogs`)
 
+**Protótipo** (`docs/prototype/`) — 32 marcadores distintos nos 6 documentos:
+`camadas` · `stack` · `nao-objetivos` · `mapa-uc` · `uc-sem-tela` · `telas` · `navegacao` · `fluxos` · `estrategia` · `personas` · `fixtures` · `cenarios` · `convencoes` · `endpoints` · `detalhamento` · `atomicas` · `agregacoes` · `tempo-real` · `divergencias` · `matriz-estados` · `erros` · `otimistas` · `transicoes` · `feedback` · `lacunas-dominio` · `use-cases` · `estados` · `regras` · `api` · `contradicoes` · `suposicoes` · `encaminhamento`
+
 **Cross-layer** (`docs/shared/`) — 6 marcadores:
 
 | Doc | Marcadores |
@@ -1749,6 +1920,8 @@ O framework cobre a engenharia de um SaaS com profundidade, mas há temas de Saa
 | "desktop", "Electron", "Tauri", "system tray", "menu bar" | `desktop` |
 | "web", "SaaS", "dashboard", "painel", "SEO", "navegador" | `web` |
 | Nenhum sinal claro | `web` (padrão, registrado como suposição de risco médio) |
+
+**A flag `--prototype`** insere três fases e move o backend para depois delas: **15 fases** em vez de 12, **54 documentos preenchidos** em vez de 48, mais o app mockado. Exige projeto-alvo — o protótipo *é* código, não existe versão só-documentação dele. As fases 9 (`prototype-build`) e 10 (`prototype-api`) seguem o mesmo regime da `codegen-setup`: escrevem fora do repositório, têm **portão objetivo** (telas, fluxos percorríveis, estados, typecheck, lint) e reportam falha em vez de declarar sucesso. Os achados de risco alto de `05-findings.md` entram no relatório final **acima** das suposições — são evidência de código, não inferência.
 
 **Retomada:** verifica quais documentos já têm conteúdo real (sem `{{placeholders}}`) e pula as fases concluídas. Rodar `/pipeline` de novo continua de onde parou.
 
@@ -1934,6 +2107,8 @@ src/contracts/
 Regras: entidades PascalCase, campos camelCase (conforme glossário) · enums em PascalCase com valores SCREAMING_SNAKE_CASE · **JSDoc com a descrição do domain model** · IDs como branded types quando a linguagem permitir.
 
 Com os contratos corretos, cada sessão futura gera código tipado **sem reler o domain model inteiro**.
+
+> **Quando houve protótipo,** `src/contracts/` não nasce do zero: os tipos das entidades já existem em `src/types/`, nomeados pelo glossário e validados por uso real numa interface. `/codegen-setup` os **promove**, conferindo contra `04-domain-model.md` — e um conflito aí significa que `/prototype-api` deixou um achado passar.
 
 ### 15.4 Orçamento de contexto
 
@@ -2140,6 +2315,14 @@ docs/
 │   ├── 15-observability.md             logs, Golden Signals, tracing, alertas, dashboards, health
 │   └── 16-evolution.md                 roadmap, débitos, SemVer, deprecação, revisão
 │
+├── prototype/                          6 documentos — OPCIONAL, roda ANTES do backend
+│   ├── 00-prototype-vision.md          o que é real e o que é mockado, critérios de saída
+│   ├── 01-screens.md                   mapa UC → tela, campo a campo, navegação
+│   ├── 02-mock-data.md                 personas, fixtures, casos de borda, cenários
+│   ├── 03-api-requirements.md          O CONTRATO DESCOBERTO — fonte de backend/05
+│   ├── 04-interaction-states.md        estados por tela, erros exercidos, otimismo
+│   └── 05-findings.md                  lacunas e regras que a UI revelou no blueprint
+│
 ├── backend/                            15 documentos — COMO, no servidor
 │   └── 00-backend-vision · 01-architecture · 02-project-structure · 03-domain ·
 │      04-data-layer · 05-api-contracts · 06-services · 07-controllers · 08-middlewares ·
@@ -2175,6 +2358,7 @@ docs/
 ├── blueprint/         blueprint-foundation/  blueprint-domain/
 │                      blueprint-architecture/ blueprint-flows/
 │                      blueprint-quality/     blueprint-plan/    técnico (6 fases)
+├── prototype/         prototype-build/       prototype-api/     protótipo (opcional)
 ├── backend/                                                     backend
 ├── frontend/          frontend-design-system/
 │                      frontend-app/          frontend-quality/  frontend
@@ -2200,8 +2384,13 @@ docs/
 /frontend-app {client}           8 docs do cliente
 /frontend-quality {client}       5 docs do cliente
 
+# Protótipo (opcional — roda entre os fluxos e o backend)
+/prototype {client}                     plano: telas, navegação, dados mock
+/prototype-build {client} {alvo}        código: o app mockado
+/prototype-api {client} {alvo}          o contrato descoberto, extraído do código
+
 # Automação
-/pipeline [prd] [clientes] [alvo]   tudo, em fases isoladas, sem perguntas
+/pipeline [prd] [clientes] [alvo] [--prototype]   tudo, em fases isoladas, sem perguntas
 /build [ENT-XXX...] [--max N]       features em loop com portões
 
 # Evolução

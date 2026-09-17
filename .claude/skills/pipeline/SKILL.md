@@ -8,12 +8,28 @@ description: Executa o pipeline completo de documentacao automaticamente — blu
 Roda as 11+ fases de documentacao em sequencia, **sem parar para perguntar**. Cada fase executa num subagente com contexto limpo, escreve seus documentos e devolve um resumo. Ao final, consolida todas as inferencias em `docs/ASSUMPTIONS.md` para revisao.
 
 ```
-/pipeline [caminho-do-prd] [clientes] [projeto-alvo]
+/pipeline [caminho-do-prd] [clientes] [projeto-alvo] [--prototype]
 
 /pipeline                                      # usa docs/prd.md, infere os clientes
 /pipeline docs/prd.md web,mobile               # explicito, para na documentacao
 /pipeline docs/prd.md web ../meu-saas/         # inclui o scaffold do codigo
+/pipeline docs/prd.md web ../meu-saas/ --prototype   # com fase de prototipo
 ```
+
+## A flag `--prototype`
+
+Insere a **fase de prototipo** — um frontend completo e mockado construido **antes** do backend, para que o contrato de API seja descoberto construindo a interface em vez de inventado antes dela.
+
+| | Sem `--prototype` | Com `--prototype` |
+|---|---|---|
+| Fases | 12 | 15 |
+| Ordem | backend → frontend | design system → **prototipo** → backend → frontend |
+| Contrato de API | Derivado dos casos de uso | **Extraido de codigo com consumidor real** |
+| Projeto-alvo | So na ultima fase | **Obrigatorio** — o prototipo e codigo |
+| Custo | Base | Bem maior: constroi a UI duas vezes |
+| Quando compensa | CRUD conhecido, PRD detalhado | Dominio novo, fluxos longos, SaaS com muitas telas |
+
+**A flag exige projeto-alvo.** Sem ele, nao ha onde construir — pare e pergunte, no kickoff.
 
 ## Modo autonomo — o que isso significa
 
@@ -40,12 +56,23 @@ Toda validacao acontece **antes** do run comecar. Depois disso, nenhuma interrup
 
 Se existir, leia o PRD **completo**. E o unico documento que o orquestrador carrega — todo o resto fica nos subagentes.
 
-**Projeto-alvo.** A ultima fase (`codegen-setup`) escreve codigo fora deste repositorio e precisa saber onde. Se o usuario nao informou:
+**Projeto-alvo.** As fases que escrevem codigo fora deste repositorio (`prototype-build` e `codegen-setup`) precisam saber onde. Se o usuario nao informou:
 
 > "Onde o codigo deve ser gerado? (ex: `../meu-saas/`)
 > Responda o caminho, ou `pular` para rodar so a documentacao."
 
 Resolva isso **agora**, no kickoff — nunca no meio do run. Se o usuario responder `pular`, remova a fase final do plano.
+
+**Com `--prototype`, o projeto-alvo e obrigatorio.** O prototipo *e* codigo; nao existe versao so-documentacao dele. Se a flag veio sem caminho e o usuario responder `pular`, **pare**:
+
+> "`--prototype` precisa de um projeto-alvo — o prototipo e um app que roda, nao um documento.
+> Informe o caminho, ou rode sem a flag para so a documentacao."
+
+**Com `--prototype`, verifique tambem o custo.** A fase constroi a interface inteira; some-se a isso a implementacao final. Avise uma vez, no kickoff, e siga — o usuario ja optou ao passar a flag:
+
+> "Modo prototipo: a UI sera construida duas vezes (mockada agora, integrada depois). O retorno e um contrato de API com consumidor real e as lacunas do dominio descobertas antes do schema."
+
+**Escopo do prototipo.** Um cliente so — o primeiro da lista de clientes. Registre como suposicao de risco **baixo** se foi inferido.
 
 ## Passo 2: Determinar os Clientes Frontend
 
@@ -85,7 +112,7 @@ Nao aguarde confirmacao — o usuario ja optou pelo modo automatico ao rodar `/p
 
 Para cada fase, use a ferramenta **Agent** com `subagent_type: general-purpose` e `run_in_background: false` (aguarde cada uma terminar antes da proxima).
 
-### Ordem das fases
+### Ordem das fases — padrao (12 fases)
 
 | # | Skill | Argumento | Docs gerados |
 |---|-------|-----------|--------------|
@@ -102,9 +129,72 @@ Para cada fase, use a ferramenta **Agent** com `subagent_type: general-purpose` 
 | 11 | `frontend-quality` | `{client}` | frontend {client} 09,10,11,12,13 |
 | 12 | `codegen-setup` | `{projeto-alvo}` | CLAUDE.md, `src/contracts/`, schema, scaffold |
 
-As fases 10 e 11 repetem para **cada** cliente selecionado, sempre `app` antes de `quality`.
-
 > A fase 9 roda depois da 7 de proposito: `shared/15-api-dependencies.md` usa `docs/backend/05-api-contracts.md` como fonte autoritativa dos endpoints.
+
+### Ordem das fases — com `--prototype` (15 fases)
+
+A ordem **inverte a relacao entre frontend e backend**: a interface vem primeiro, mockada, e o contrato de API nasce dela.
+
+| # | Skill | Argumento | Saida |
+|---|-------|-----------|-------|
+| 1-6 | `blueprint-*` | — | os 17 docs do blueprint tecnico |
+| **7** | **`frontend-design-system`** | — | frontend shared/03 — **antecipada: o prototipo precisa dos tokens** |
+| **8** | **`prototype`** | `{client}` | prototype 00, 01, 02 — plano de telas e dados |
+| **9** | **`prototype-build`** | `{client} {projeto-alvo}` | **codigo**: app mockado navegavel |
+| **10** | **`prototype-api`** | `{client} {projeto-alvo}` | prototype 03, 04, 05 — **contrato descoberto** |
+| 11 | `backend` | — | backend 00 a 14, agora com `prototype/03` como fonte do contrato |
+| 12 | `frontend` | clientes | frontend shared/06, shared/15 |
+| 13 | `frontend-app` | `{client}` | frontend {client} 00,01,02,04,05,07,08,14 |
+| 14 | `frontend-quality` | `{client}` | frontend {client} 09,10,11,12,13 |
+| 15 | `codegen-setup` | `{projeto-alvo}` | CLAUDE.md, `src/contracts/`, schema, scaffold |
+
+As fases 13 e 14 repetem para **cada** cliente, sempre `app` antes de `quality`. O **prototipo e de um cliente so** — o primeiro da lista.
+
+**Total:** 48 docs + 6 do prototipo = **54 documentos preenchidos**, mais o app mockado.
+
+### As fases 9 e 10 sao diferentes das outras
+
+Como a `codegen-setup`, a fase 9 escreve **codigo fora deste repositorio** e tem portao objetivo. A fase 10 le esse codigo.
+
+- **Fase 9 (`prototype-build`)** — portao de cobertura: toda tela existe, todo fluxo critico e percorrivel, toda tela tem os quatro estados, toda persona navega, type check e lint passam. Falha no portao → corrigir e repetir; se persistir, **reportar falha**, nunca declarar sucesso.
+- **Fase 10 (`prototype-api`)** — le o **codigo**, nao o plano. Se `03-api-requirements.md` sair identico a `01-screens.md`, a fase falhou: ela copiou a intencao em vez de extrair o fato.
+- **Achados de risco alto** de `05-findings.md` sao reportados ao orquestrador. Em modo autonomo o pipeline **nao para** por causa deles (documento incompleto nao corrompe o proximo), mas eles entram no relatorio final **acima** das suposicoes — sao evidencia, nao inferencia.
+- **Nao commite** no projeto-alvo nestas fases.
+
+Acrescente ao prompt do subagente da fase 9:
+
+```
+Esta fase escreve codigo em {projeto-alvo}, fora do repositorio de documentacao.
+
+- Construa TODA tela de docs/prototype/01-screens.md. Nao reduza escopo.
+- Os quatro estados (carregando, vazio, erro, sucesso) sao obrigatorios por tela.
+- Rode type check e lint ao final. Corrija o que falhar.
+- Se apos a correcao ainda houver erro, devolva-o em GAPS e NAO declare sucesso.
+- Nao commite no projeto-alvo.
+
+Acrescente ao retorno:
+GATE:
+  telas:     {n}/{N}
+  fluxos:    {n}/{N} percorriveis
+  estados:   completo|faltam {n}
+  typecheck: ok|falhou — {resumo}
+  lint:      ok|falhou — {resumo}
+```
+
+E ao da fase 10:
+
+```
+Extraia o contrato LENDO O CODIGO do prototipo em {projeto-alvo} — handlers de
+mock, chamadas da aplicacao e componentes que renderizam os campos.
+NAO copie docs/prototype/01-screens.md: aquele e o plano, voce documenta o fato.
+Onde o codigo divergir do plano, o codigo vence e a divergencia vira achado.
+Nenhum endpoint entra no contrato sem tela que o chame; nenhum campo, sem ponto
+de renderizacao.
+
+Acrescente ao retorno:
+FINDINGS:
+- {achado} | {risco alto|medio|baixo} | {destino}
+```
 
 ### A fase 12 e diferente das outras
 
@@ -238,6 +328,13 @@ O PRD nao cobre os pontos abaixo. Considere enriquece-lo e rodar `/increment`:
 >
 > {{Se houve falhas: **Fases que falharam:** lista + o que ficou incompleto}}
 >
+> {{Se rodou com --prototype:}}
+> **Prototipo ({{projeto-alvo}}):** {{n}} telas · {{n}}/{{N}} fluxos percorriveis · typecheck {{ok|falhou}} · lint {{ok|falhou}}
+> **Contrato extraido:** {{n}} endpoints com consumidor · {{n}} campos sem consumidor propostos para remocao
+>
+> **Achados do prototipo — {{n}} de risco alto.** Estes vem de **evidencia de codigo**, nao de inferencia; leia-os antes das suposicoes:
+> 1. {{achado}} → {{destino}}
+>
 > **Scaffold ({{projeto-alvo}}):** typecheck {{ok|falhou}} · lint {{ok|falhou}} · schema {{ok|falhou}}
 >
 > **{{n}} suposicoes de risco alto** precisam da sua revisao — estao no topo de
@@ -256,6 +353,8 @@ O PRD nao cobre os pontos abaixo. Considere enriquece-lo e rodar `/increment`:
 
 - **Qualidade depende do PRD.** PRD raso gera documentacao rasa com muitas suposicoes de risco alto. O pipeline nao inventa contexto de negocio — ele extrapola o que existe.
 - **Nao substitui as skills individuais.** Se o projeto e critico, rode fase a fase (`/blueprint-foundation`, `/blueprint-domain`, ...) e responda as perguntas. O pipeline e para primeira versao rapida e para projetos onde o PRD ja e detalhado.
-- **Vai ate o scaffold, nao ate as features.** A fase 12 gera tipos, schema e estrutura — tudo derivavel mecanicamente dos documentos. Implementar features e outro loop, com outros portoes: `/build`.
+- **Vai ate o scaffold, nao ate as features.** A fase final gera tipos, schema e estrutura — tudo derivavel mecanicamente dos documentos. Implementar features e outro loop, com outros portoes: `/build`.
+- **O prototipo custa caro e nao serve a todo projeto.** Ele constroi a UI inteira para depois reconstrui-la integrada. Para um CRUD conhecido com PRD detalhado, o retorno provavelmente nao paga; para um dominio novo ou um SaaS com fluxos longos, paga quase sempre — porque a alternativa e descobrir a lacuna do dominio com o schema ja em producao.
+- **O prototipo e de um cliente so.** Gestos, offline, push e IPC nao aparecem num prototipo web, e o contrato extraido nao os cobre.
 - **O scaffold herda as suposicoes dos documentos.** Se `05-data-model.md` supos PostgreSQL, o schema nasce em PostgreSQL. Revise `ASSUMPTIONS.md` antes de construir em cima.
 - **Custo.** Um subagente por fase multiplica o consumo de tokens em relacao a rodar tudo numa sessao — e o preco por nao estourar o contexto.

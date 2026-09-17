@@ -9,6 +9,30 @@ Le o **blueprint tecnico ja preenchido** (`docs/blueprint/`) e transforma as dec
 
 O blueprint e a fonte primaria — ja contem entidades, requisitos, fluxos, casos de uso, ADRs e maquinas de estado. Voce so pergunta o que ele **nao** cobre: detalhes de implementacao (framework, ORM, estrutura de classes, metodos).
 
+## Se `docs/prototype/` existir, ele muda esta skill
+
+O prototipo e um frontend completo e mockado construido **antes** do backend. Quando ele existe, o contrato de API deixa de ser inventado e passa a ser **herdado de um consumidor real**.
+
+| Documento do prototipo | Autoridade sobre | Efeito |
+|---|---|---|
+| `03-api-requirements.md` | **`05-api-contracts.md`** | **Fonte primaria dos endpoints.** Cada endpoint ja tem tela consumidora e cada campo ja tem ponto de renderizacao |
+| `04-interaction-states.md` | `09-errors.md` | Todo erro que a UI trata **precisa** existir no catalogo, com o formato que o tratamento exige |
+| `02-mock-data.md` | `04-data-layer.md` | Fixtures viram seeds de dev e staging; casos de borda viram fixtures de teste (`14-tests.md`) |
+| `01-screens.md` | `11-permissions.md` | As personas ja exercitaram a matriz RBAC — confirme, nao reinvente |
+| `05-findings.md` | todos | Achado de risco **alto** aberto **bloqueia esta skill** |
+
+**Portao:** antes de gerar qualquer documento, leia `docs/prototype/05-findings.md`. Se houver achado de risco alto em aberto, **pare**:
+
+> "O prototipo registrou {{N}} achados de risco alto ainda abertos. Um contrato construido sobre lacuna conhecida propaga a lacuna para o schema — e schema com dados nao se corrige com `/increment`.
+> Resolva com `/increment` ou `/patch`, rode `/prototype-api` para regenerar o contrato, e volte."
+
+**Regras quando o prototipo existe:**
+
+1. **Nao invente endpoint.** Endpoint que nao esta em `03-api-requirements.md` so entra se vier de um fluxo sem interface (webhook, worker, cron, integracao) — e a origem precisa ser citada.
+2. **Nao acrescente campo ao DTO de response** sem consumidor. O prototipo ja listou os campos sem consumidor e propos remocao; respeite a proposta ou justifique.
+3. **Nao contradiga a latencia tolerada nem a exigencia de idempotencia** — as duas foram observadas, nao estimadas.
+4. **As perguntas 4, 5 e 8 do questionario abaixo ficam respondidas** pelo prototipo. Confirme em vez de perguntar.
+
 ## Fonte e Saida
 
 ```
@@ -46,6 +70,9 @@ Leia os 17 arquivos de `docs/blueprint/`. Mapa de extracao:
 | 06-architecture | Componentes → camadas (01). Comunicacao → middlewares (08). Deploy → deploy (01). |
 | 07-critical_flows | Fluxos → services com fluxo detalhado (06). Erros → catalogo de erros (09). |
 | 08-use_cases | UCs → mapa de endpoints (05). Atores → permissoes (11). |
+| **prototype/03-api-requirements** | **Endpoints, DTOs, campos, erros, latencia, idempotencia → contratos (05). Fonte primaria quando existir.** |
+| **prototype/04-interaction-states** | Erros que a UI trata → catalogo (09). Mutacoes otimistas → idempotencia (04). |
+| **prototype/02-mock-data** | Personas → seeds (04). Casos de borda → fixtures de teste (14). |
 | 09-state-models | Estados → maquinas de estado em domain (03). Transicoes → metodos (03). |
 | 10-decisions | ADRs → justificativas de stack e padrao (00, 01). |
 | 11-build_plan | Entregas → ordem de implementacao. |
@@ -77,11 +104,11 @@ Pergunte **apenas** o que o blueprint nao responde. Pre-preencha com `(do bluepr
 | 1 | Stack | Linguagem e framework? (Node+Fastify, Python+FastAPI, Go+Gin, Java+Spring) | 10-decisions |
 | 2 | Stack | ORM? (Prisma, Drizzle, TypeORM, SQLAlchemy, raw) | 05-data |
 | 3 | Stack | Deploy e CI/CD? (Docker+K8s, ECS, serverless, PaaS) | 06-architecture |
-| 4 | API | Confirme os endpoints derivados dos use cases | 08-use_cases |
-| 5 | API | Campos de request/response derivados das entidades | 04-domain-model |
+| 4 | API | Confirme os endpoints derivados dos use cases | 08-use_cases — **ou `prototype/03`, que ja os traz com consumidor** |
+| 5 | API | Campos de request/response derivados das entidades | 04-domain-model — **ou `prototype/03`, campo a campo com ponto de renderizacao** |
 | 6 | API | Versionamento? (URL /v1/, header, sem) | 16-evolution |
 | 7 | Auth | Provedor de auth? (Auth0, Cognito, Keycloak, Supabase, proprio) | 13-security |
-| 8 | Auth | Confirme a matriz RBAC derivada dos use cases | 08-use_cases + 13-security |
+| 8 | Auth | Confirme a matriz RBAC derivada dos use cases | 08-use_cases + 13-security — **ou `prototype/02`, cujas personas ja a exercitaram** |
 | 9 | Async | Message broker? (BullMQ, RabbitMQ, Kafka, SQS) | 06-architecture |
 | 10 | Async | Confirme os workers derivados dos fluxos assincronos | 07-flows |
 | 11 | Async | Provedores de comunicacao e pagamento? (email, SMS, WhatsApp, gateway) | — |
@@ -126,12 +153,12 @@ Atualize o progresso apos cada template (`| # | Template | Status |` com ✅ / �
 
 ## Regras
 
-1. **O blueprint e a fonte primaria** — leia tudo antes de perguntar qualquer coisa
+1. **O blueprint e a fonte primaria do dominio; o prototipo, do contrato de API** — leia os dois antes de perguntar qualquer coisa
 2. **So pergunte o que o blueprint nao responde** — detalhes de implementacao
 3. **Pre-preencha** respostas do blueprint com `(do blueprint XX: valor)`
 4. **Nunca invente** numeros, metricas ou nomes — use o blueprint ou pergunte
 5. **Cada entidade deve ter:** atributos, invariantes, metodos, eventos, maquina de estados
-6. **Cada endpoint deve ter:** request, response, status codes, erros
+6. **Cada endpoint deve ter:** request, response, status codes, erros — e, quando ha prototipo, **consumidor nomeado**
 7. **Cada service deve ter:** metodos, com fluxo passo-a-passo nos criticos
 8. **Cada repository deve ter:** interface, queries, indices
 9. **Cada template de mensagem deve ter:** evento disparador, canal, variaveis

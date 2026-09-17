@@ -34,6 +34,7 @@ docs/blueprint/*.md
 docs/backend/*.md
 docs/frontend/shared/*.md
 docs/frontend/*/*.md          # web, mobile, desktop
+docs/prototype/*.md           # se existir
 docs/shared/*.md
 docs/specs/*.md               # se existir
 docs/adr/*.md

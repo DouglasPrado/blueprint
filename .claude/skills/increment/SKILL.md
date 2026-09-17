@@ -19,7 +19,8 @@ Se o usuario nao passou o alvo como argumento, pergunte:
 > - **blueprint** — tecnico (`docs/blueprint/`, 17 docs)
 > - **backend** — implementacao (`docs/backend/`, 15 docs)
 > - **frontend** — interface (`docs/frontend/`, multi-client)
-> - **all** — os tres"
+> - **prototype** — frontend mockado (`docs/prototype/`, 6 docs)
+> - **all** — os quatro"
 
 Se o alvo incluir **frontend**, pergunte tambem o cliente:
 
@@ -40,6 +41,7 @@ Leia apenas o escopo selecionado:
 | frontend `shared` | `docs/frontend/shared/` (03, 06, 15) |
 | frontend `{client}` | `docs/frontend/shared/` + `docs/frontend/{client}/` (00 a 14) |
 | frontend `all` | shared + todos os clientes existentes |
+| prototype | `docs/prototype/` (00 a 05) + `docs/blueprint/04-domain-model.md`, `08-use_cases.md`, `09-state-models.md` para contexto |
 
 Leia `docs/prd.md` se existir. Se o alvo for backend ou frontend, o blueprint tecnico e a referencia de verdade — nao contradiga.
 

@@ -24,6 +24,17 @@ Do blueprint tecnico:
 
 Dos compartilhados: `docs/frontend/shared/03-design-system.md`, `06-data-layer.md`, `15-api-dependencies.md`
 
+**Do prototipo, se existir** — sao a mesma informacao ja validada contra codigo que roda:
+
+| Doc do prototipo | Responde antecipadamente |
+|---|---|
+| `01-screens.md` | `07-routes.md` (rotas, guards, layouts) e parte de `04-components.md` |
+| `04-interaction-states.md` | Estados de `08-flows.md` e as mensagens de feedback de `14-copies.md` |
+| `03-api-requirements.md` | O que cada tela consome, campo a campo |
+| `05-findings.md` | Decisoes ja tomadas — nao reabra |
+
+> Com prototipo, esta skill **documenta o que existe** em vez de projetar o que podera existir. Divergencia entre o prototipo e o que voce escreveria e achado, nao liberdade editorial: registre.
+
 Se `docs/backend/13-integrations.md` existir, leia a secao de canais de comunicacao — ela alimenta os copies de notificacao.
 
 Templates a preencher (8): `00-frontend-vision.md`, `01-architecture.md`, `02-project-structure.md`, `04-components.md`, `05-state.md`, `07-routes.md`, `08-flows.md`, `14-copies.md`

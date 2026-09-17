@@ -11,7 +11,7 @@
 | Campo | Valor |
 | --- | --- |
 | Versão | v1.0.0 |
-| Fonte | Repositório Blueprint — `README.md`, `docs/**`, `.claude/skills/**` |
+| Fonte | Repositório Blueprint — `README.md`, `docs/**`, `skills/**` |
 | Cobertura | 52 documentos padrão (1 cliente frontend), 58 com a fase de protótipo · 24 skills · 10 diagramas `.mmd` + 4 READMEs de diagramas |
 | Idioma | Descrições em português; identificadores técnicos em inglês |
 
@@ -2269,29 +2269,29 @@ Um framework documentation-driven também sofre de deriva documental. Estas **se
 
 | # | Divergência | Fontes em conflito | Qual seguir |
 | --- | --- | --- | --- |
-| 1 | **Marcadores `APPEND` do blueprint técnico** | `.claude/skills/increment/SKILL.md` diz que `02, 05, 06, 07, 08, 14, 15, 16` não têm marcador; **os oito arquivos têm** | Os arquivos. Inventário real em §14.3 |
+| 1 | **Marcadores `APPEND` do blueprint técnico** | `skills/increment/SKILL.md` diz que `02, 05, 06, 07, 08, 14, 15, 16` não têm marcador; **os oito arquivos têm** | Os arquivos. Inventário real em §14.3 |
 | 2 | **Nome do diagrama de arquitetura do cliente web** | `/blueprint:frontend-app` gera `{client}-architecture.mmd`; `docs/diagrams/web/README.md` declara `frontend-architecture.mmd` | O README do diagrama, que é o que `frontend/web/01-architecture.md` referencia |
 | 3 | **Numeração de fluxos alternativos e exceções em casos de uso** | `/blueprint:blueprint-flows` diz `1a, 2a…` e `E1, E2…`; `docs/blueprint/08-use_cases.md` e `docs/templates/use-case-template.md` usam `2a` (alternativo) e `2b` (exceção) | Os templates, que são o que o documento gerado precisa espelhar |
 | 4 | **Referências cruzadas em português e em caminho flat, apontando para arquivos inexistentes** | Não é um template isolado: **37 ocorrências em 25 arquivos**, em quatro classes — (a) o template do router `docs/templates/claudemd-template.md` (`04-componentes.md`, `05-estado.md`, `07-rotas.md`, `08-fluxos.md`, `09-testes.md`, `11-seguranca.md`, `12-observabilidade.md` e o flat `docs/frontend/06-data-layer.md`); (b) **`01-arquitetura.md`, referenciado em 6 documentos de cliente** (`{web,desktop}/00-frontend-vision.md`, `.../02-project-structure.md`, `.../05-state.md`); (c) o resto dos docs de cliente (`07-rotas.md`, `11-seguranca.md`, `09-testes.md`, `13-cicd-convencoes.md`, `12-observabilidade.md`, `00-visao-frontend.md`); (d) os **compartilhados e cross-layer** — `frontend/shared/03-design-system.md:122`, `frontend/shared/06-data-layer.md:149`, `frontend/shared/15-api-dependencies.md:90`, `docs/shared/event-mapping.md:49-51` e `docs/shared/error-ux-mapping.md:60-61`, estes últimos com o caminho **flat** `docs/frontend/06-data-layer.md`, `docs/frontend/11-security.md`, `docs/frontend/12-observability.md` | A estrutura real (`docs/frontend/{shared,web,mobile,desktop}/`, nomes em inglês). **Deriva sistêmica** da migração flat → multi-client: atingiu o template do router, os documentos gerados *e* os conectores cross-layer |
 | 5 | **Prefixo de regra de negócio** | `docs/blueprint/04-domain-model.md`, `08-use_cases.md`, `backend/03-domain.md` e `/blueprint:specs` usam **`RN-XX`**; `docs/templates/use-case-template.md:54` e `docs/blueprint/README.MD:356,608` usam **`RB-01`** | **`RN-XX`** — é o que os documentos modulares, o backend e o gerador de backlog usam. `RB-` sobrevive só no master e no template de caso de uso |
 | 6 | **Dono do `auth-flow.mmd`** | `docs/diagrams/README.md` §6 atribui todos os `sequences/*.mmd` a `07-critical_flows.md`; `/blueprint:blueprint-quality` manda atualizá-lo ao gerar `13-security.md` | Ambos, em momentos diferentes: o fluxo nasce em `07` (fase 4) e o detalhe de autenticação é refinado por `13` (fase 5). Detalhado em §3.3 |
-| 7 | **Seletor do tema escuro** | `docs/frontend/shared/03-design-system.md:80` usa `[data-theme="dark"]`; `.claude/skills/frontend-design-system/SKILL.md:149` usa `.dark` | Qualquer um — mas **um só**, e o mesmo em todo o projeto. Detalhado em §9.1 |
+| 7 | **Seletor do tema escuro** | `docs/frontend/shared/03-design-system.md:80` usa `[data-theme="dark"]`; `skills/frontend-design-system/SKILL.md:149` usa `.dark` | Qualquer um — mas **um só**, e o mesmo em todo o projeto. Detalhado em §9.1 |
 
-> ⚠️ **E aqui está a quarta lacuna estrutural do framework:** `/blueprint:patch` e `/blueprint:increment` **não alcançam seis destas sete divergências**. A varredura do `/blueprint:patch` cobre apenas `docs/blueprint/`, `docs/backend/`, `docs/frontend/shared/`, `docs/frontend/*/`, `docs/prototype/`, `docs/shared/`, `docs/specs/` e `docs/adr/`. Ficam **inteiramente fora de alcance** três diretórios: **`docs/templates/`**, **`docs/diagrams/`** e — o mais importante — **`.claude/skills/`**, já que a varredura só desce em `docs/**`. `/blueprint:increment` é mais restrito ainda (`blueprint`, `backend`, `frontend`, `prototype`).
+> ⚠️ **E aqui está a quarta lacuna estrutural do framework:** `/blueprint:patch` e `/blueprint:increment` **não alcançam seis destas sete divergências**. A varredura do `/blueprint:patch` cobre apenas `docs/blueprint/`, `docs/backend/`, `docs/frontend/shared/`, `docs/frontend/*/`, `docs/prototype/`, `docs/shared/`, `docs/specs/` e `docs/adr/`. Ficam **inteiramente fora de alcance** três diretórios: **`docs/templates/`**, **`docs/diagrams/`** e — o mais importante — **`skills/`**, já que a varredura só desce em `docs/**`. `/blueprint:increment` é mais restrito ainda (`blueprint`, `backend`, `frontend`, `prototype`).
 >
 > Onde cada divergência mora, e o que isso implica:
 >
 > | # | Ponta fora de alcance | Ponta alcançável | Correção |
 > | --- | --- | --- | --- |
-> | 1 | `.claude/skills/increment/SKILL.md` | — | **manual** |
-> | 2 | `docs/diagrams/web/README.md` + `.claude/skills/frontend-app/SKILL.md` | — | **manual (as duas pontas)** |
-> | 3 | `.claude/skills/blueprint-flows/SKILL.md` + `docs/templates/use-case-template.md` | `docs/blueprint/08-use_cases.md` | **manual** nas fontes; o doc gerado o `/blueprint:patch` alcança |
+> | 1 | `skills/increment/SKILL.md` | — | **manual** |
+> | 2 | `docs/diagrams/web/README.md` + `skills/frontend-app/SKILL.md` | — | **manual (as duas pontas)** |
+> | 3 | `skills/blueprint-flows/SKILL.md` + `docs/templates/use-case-template.md` | `docs/blueprint/08-use_cases.md` | **manual** nas fontes; o doc gerado o `/blueprint:patch` alcança |
 > | 4 | classe (a): `docs/templates/claudemd-template.md` (8 ocorrências) | classes (b)(c)(d): **24 arquivos, 29 ocorrências** em `docs/frontend/` e `docs/shared/` | `/blueprint:patch` resolve 29 das 37; o template é manual |
 > | 5 | `docs/templates/use-case-template.md:54` | `docs/blueprint/README.MD:356,608` | parcial |
-> | 6 | `docs/diagrams/README.md` + `.claude/skills/blueprint-quality/SKILL.md` | — | **manual (as duas pontas)** |
-| 7 | `.claude/skills/frontend-design-system/SKILL.md` | `frontend/shared/03-design-system.md` | parcial |
+> | 6 | `docs/diagrams/README.md` + `skills/blueprint-quality/SKILL.md` | — | **manual (as duas pontas)** |
+| 7 | `skills/frontend-design-system/SKILL.md` | `frontend/shared/03-design-system.md` | parcial |
 >
-> **Quem usar §17.4 como lista de tarefas precisa saber disto:** rodar `/blueprint:patch` corrige 29 das 37 ocorrências da #4 e metade das #5 e #7 — e nada mais. As outras quatro exigem edição manual dentro de `.claude/skills/`, `docs/templates/` e `docs/diagrams/`.
+> **Quem usar §17.4 como lista de tarefas precisa saber disto:** rodar `/blueprint:patch` corrige 29 das 37 ocorrências da #4 e metade das #5 e #7 — e nada mais. As outras quatro exigem edição manual dentro de `skills/`, `docs/templates/` e `docs/diagrams/`.
 >
 > *(Detalhe de execução: a varredura da skill está escrita como `docs/blueprint/*.md`, em minúsculas, e o blueprint master é `README.MD` — num filesystem sensível a maiúsculas, o glob literal não o pega. A ponta "alcançável" da #5 depende de o agente ajustar o padrão.)* O framework tem ferramenta para corrigir a si mesmo, mas não para corrigir as próprias ferramentas — as skills, os templates e os diagramas estão fora de todo automatismo que ele oferece.
 >
@@ -2379,7 +2379,7 @@ docs/
 ### 18.2 Skills
 
 ```
-.claude/skills/
+skills/
 ├── pipeline/          build/                              automação
 ├── blueprint/         blueprint-foundation/  blueprint-domain/
 │                      blueprint-architecture/ blueprint-flows/

@@ -1,0 +1,32 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "\"${PLUGIN_ROOT}/hooks/status.sh\"", "timeout": 15 }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "\"${PLUGIN_ROOT}/hooks/no-secrets.sh\"", "timeout": 20 }
+        ]
+      },
+      {
+        "matcher": "apply_patch",
+        "hooks": [
+          { "type": "command", "command": "\"${PLUGIN_ROOT}/hooks/apply-patch-guard.sh\"", "timeout": 15 }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "\"${PLUGIN_ROOT}/hooks/stop-gate.sh\"", "timeout": 30 }
+        ]
+      }
+    ]
+  }
+}

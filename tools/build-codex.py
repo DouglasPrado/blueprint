@@ -22,7 +22,9 @@ Diferencas que o gerador resolve:
   3. Referencias cruzadas. `/blueprint:backend` vira `blueprint-backend`.
 
   4. Manifesto. O Codex exige `version`, `description`, `author.name` e um bloco
-     `interface` inteiro — e REJEITA o campo `hooks`, que no Claude e aceito.
+     `interface` inteiro. O campo `hooks` fica de fora de proposito: no Codex um
+     valor explicito no manifesto SUBSTITUI a descoberta por arquivo em vez de
+     somar a ela, e hooks/hooks.json no lugar convencional ja e o que ele procura.
 
 Os hooks NAO sao derivados: no Codex as ferramentas tem outros nomes, o payload
 de edicao de arquivo tem outro formato, e o deny de PreToolUse nao e aplicado a
@@ -49,11 +51,28 @@ def codex_name(skill: str) -> str:
     return f"blueprint-{skill}"
 
 
-def convert(text: str, src_name: str, names: dict) -> str:
-    """Traduz um SKILL.md do Claude para o Codex."""
+def translate(text: str, names: dict) -> str:
+    """Traduz o vocabulario do Claude para o do Codex.
+
+    Vale para SKILL.md e para os templates de docs/ — um template que manda
+    rodar `/blueprint:increment` referencia um comando que nao existe no Codex,
+    e um router chamado CLAUDE.md nao e lido pelo Codex, que le AGENTS.md.
+    """
     # /blueprint:backend -> blueprint-backend (mais longos primeiro)
     for claude, codex in sorted(names.items(), key=lambda kv: -len(kv[0])):
         text = re.sub(rf'/blueprint:{re.escape(claude)}(?![\w-])', codex, text)
+
+    text = text.replace("${CLAUDE_PLUGIN_ROOT}", "${PLUGIN_ROOT}")
+    text = text.replace("Claude Code", "Codex")
+    # O arquivo de instrucoes do agente: CLAUDE.md no Claude, AGENTS.md no Codex.
+    text = text.replace("claudemd-template", "agentsmd-template")
+    text = text.replace("CLAUDE.md", "AGENTS.md")
+    return text
+
+
+def convert(text: str, src_name: str, names: dict) -> str:
+    """Traduz um SKILL.md do Claude para o Codex."""
+    text = translate(text, names)
 
     # Frontmatter: so name e description, e name = diretorio
     m = re.match(r'^---\n(.*?)\n---\n', text, re.S)
@@ -65,11 +84,14 @@ def convert(text: str, src_name: str, names: dict) -> str:
             desc = dm.group(1).strip()
         new_fm = f"---\nname: {names[src_name]}\ndescription: {desc}\n---\n"
         text = new_fm + BANNER.format(src=src_name) + body
-
-    # ${CLAUDE_PLUGIN_ROOT} -> ${PLUGIN_ROOT}
-    text = text.replace("${CLAUDE_PLUGIN_ROOT}", "${PLUGIN_ROOT}")
-    text = text.replace("Claude Code", "Codex")
     return text
+
+
+def docs_dest(rel: Path) -> Path:
+    """O template do router muda de nome junto com o arquivo que ele gera."""
+    if rel.name == "claudemd-template.md":
+        return rel.with_name("agentsmd-template.md")
+    return rel
 
 
 def build(check: bool):
@@ -130,13 +152,18 @@ def build(check: bool):
     # Hooks do Codex: escritos a mao, apenas copiados.
     if CODEX_HOOKS_SRC.is_dir():
         for f in sorted(CODEX_HOOKS_SRC.rglob("*")):
-            if f.is_file():
-                staged[OUT / "hooks" / f.relative_to(CODEX_HOOKS_SRC)] = f.read_text(encoding="utf-8")
+            rel = f.relative_to(CODEX_HOOKS_SRC)
+            # A suite de testes e do repositorio, nao do plugin instalado.
+            if not f.is_file() or rel.parts[0] == "test":
+                continue
+            staged[OUT / "hooks" / rel] = f.read_text(encoding="utf-8")
 
     # Biblioteca de templates: o plugin instalado precisa ser autocontido.
+    # Os templates tambem passam pela traducao — eles citam skills e o router.
     for f in sorted((ROOT / "docs").rglob("*")):
         if f.is_file():
-            staged[OUT / "docs" / f.relative_to(ROOT / "docs")] = f.read_text(encoding="utf-8")
+            rel = docs_dest(f.relative_to(ROOT / "docs"))
+            staged[OUT / "docs" / rel] = translate(f.read_text(encoding="utf-8"), names)
 
     for extra in ("LICENSE",):
         staged[OUT / extra] = (ROOT / extra).read_text(encoding="utf-8")

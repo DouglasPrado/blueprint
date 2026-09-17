@@ -2,18 +2,25 @@
 
 # Blueprint
 
-**Documentation-driven software engineering for Claude Code.**
+**Documentation-driven software engineering for Claude Code and Codex.**
 
 Turn a product requirements document into a traceable technical blueprint, backend and frontend specifications, implementation backlog, typed scaffold and guarded build loop.
 
-**A Claude Code plugin · 3 blueprints + optional prototype · 58 documents · 25 skills · quality hooks**
+**A plugin for Claude Code and Codex · 3 blueprints + optional prototype · 58 documents · 25 skills · quality hooks**
 
 ```bash
+# Claude Code
 /plugin marketplace add DouglasPrado/blueprint
 /plugin install blueprint@blueprint
 ```
 
-Then, from the root of your project: **`/blueprint:init`** — it installs the template library the skills fill in. Without it the other commands have nothing to write into.
+```bash
+# Codex
+/plugin marketplace add DouglasPrado/blueprint
+/plugin install blueprint@blueprint
+```
+
+Then, from the root of your project: **`/blueprint:init`** on Claude Code, **`blueprint-init`** on Codex — it installs the template library the skills fill in. Without it the other commands have nothing to write into.
 
 </div>
 
@@ -21,7 +28,7 @@ Then, from the root of your project: **`/blueprint:init`** — it installs the t
 
 ## What is Blueprint?
 
-Blueprint is a software engineering framework built around **structured Markdown templates + Claude Code skills**.
+Blueprint is a software engineering framework built around **structured Markdown templates + agent skills**, packaged as a plugin for both Claude Code and Codex.
 
 It turns a PRD into an explicit engineering system that describes:
 
@@ -680,7 +687,7 @@ Blueprint can move from specification to implementation through a set of code-ge
 /blueprint:codegen-setup
       │
       ▼
-Contracts + schema + scaffold + CLAUDE.md router
+Contracts + schema + scaffold + agent router
       │
       ▼
 /blueprint:codegen
@@ -783,9 +790,9 @@ A filled project blueprint can grow far beyond what should be loaded into a sing
 
 Blueprint uses four mechanisms to keep implementation context bounded.
 
-### 1. `CLAUDE.md` router
+### 1. The agent router
 
-Maps task types to the small set of documents most likely to be relevant.
+A `CLAUDE.md` on Claude Code, an `AGENTS.md` on Codex — the file each agent reads on its own when it opens the project. It maps task types to the small set of documents most likely to be relevant.
 
 ```text
 Task type
@@ -818,7 +825,7 @@ The goal is to make each agent read the **right things**.
 
 You need:
 
-1. **Claude Code**
+1. **Claude Code** or **Codex**
 2. a product requirements document
 3. **Context7 MCP** for up-to-date technology documentation
 
@@ -837,7 +844,9 @@ Example Context7 configuration:
 
 ## Install
 
-Blueprint is a Claude Code plugin. The repository is both the plugin and the marketplace that serves it.
+The repository is both the plugin and the marketplace that serves it, for both agents.
+
+### Claude Code
 
 ```bash
 # 1. add the marketplace
@@ -847,10 +856,27 @@ Blueprint is a Claude Code plugin. The repository is both the plugin and the mar
 /plugin install blueprint@blueprint
 ```
 
+### Codex
+
+Same two steps, from a session or from the terminal:
+
+```bash
+# 1. add the marketplace
+codex plugin marketplace add DouglasPrado/blueprint
+
+# 2. install the plugin
+codex plugin install blueprint@blueprint
+```
+
+`codex plugin marketplace list` and `codex plugin list` confirm both landed.
+
+**The hooks do not run until you trust them.** Plugin-bundled hooks are non-managed hooks in Codex, so they stay inert until you review the definition and accept it. That is the right default — a hook runs as you. The five scripts are short and live in `plugins/blueprint/hooks/`.
+
 Then, **from the root of your own project**:
 
 ```text
-/blueprint:init
+/blueprint:init        # Claude Code
+blueprint-init         # Codex
 ```
 
 `init` copies the template library into your project's `docs/`. That matters: the filled documents belong in **your** repository — your history, your code review. The plugin only supplies the initial shape.
@@ -863,21 +889,40 @@ Then choose an execution mode.
 
 ### Command namespace
 
-Plugin skills are namespaced. Every command in this documentation is invoked as `/blueprint:<skill>`:
+On Claude Code, plugin skills are namespaced and every command in this documentation is invoked as `/blueprint:<skill>`:
 
 ```text
 /blueprint:init          /blueprint:blueprint       /blueprint:backend
 /blueprint:prototype     /blueprint:pipeline        /blueprint:build
 ```
 
+Codex has no invocation namespace, so the prefix moves into the skill name itself — the same convention `openai/skills` uses. Drop the `/` and the `:` becomes a `-`:
+
+```text
+blueprint-init           blueprint-blueprint        blueprint-backend
+blueprint-prototype      blueprint-pipeline         blueprint-build
+```
+
+The rest of this document uses the Claude Code form. The mapping is mechanical, and the skills you actually read inside Codex are already written in the Codex form — they are generated, not translated at read time.
+
 ### Developing on the plugin itself
 
 ```bash
 git clone https://github.com/DouglasPrado/blueprint.git
-claude --plugin-dir ./blueprint      # loads it straight from disk, no install
+claude --plugin-dir ./blueprint            # Claude Code: straight from disk, no install
+codex plugin marketplace add ./blueprint   # Codex: local marketplace
 ```
 
-Inside a session, `/reload-plugins` picks up edits without restarting. `claude plugin validate ./blueprint` checks the manifest and structure.
+Inside a Claude Code session, `/reload-plugins` picks up edits without restarting, and `claude plugin validate ./blueprint` checks the manifest and structure.
+
+**One source, two plugins.** `skills/`, `docs/` and `hooks/` are the source. `plugins/blueprint/` and `.agents/plugins/marketplace.json` are **generated** by `tools/build-codex.py` and must not be edited — every generated file carries a header saying so. After changing a skill or a template:
+
+```bash
+python3 tools/build-codex.py          # regenerate
+python3 tools/build-codex.py --check  # CI: fails if the generated tree drifted
+```
+
+The Codex hooks are the one thing that is *not* generated: the two agents disagree on tool names, on the shape of a file-edit payload, and on whether a `PreToolUse` deny is enforced. They are written by hand in `codex/hooks/`. `AGENTS.md` documents the differences.
 
 ### Fast autonomous pass
 
@@ -905,7 +950,7 @@ Then run the technical, backend and frontend phases in order.
 
 # Quality hooks
 
-The plugin ships five hooks. They exist because three of the framework's rules are stated in every skill and are exactly the ones an agent breaks under pressure: *Write only over a template*, *never weaken a test to go green*, *never leave a placeholder behind*.
+The plugin ships five hooks on Claude Code and four on Codex. They exist because three of the framework's rules are stated in every skill and are exactly the ones an agent breaks under pressure: *Write only over a template*, *never weaken a test to go green*, *never leave a placeholder behind*.
 
 A rule repeated in prose is a suggestion. A rule enforced at the tool call is a rule.
 
@@ -916,6 +961,25 @@ A rule repeated in prose is a suggestion. A rule enforced at the tool call is a 
 | `no-secrets` | `PreToolUse(Bash)` | Before `git commit` or `git push`, scans the **staged** diff for credentials and **blocks** on a hit |
 | `docs-complete` | `PostToolUse(Write)` | Warns when a generated document still contains `{{placeholders}}` — cannot block, the write already happened |
 | `status` | `SessionStart` | Reports where the project stands: which suites are filled, open high-risk findings and assumptions, documents built over a known gap, and the next command |
+
+## On Codex, enforcement moves to `Stop`
+
+The Codex hooks are not a port of the table above, because the enforcement point is different.
+
+Codex edits files through `apply_patch`, and a `PreToolUse` deny **is not enforced for `apply_patch`** ([openai/codex#27833](https://github.com/openai/codex/issues/27833), open). `code_mode_exec` does not fire `PreToolUse` at all ([#23411](https://github.com/openai/codex/issues/23411)). A gate that only warns is not a gate.
+
+So the rule is restated: instead of *you may not make this edit*, it becomes **you may not end the turn with the tree in this state**.
+
+| Hook | Event | What it does |
+| --- | --- | --- |
+| `stop-gate` | `Stop` | **The gate.** Reads the working tree with `git`, and returns `decision: block` with the reason if a Blueprint document lost an `<!-- APPEND:... -->` marker or a test file gained a skip. Codex turns the reason into a new prompt and the agent keeps working |
+| `apply-patch-guard` | `PreToolUse(apply_patch)` | Parses the patch text and says the same thing **early** — advisory, because the deny is not enforced. Undoing before the write is cheaper than after |
+| `no-secrets` | `PreToolUse(Bash)` | Same as on Claude Code: scans the staged diff before `git commit` / `git push` |
+| `status` | `SessionStart` | Same as on Claude Code |
+
+Checking the *result* rather than the *call* is more robust in a second way: it catches the violation no matter which tool produced it — `apply_patch`, a shell heredoc, or `code_mode_exec`.
+
+Two details that matter if you modify them. `Stop` decides by the **JSON on stdout**, not by the exit code, and invalid stdout becomes a hook error on *every* turn — so every path through `stop-gate.sh` prints valid JSON, error paths included. And it gives up after three consecutive blocks in the same turn: an unrepairable violation must not trap the agent in a loop.
 
 ## The design rule behind them
 
@@ -931,16 +995,19 @@ Two of them enforce asymmetric costs, which is why they block rather than warn. 
 ## Testing them
 
 ```bash
-bash hooks/test/run.sh
+bash hooks/test/run.sh          # 55 cases — Claude Code hooks
+bash codex/hooks/test/run.sh    # 40 cases — Codex hooks, plus the generated tree's structure
 ```
 
-35 cases, covering what each hook must block, what it must let through, and graceful degradation. Run it after changing a pattern: a malformed hook fails **silently** — it does not block, does not warn, and the plugin looks installed while doing nothing.
+Each suite covers what its hooks must block, what they must let through, and graceful degradation. Run them after changing a pattern: a malformed hook fails **silently** — it does not block, does not warn, and the plugin looks installed while doing nothing.
+
+Both suites also assert mechanically that no pattern uses `\b`, `\s` or lookahead. Those are GNU extensions; under the BSD `grep` on macOS they do not error, they simply **stop matching** — and the hook quietly starts allowing everything.
 
 ## Turning one off
 
 Hooks run as you, not sandboxed. Read them before installing any plugin, this one included — they are five short shell scripts under `hooks/`.
 
-To disable one, remove its entry from `hooks/hooks.json` in your installed copy, or disable the plugin's hooks wholesale in your settings.
+To disable one, remove its entry from `hooks/hooks.json` in your installed copy, or disable the plugin's hooks wholesale in your settings. On Codex they are inert until you explicitly trust them, so doing nothing is already the off switch.
 
 ---
 
@@ -1052,9 +1119,15 @@ blueprint/
 ├── .claude-plugin/
 │   ├── plugin.json            # plugin manifest
 │   └── marketplace.json       # the repo serves itself as a marketplace
-├── skills/                    # 25 Claude Code skills
+├── skills/                    # 25 skills — the source for both plugins
 ├── hooks/
-│   └── hooks.json             # quality gates (see below)
+│   ├── hooks.json             # quality gates (see below)
+│   └── test/run.sh            # 55 cases
+├── codex/hooks/               # Codex hooks, hand-written (see AGENTS.md)
+├── tools/build-codex.py       # skills/ + docs/ -> the Codex plugin
+├── plugins/blueprint/         # GENERATED — the Codex plugin, do not edit
+├── .agents/plugins/           # GENERATED — Codex marketplace manifest
+├── AGENTS.md                  # how to work on this repository
 ├── LICENSE                    # MIT
 ├── docs/
 │   ├── adr/
@@ -1206,10 +1279,10 @@ Blueprint is under active development.
 
 The current repository contains:
 
-- distributed as an installable Claude Code plugin, MIT licensed
+- distributed as an installable plugin for Claude Code and Codex, MIT licensed
 - 3 blueprint layers plus an optional prototype phase
 - 52 standard documents for a single-client flow, 58 with the prototype
-- 25 Claude Code skills
+- 25 skills, generated into both plugins from one source
 - contract discovery through a mocked frontend built before the backend
 - autonomous documentation pipeline
 - resumable phases

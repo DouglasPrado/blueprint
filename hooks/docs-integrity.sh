@@ -89,23 +89,37 @@ fi
 # "tem {{": as marcas de procedencia que TODA skill escreve ao preencher —
 # <!-- do blueprint: ... -->, <!-- assumido: ... -->, <!-- adicionado: ... -->.
 # Arquivo que carrega uma delas foi preenchido, tenha chaves ou nao.
-pristine() { # 0 = e o template intocado
+# UMA derivacao so, usada nos dois lugares. Duas copias divergiram: a segunda
+# nao tinha o fallback de caminho relativo, entao um file_path relativo
+# ("docs/frontend/web/14-copies.md") nao achava o template e o hook caia na
+# heuristica do {{ — o documento de copies preenchido voltava a ser
+# sobrescrivel. O hook trata caminho relativo de proposito, nao e caso fora
+# de contrato.
+#
+# ## e nao # : queremos o ULTIMO /docs/ do caminho. Com # , um projeto em
+# ~/docs/proj/ derivava rel="proj/docs/frontend/..." e o template nao era
+# encontrado.
+tpl_for() { # imprime o caminho do template pristino, ou nada
   [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] || return 1
-  # ## e nao # : queremos o ULTIMO /docs/ do caminho. Com # , um projeto em
-  # ~/docs/proj/ derivava rel="proj/docs/frontend/..." , o template nao era
-  # encontrado e o hook voltava a heuristica que este ramo existe para substituir.
-  rel=${1##*/docs/}; [ "$rel" = "$1" ] && rel=${1#docs/}
-  [ "$rel" = "$1" ] && return 1
-  tpl="$CLAUDE_PLUGIN_ROOT/docs/$rel"
-  [ -f "$tpl" ] || return 1
-  cmp -s "$1" "$tpl" 2>/dev/null
+  _rel=${1##*/docs/}
+  [ "$_rel" = "$1" ] && _rel=${1#docs/}
+  [ "$_rel" = "$1" ] && return 1
+  _tpl="$CLAUDE_PLUGIN_ROOT/docs/$_rel"
+  [ -f "$_tpl" ] || return 1
+  printf '%s' "$_tpl"
+}
+
+pristine() { # 0 = e o template intocado
+  _t=$(tpl_for "$1") || return 1
+  [ -n "$_t" ] || return 1
+  cmp -s "$1" "$_t" 2>/dev/null
 }
 
 if [ "$tool" = "Write" ] && [ -f "$file" ]; then
   filled=1
   if pristine "$file"; then
     filled=0
-  elif [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -f "$CLAUDE_PLUGIN_ROOT/docs/${file##*/docs/}" ]; then
+  elif tpl_for "$file" >/dev/null 2>&1; then
     filled=1   # existe template correspondente e o arquivo difere dele
   elif grep -qE '<!-- (do blueprint|do backend|do frontend|assumido|adicionado|corrigido|atualizado|construido sobre lacuna):?' "$file" 2>/dev/null; then
     filled=1   # marca de procedencia: alguma skill ja escreveu aqui

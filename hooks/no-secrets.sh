@@ -39,7 +39,7 @@ fi
 # bloquear leitura por causa do stage e o tipo de coisa que faz desligar o
 # plugin. Tolera "cd X && git ...", "git -C X ..." e flags globais.
 printf '%s' "$cmd" \
-  | grep -qE '(^|[;&|][[:space:]]*)[[:space:]]*git([[:space:]]+(-C[[:space:]]+("[^"]*"|'"'"'[^'"'"']*'"'"'|[^[:space:]]+)|--[a-z-]+([[:space:]]+[^[:space:]]+)?|-[a-z]))*[[:space:]]+(commit|push)([[:space:]]|$)' 2>/dev/null \
+  | grep -qE '(^|[;&|][[:space:]]*)[[:space:]]*git([[:space:]]+(-C[[:space:]]+("[^"]*"|'"'"'[^'"'"']*'"'"'|[^[:space:]]+)|-c[[:space:]]+[^[:space:]]+=[^[:space:]]*|--[a-z-]+=[^[:space:]]*|--[a-z-]+([[:space:]]+[^[:space:]=-][^[:space:]]*)?|-[a-z]))*[[:space:]]+(commit|push)([[:space:]]|$)' 2>/dev/null \
   || exit 0
 
 command -v git >/dev/null 2>&1 || exit 0
@@ -60,21 +60,46 @@ t=$(printf '%s' "$cmd" | sed -n 's/.*git[[:space:]]\{1,\}-C[[:space:]]\{1,\}"\([
 # "git -C <dir>" sem aspas
 [ -z "$t" ] && t=$(printf '%s' "$cmd" | sed -n 's/.*git[[:space:]]\{1,\}-C[[:space:]]\{1,\}\([^[:space:]]\{1,\}\).*/\1/p' | head -1)
 [ -n "$t" ] && target="$t"
-# "cd <dir> && git ..."
+# "cd <dir> && git ..." — o ULTIMO cd antes do git, nao o primeiro.
+# `cd /outro && cd /alvo && git commit` varria /outro: falso positivo num
+# repositorio e falso negativo no outro, na mesma linha.
 if [ -z "$target" ]; then
-  t=$(printf '%s' "$cmd" | sed -n 's/^[[:space:]]*cd[[:space:]]\{1,\}"\([^"]\{1,\}\)".*/\1/p' | head -1)
-  [ -z "$t" ] && t=$(printf '%s' "$cmd" | sed -n "s/^[[:space:]]*cd[[:space:]]\{1,\}'\([^']\{1,\}\)'.*/\1/p" | head -1)
-  [ -z "$t" ] && t=$(printf '%s' "$cmd" | sed -n 's/^[[:space:]]*cd[[:space:]]\{1,\}\([^[:space:]&;|]\{1,\}\).*/\1/p' | head -1)
+  pre=${cmd%%git *}
+  t=$(printf '%s' "$pre" | tr ';&|' '\n\n\n' \
+        | sed -n 's/^[[:space:]]*cd[[:space:]]\{1,\}"\([^"]\{1,\}\)".*/\1/p; s/^[[:space:]]*cd[[:space:]]\{1,\}'"'"'\([^'"'"']\{1,\}\)'"'"'.*/\1/p; s/^[[:space:]]*cd[[:space:]]\{1,\}\([^[:space:]]\{1,\}\).*/\1/p' \
+        | tail -1)
   [ -n "$t" ] && target="$t"
 fi
-[ -z "$target" ] && target="${CLAUDE_PROJECT_DIR:-.}"
 
 # Tira aspas simples/duplas do caminho, se houver.
-target=$(printf '%s' "$target" | sed "s/^['\"]//; s/['\"]$//")
+[ -n "$target" ] && target=$(printf '%s' "$target" | sed "s/^['\"]//; s/['\"]$//")
+# Expande ~ e $HOME — o comando e texto, nao foi pelo shell ainda.
+case "$target" in
+  "~") target="$HOME" ;;
+  "~/"*) target="$HOME/${target#~/}" ;;
+  '$HOME') target="$HOME" ;;
+  '$HOME/'*) target="$HOME/${target#\$HOME/}" ;;
+esac
+# ALVO IRRESOLUVEL NAO PODE CALAR O HOOK. Antes, qualquer forma que nao
+# expandisse (variavel, subshell, caminho de outro container) fazia o
+# `[ -d ]` encerrar tudo em silencio. Agora cai no projeto, que e o palpite
+# certo quando nao da para saber.
+{ [ -n "$target" ] && [ -d "$target" ]; } || target="${CLAUDE_PROJECT_DIR:-.}"
+
 [ -d "$target" ] || exit 0
 git -C "$target" rev-parse --git-dir >/dev/null 2>&1 || exit 0
 
-staged=$(git -C "$target" diff --cached --no-color 2>/dev/null | grep '^+' | grep -v '^+++' 2>/dev/null)
+# `git commit -a` commita arquivo RASTREADO sem passar pelo indice, entao
+# `diff --cached` sai vazio e o hook saia calado — na forma de commit mais
+# comum de um agente. Com -a/-am/--all, o que vai ser commitado e o diff
+# contra o HEAD, nao o indice.
+staged=$(git -C "$target" diff --cached --no-color 2>/dev/null)
+case "$cmd" in
+  *" -a"[!a-zA-Z0-9-]*|*" -a"|*" -am"*|*" -ma"*|*" --all"*|*" -a"[a-z]*)
+    staged="$staged
+$(git -C "$target" diff --no-color HEAD 2>/dev/null)" ;;
+esac
+staged=$(printf '%s' "$staged" | grep '^+' | grep -v '^+++' 2>/dev/null)
 [ -z "$staged" ] && exit 0
 
 # --- 3. Descarta o que e claramente exemplo ------------------------------

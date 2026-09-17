@@ -344,10 +344,157 @@ else
   printf '%s\n' "$outs" | head -6 | sed 's/^/          /'
 fi
 
+echo "== regressao: achados do ciclo 3 =="
+
+# A1: `git commit -a` commita arquivo rastreado sem passar pelo indice.
+if command -v git >/dev/null 2>&1; then
+  AR="$T/commit-a"; mkdir -p "$AR"
+  ( cd "$AR" && git init -q . && git config user.email t@t && git config user.name t \
+    && printf 'x = 1\n' > s.py && git add -A && git commit -qm init \
+    && printf 'AWS_KEY="AKIAYYYYYYYYYYYYYYYY"\n' >> s.py )
+  for f in "cd $AR && git commit -am leak" "cd $AR && git commit -a -m leak"; do
+    run "credencial nao-staged em 'git commit -a' bloqueia" 2 \
+      "$(python3 -c 'import json,sys;print(json.dumps({"tool_name":"Bash","tool_input":{"command":sys.argv[1]}}))' "$f")" no-secrets.sh
+  done
+  # M1: flags com '='
+  ( cd "$AR" && git add -A )
+  for f in "cd $AR && git -c user.name=x commit -m y" "cd $AR && git --git-dir=$AR/.git commit -m y"; do
+    run "commit com flag '=' e reconhecido como commit" 2 \
+      "$(python3 -c 'import json,sys;print(json.dumps({"tool_name":"Bash","tool_input":{"command":sys.argv[1]}}))' "$f")" no-secrets.sh
+  done
+  # M2: o ULTIMO cd antes do git decide o alvo
+  run "o ultimo cd antes do git decide o repositorio varrido" 2 \
+    "$(python3 -c 'import json,sys;print(json.dumps({"tool_name":"Bash","tool_input":{"command":sys.argv[1]}}))' "cd /tmp && cd $AR && git commit -m x")" no-secrets.sh
+
+  # M9 (vacuidade): o filtro de VALOR do sig() nao tinha teste proprio. Os casos
+  # do ciclo 2 usavam "demo", que so existe em VALUE_NOISE_GEN — exercitavam a
+  # regra generica, nunca as assinaturas.
+  ORIG5=$PWD; cd "$G" || exit 1
+  stage 'const k = "AKIAZZZZYYYYXXXXWWWW" // sample de producao'
+  run "assinatura real com palavra de exemplo no COMENTARIO bloqueia" 2 "$CMT" no-secrets.sh
+  stage 'const k = "AKIAIOSFODNN7EXAMPLE"'
+  run "assinatura de exemplo no proprio VALOR continua passando" 0 "$CMT" no-secrets.sh
+  git reset -q; rm -f f.*
+  cd "$ORIG5" || exit 1
+fi
+
+# M5: apagar o limiar afrouxa mais que rebaixa-lo.
+run "apagar o coverageThreshold bloqueia" 2 \
+  "$(mk Edit "$T/proj/jest.config.js" 'coverageThreshold: { global: { lines: 80, branches: 80 } },' '')" tests-integrity.sh
+run "apagar fail_under bloqueia" 2 \
+  "$(mk Edit "$T/proj/setup.cfg" 'fail_under = 90' '')" tests-integrity.sh
+
+# B1: chaves aninhadas dentro do bloco global.
+run "global com bloco aninhado, 80->20, bloqueia" 2 \
+  "$(mk Edit "$T/proj/jest.config.js" \
+      'coverageThreshold: { global: { nested: { lines: 90 }, lines: 80 } }' \
+      'coverageThreshold: { global: { nested: { lines: 90 }, lines: 20 } }')" tests-integrity.sh
+
+# B5: variantes reais de Jest/Vitest e exclusao de caminho.
+run "test.concurrent.skip bloqueia" 2 \
+  "$(mk Edit "$T/proj/src/__tests__/u.test.ts" 'test.concurrent("a")' 'test.concurrent.skip("a")')" tests-integrity.sh
+run "describe.each([]).skip bloqueia" 2 \
+  "$(mk Edit "$T/proj/src/__tests__/u.test.ts" 'describe.each([])("a")' 'describe.each([]).skip("a")')" tests-integrity.sh
+run "testPathIgnorePatterns novo bloqueia" 2 \
+  "$(mk Edit "$T/proj/jest.config.js" \
+      'module.exports = { coverageThreshold: { global: { lines: 80 } } }' \
+      'module.exports = { coverageThreshold: { global: { lines: 80 } }, testPathIgnorePatterns: ["flaky"] }')" tests-integrity.sh
+run "item.list.skip() do dominio nao e skip de teste" 0 \
+  "$(mk Edit "$T/proj/src/__tests__/u.test.ts" 'x' 'expect(item.list.skip(2)).toBe(1)')" tests-integrity.sh
+
+# M6 + B2 (vacuidade): as duas derivacoes do rel divergiam, e o ramo do template
+# pristino nao tinha teste nenhum — nenhum caso exportava CLAUDE_PLUGIN_ROOT.
+mkdir -p "$T/rel/docs/frontend/web"
+printf '# Copies\n\n| {{auth.login.title}} | Entrar |\n\n<!-- APPEND:copies -->\n' > "$T/rel/docs/frontend/web/14-copies.md"
+mkdir -p "$T/rel/docs/blueprint"
+relcase() { # descricao, esperado, file_path, cwd
+  local o r
+  o=$(cd "$4" && printf '{"tool_name":"Write","tool_input":{"file_path":"%s","content":"x"}}' "$3" \
+        | CLAUDE_PLUGIN_ROOT="$HOOKS/.." bash "$HOOKS/docs-integrity.sh" 2>&1); r=$?
+  if [ "$r" = "$2" ]; then pass=$((pass+1)); printf '  ok    %s\n' "$1"
+  else fail=$((fail+1)); printf '  FALHA %s (esperado %s, veio %s)\n' "$1" "$2" "$r"; fi
+}
+relcase "doc preenchido com {{i18n}}, file_path RELATIVO, bloqueia" 2 "docs/frontend/web/14-copies.md" "$T/rel"
+relcase "doc preenchido com {{i18n}}, file_path absoluto, bloqueia" 2 "$T/rel/docs/frontend/web/14-copies.md" "$T/rel"
+cp "$HOOKS/../docs/blueprint/05-data-model.md" "$T/rel/docs/blueprint/05-data-model.md"
+relcase "template pristino comparado com o do plugin aceita Write" 0 "$T/rel/docs/blueprint/05-data-model.md" "$T/rel"
+printf 'conteudo real, sem placeholder e sem marca de procedencia\n' >> "$T/rel/docs/blueprint/05-data-model.md"
+relcase "template que deixou de bater com o do plugin bloqueia" 2 "$T/rel/docs/blueprint/05-data-model.md" "$T/rel"
+
+echo "== stop-gate (Claude): o portao de resultado que faltava =="
+if command -v git >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
+  SG="$T/sg"; mkdir -p "$SG/docs/blueprint" "$SG/src/__tests__"
+  printf '# D\n\nreal.\n\n<!-- APPEND:entities -->\n' > "$SG/docs/blueprint/04-domain-model.md"
+  printf "it('a',()=>{})\nit('b',()=>{})\n" > "$SG/src/__tests__/u.test.ts"
+  ( cd "$SG" && git init -q . && git config user.email t@t && git config user.name t \
+    && git add -A && git commit -qm base )
+  sgd() { ( cd "$2" && CLAUDE_PROJECT_DIR="$2" bash "$HOOKS/stop-gate.sh" 2>/dev/null ) \
+            | python3 -c 'import sys,json;print(json.load(sys.stdin).get("decision") or "ok")'; }
+  sgcase() { local d; rm -f "$3"/.git/.blueprint-stop-*; d=$(sgd "" "$3")
+    if [ "$d" = "$2" ]; then pass=$((pass+1)); printf '  ok    %s\n' "$1"
+    else fail=$((fail+1)); printf '  FALHA %s (esperado %s, veio %s)\n' "$1" "$2" "$d"; fi; }
+  ( cd "$SG" && CLAUDE_PROJECT_DIR="$SG" bash "$HOOKS/status.sh" >/dev/null 2>&1 )
+  sgcase "arvore limpa deixa o turno terminar" ok "$SG"
+  # M8: escrita por Bash passa por fora de Write|Edit — e so o Stop pega.
+  ( cd "$SG" && sed -i "s/it('a'/it.skip('a'/" src/__tests__/u.test.ts )
+  sgcase "sed -i que silencia teste bloqueia (nao passa por Write|Edit)" block "$SG"
+  ( cd "$SG" && git checkout -q -- . )
+  # A3: apagar e esvaziar.
+  rm "$SG/src/__tests__/u.test.ts"
+  sgcase "apagar o arquivo de teste bloqueia" block "$SG"
+  ( cd "$SG" && git checkout -q -- . )
+  printf '' > "$SG/src/__tests__/u.test.ts"
+  sgcase "esvaziar o arquivo de teste bloqueia" block "$SG"
+  ( cd "$SG" && git checkout -q -- . )
+  printf "it('a',()=>{})\n" > "$SG/src/__tests__/u.test.ts"
+  sgcase "remover UM teste de dois bloqueia" block "$SG"
+  ( cd "$SG" && git checkout -q -- . )
+  ( cd "$SG" && git mv src/__tests__/u.test.ts src/__tests__/v.test.ts )
+  sgcase "MOVER o teste de arquivo nao bloqueia" ok "$SG"
+  ( cd "$SG" && git reset -q --hard HEAD )
+  printf "it('a',()=>{})\nit('b',()=>{})\nit('c',()=>{})\n" > "$SG/src/__tests__/u.test.ts"
+  sgcase "acrescentar teste nao bloqueia" ok "$SG"
+  ( cd "$SG" && git checkout -q -- . )
+  # A2: projeto num subdiretorio do repositorio.
+  MO="$T/mono"; mkdir -p "$MO/apps/web/docs/blueprint" "$MO/apps/web/src/__tests__"
+  printf '# D\n\nreal.\n\n<!-- APPEND:entities -->\n' > "$MO/apps/web/docs/blueprint/04-domain-model.md"
+  printf "it('a',()=>{})\n" > "$MO/apps/web/src/__tests__/u.test.ts"
+  ( cd "$MO" && git init -q . && git config user.email t@t && git config user.name t \
+    && git add -A && git commit -qm base )
+  ( cd "$MO/apps/web" && CLAUDE_PROJECT_DIR="$MO/apps/web" bash "$HOOKS/status.sh" >/dev/null 2>&1 )
+  printf '# D\n\nsem marcador\n' > "$MO/apps/web/docs/blueprint/04-domain-model.md"
+  sgcase "projeto em subdiretorio do repo: marcador perdido bloqueia" block "$MO/apps/web"
+  ( cd "$MO" && git checkout -q -- . )
+  printf "it.skip('a',()=>{})\n" > "$MO/apps/web/src/__tests__/u.test.ts"
+  sgcase "projeto em subdiretorio do repo: teste silenciado bloqueia" block "$MO/apps/web"
+  ( cd "$MO" && git checkout -q -- . )
+fi
+
+echo "== status: a ordem do proximo passo e a do pipeline =="
+mkfull() { mkdir -p "$1/docs/blueprint" "$1/docs/backend" "$1/docs/frontend/web" "$1/docs/shared"
+  for i in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16; do
+    printf '# %s\n\nreal.\n' "$i" > "$1/docs/blueprint/$i-d.md"; done
+  for i in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14; do
+    printf '# %s\n\nreal.\n' "$i" > "$1/docs/backend/$i-d.md"; done; }
+nx() { CLAUDE_PROJECT_DIR="$1" bash "$HOOKS/status.sh" 2>/dev/null | sed -n 's/^Proximo: //p'; }
+ordcase() { local g; g=$(nx "$2")
+  case "$g" in *"$3"*) pass=$((pass+1)); printf '  ok    %s\n' "$1" ;;
+  *) fail=$((fail+1)); printf '  FALHA %s (veio: %s)\n' "$1" "${g:-vazio}" ;; esac; }
+ST="$T/ord"; mkfull "$ST"
+printf '# f\n\n{{placeholder}}\n' > "$ST/docs/frontend/web/00-d.md"
+printf '# g\n\n{{placeholder}}\n' > "$ST/docs/shared/glossary.md"
+ordcase "frontend em template vem antes de shared" "$ST" "frontend-app"
+printf '# f\n\nreal.\n' > "$ST/docs/frontend/web/00-d.md"
+ordcase "com frontend pronto, shared vem antes do scaffold" "$ST" "blueprint:shared"
+printf '# g\n\nreal.\n' > "$ST/docs/shared/glossary.md"
+ordcase "so entao specs/codegen-setup" "$ST" "codegen-setup"
+mkdir -p "$ST/docs/prototype"; printf '# p\n\n{{placeholder}}\n' > "$ST/docs/prototype/00-d.md"
+ordcase "prototipo em template com backend PRONTO nao e mais sugerido" "$ST" "codegen-setup"
+
 echo "== portabilidade: sem extensoes GNU nos padroes =="
 # Comentario pode citar \b e \s para explicar por que nao se usa; o que importa
 # e o codigo. Por isso tudo a partir do primeiro # e descartado antes do teste.
-for h in docs-integrity tests-integrity no-secrets docs-complete status; do
+for h in docs-integrity tests-integrity no-secrets docs-complete status stop-gate; do
   offenders=$(sed 's/#.*//' "$HOOKS/$h.sh" | grep -nE '\\b|\\s|\(\?[!=]|sed[^|]*\\\\\|' 2>/dev/null)
   if [ -n "$offenders" ]; then
     fail=$((fail+1)); printf '  FALHA %s.sh usa \\b, \\s ou lookahead (falha calado no BSD grep)\n' "$h"

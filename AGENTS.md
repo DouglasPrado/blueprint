@@ -41,12 +41,13 @@ repositório, então gerado defasado é plugin quebrado para quem instala.
 `tools/build-codex.py` traduz skills e templates, mas **copia** `codex/hooks/`
 sem traduzir. Isso é proposital — as duas plataformas divergem no que importa.
 
-A exceção é `no-secrets.sh`, que é **derivado** de `hooks/no-secrets.sh`: nada
-nele depende de nome de ferramenta, formato de payload ou evento. Manter duas
-cópias à mão só produziu drift — a do Codex ficou para trás de correções de
-segurança feitas na do Claude, e ninguém percebeu porque as duas suítes passavam.
-Se um hook do Codex passar a ser tradução pura de um do Claude, mova-o para o
-gerador em vez de copiar.
+**Só `apply-patch-guard.sh` é escrito à mão.** `no-secrets.sh`, `status.sh` e
+`stop-gate.sh` são **derivados** dos de `hooks/`: nada neles depende de nome de
+ferramenta, formato de payload ou evento — os dois agentes usam o mesmo contrato
+de `SessionStart` e de `Stop`. Manter cópias à mão só produziu drift: a do
+`no-secrets` ficou para trás de correções de segurança, e ninguém percebeu
+porque as duas suítes passavam. Se um hook do Codex virar tradução pura de um do
+Claude, mova-o para o gerador em vez de copiar.
 
 | | Claude Code | Codex |
 | --- | --- | --- |
@@ -57,6 +58,7 @@ gerador em vez de copiar.
 | Raiz do plugin | `${CLAUDE_PLUGIN_ROOT}` | `${PLUGIN_ROOT}` |
 | Declaração dos hooks | campo `hooks` no manifesto | `hooks/hooks.json`, descoberto por convenção |
 | Confiança nos hooks | ativos após instalar | o usuário precisa **revisar e confiar** antes de rodarem |
+| Peso do `Stop` | defesa em profundidade (o `PreToolUse` já pega `Write`/`Edit`) | **a única aplicação** — nada impede a escrita |
 | Arquivo de instruções do projeto | `CLAUDE.md` | `AGENTS.md` |
 
 No manifesto do Codex o campo `hooks` fica **fora de propósito**: um valor
@@ -89,8 +91,8 @@ de erro. Se você mexer nesse script, o teste que verifica isso é obrigatório.
 ## Antes de commitar
 
 ```bash
-bash hooks/test/run.sh          # 87 casos — hooks do Claude Code
-bash codex/hooks/test/run.sh    # 55 casos — hooks do Codex + estrutura do gerado
+bash hooks/test/run.sh          # 119 casos — hooks do Claude Code
+bash codex/hooks/test/run.sh    # 57 casos — hooks do Codex + estrutura do gerado
 python3 tools/build-codex.py --check
 ```
 

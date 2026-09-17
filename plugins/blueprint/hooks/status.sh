@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# GERADO por tools/build-codex.py a partir de hooks/status.sh.
+# Nao edite aqui: edite a fonte e rode `python3 tools/build-codex.py`.
 # Blueprint — estado do projeto no inicio da sessao
 #
 # SessionStart. Imprime em stdout (que o Codex injeta no contexto) onde o
@@ -10,47 +12,11 @@
 root="${CODEX_PROJECT_DIR:-$PWD}"
 docs="$root/docs"
 
-# Grava a BASE DA SESSAO para o stop-gate.sh.
-#
-# Sem ela o portao so consegue olhar `git diff HEAD`, e ai commitar o contorna:
-# silencia o teste, commita, a arvore fica limpa, o Stop nao ve nada. E o loop do
-# blueprint-build commita por feature justamente assim. Com a base gravada aqui,
-# antes de o agente tocar em qualquer coisa, o que foi commitado no meio do
-# caminho continua visivel no Stop.
-#
-# Falha de escrita e silenciosa de proposito: o SessionStart nao pode quebrar a
-# sessao. O stop-gate degrada para `diff HEAD` quando a base nao existe.
-if command -v git >/dev/null 2>&1 && git -C "$root" rev-parse --git-dir >/dev/null 2>&1; then
-  _gd=$(git -C "$root" rev-parse --absolute-git-dir 2>/dev/null)
-  _k=$(printf '%s' "$root" | cksum | cut -d' ' -f1)
-  # --verify: num repositorio SEM commit nenhum, `git rev-parse HEAD` imprime a
-  # string literal "HEAD" no stdout. Gravada como base, ela nao e sha nenhum, o
-  # stop-gate degrada para `diff HEAD` e o bypass por commit fica aberto a sessao
-  # inteira — justo na primeira sessao de um projeto novo, que e a do pipeline.
-  _h=$(git -C "$root" rev-parse --verify --quiet HEAD 2>/dev/null)
-  case "$_h" in *[!0-9a-f]*|"") _h="" ;; esac
-  # Repositorio ainda sem commit: a base correta e "nada". Gravar o sentinela em
-  # vez de nao gravar nada — sem ele a sessao inteira degradaria para `diff HEAD`
-  # e o bypass por commit ficaria aberto justo na primeira sessao de um projeto
-  # novo, que e a do pipeline.
-  [ -z "$_h" ] && _h="EMPTY"
-  if [ -n "$_h" ]; then
-    for _d in "$_gd" "${TMPDIR:-/tmp}"; do
-      [ -n "$_d" ] && [ -d "$_d" ] || continue
-      printf '%s\n' "$_h" > "$_d/.blueprint-base-$_k" 2>/dev/null && break
-    done
-  fi
-  # Base nova, contador de bloqueios zerado.
-  for _d in "$_gd" "${TMPDIR:-/tmp}"; do
-    [ -n "$_d" ] && rm -f "$_d/.blueprint-stop-$_k" 2>/dev/null
-  done
-fi
-
 # Projeto sem docs/ e justamente o estado em que o SessionStart tem algo util a
 # dizer: o plugin esta instalado e os templates ainda nao. Sair calado aqui era
 # deixar sem resposta quem mais precisa dela.
 if [ ! -d "$docs" ]; then
-  if [ -n "${PLUGIN_ROOT:-}" ]; then
+  if [ -n "${PLUGIN_ROOT:-${PLUGIN_ROOT:-}}" ]; then
     echo "== Blueprint =="
     echo "Plugin instalado, templates ainda nao. Rode blueprint-init na raiz deste projeto para instalar a biblioteca de documentos em docs/."
   fi
@@ -76,6 +42,33 @@ suite_state() {
   printf '%d/%d' "$done_" "$total"
 }
 
+# Grava a BASE DA SESSAO para o stop-gate.sh.
+#
+# Sem ela o portao so consegue olhar `git diff HEAD`, e ai commitar o contorna:
+# silencia o teste, commita, a arvore fica limpa, o Stop nao ve nada. E o loop
+# do blueprint-build commita por feature justamente assim.
+#
+# Falha de escrita e silenciosa de proposito: o SessionStart nao pode quebrar a
+# sessao. O stop-gate degrada para `diff HEAD` quando a base nao existe.
+if command -v git >/dev/null 2>&1 && git -C "$root" rev-parse --git-dir >/dev/null 2>&1; then
+  _gd=$(git -C "$root" rev-parse --absolute-git-dir 2>/dev/null)
+  _k=$(printf '%s' "$root" | cksum | cut -d' ' -f1)
+  # --verify: num repositorio SEM commit nenhum, `git rev-parse HEAD` imprime a
+  # string literal "HEAD" no stdout, que gravada como base nao e sha nenhum.
+  _h=$(git -C "$root" rev-parse --verify --quiet HEAD 2>/dev/null)
+  case "$_h" in *[!0-9a-f]*|"") _h="" ;; esac
+  # Repositorio ainda sem commit: a base correta e "nada".
+  [ -z "$_h" ] && _h="EMPTY"
+  for _d in "$_gd" "${TMPDIR:-/tmp}"; do
+    [ -n "$_d" ] && [ -d "$_d" ] || continue
+    printf '%s\n' "$_h" > "$_d/.blueprint-base-$_k" 2>/dev/null && break
+  done
+  # Base nova, contador de bloqueios zerado.
+  for _d in "$_gd" "${TMPDIR:-/tmp}"; do
+    [ -n "$_d" ] && rm -f "$_d/.blueprint-stop-$_k" 2>/dev/null
+  done
+fi
+
 blueprint=$(suite_state "$docs/blueprint")
 [ "$blueprint" = "ausente" ] && exit 0   # sem Blueprint aqui; fica quieto
 
@@ -89,9 +82,12 @@ printf 'blueprint tecnico: %s' "$blueprint"
 [ "$backend"   != "ausente" ] && printf ' | backend: %s'   "$backend"
 [ "$shared"    != "ausente" ] && printf ' | shared: %s'    "$shared"
 
+frontend_falta=""
 for c in web mobile desktop; do
   s=$(suite_state "$docs/frontend/$c")
-  [ "$s" != "ausente" ] && printf ' | frontend/%s: %s' "$c" "$s"
+  [ "$s" = "ausente" ] && continue
+  printf ' | frontend/%s: %s' "$c" "$s"
+  [ "${s%%/*}" != "${s##*/}" ] && frontend_falta="${frontend_falta:+$frontend_falta, }$c"
 done
 echo
 
@@ -128,13 +124,23 @@ case "$blueprint" in
   *)
     if [ "${blueprint%%/*}" != "${blueprint##*/}" ]; then
       falta=$(( ${blueprint##*/} - ${blueprint%%/*} )); if [ "$falta" -eq 1 ]; then next="continuar o blueprint tecnico — falta 1 documento"; else next="continuar o blueprint tecnico — faltam $falta documentos"; fi
-    elif [ "$prototype" != "ausente" ] && [ "${prototype%%/*}" != "${prototype##*/}" ]; then
+    elif [ "$prototype" != "ausente" ] && [ "${prototype%%/*}" != "${prototype##*/}" ] \
+         && { [ "$backend" = "ausente" ] || [ "${backend%%/*}" != "${backend##*/}" ]; }; then
+      # So faz sentido ANTES do backend: a fase existe para o contrato de API
+      # sair da interface. Com o backend ja preenchido, sugerir o prototipo
+      # inverte a razao de ser dele — e no fluxo padrao de 13 fases ninguem
+      # preenche docs/prototype/, entao a sugestao se repetia para sempre.
       next="blueprint-prototype  (o contrato de API sai da interface, nao o contrario)"
     elif [ "$backend" != "ausente" ] && [ "${backend%%/*}" != "${backend##*/}" ]; then
       next="blueprint-backend"
+    elif [ -n "$frontend_falta" ]; then
+      # O frontend era calculado e ignorado: o hook mandava gerar scaffold e
+      # router sobre documentacao de cliente que ainda era template.
+      next="blueprint-frontend-app $frontend_falta  (e depois blueprint-frontend-quality)"
     elif [ "$shared" != "ausente" ] && [ "${shared%%/*}" != "${shared##*/}" ]; then
-      # Antes do scaffold: o codegen-setup congela nomes, e termo corrigido
-      # depois de src/contracts/ existir ja nasceu errado nos tipos.
+      # Depois de backend E frontend, porque os tres documentos sao projecoes
+      # das duas camadas. Antes do scaffold, porque o codegen-setup congela
+      # nomes: termo corrigido depois de src/contracts/ ja nasceu errado.
       next="blueprint-shared  (glossario, eventos e erro->UX — antes do scaffold)"
     elif [ -f "$root/docs/specs/TASKS.md" ]; then
       next="blueprint-build"

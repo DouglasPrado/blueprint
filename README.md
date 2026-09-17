@@ -876,7 +876,7 @@ codex plugin install blueprint@blueprint
 
 `codex plugin marketplace list` and `codex plugin list` confirm both landed.
 
-**The hooks do not run until you trust them.** Plugin-bundled hooks are non-managed hooks in Codex, so they stay inert until you review the definition and accept it. That is the right default — a hook runs as you. The four scripts are short and live in `plugins/blueprint/hooks/`.
+**The hooks do not run until you trust them.** Plugin-bundled hooks are non-managed hooks in Codex, so they stay inert until you review the definition and accept it. That is the right default — a hook runs as you. The five scripts are short and live in `plugins/blueprint/hooks/`.
 
 Then, **from the root of your own project**:
 
@@ -956,7 +956,7 @@ Then run the technical, backend and frontend phases in order.
 
 # Quality hooks
 
-The plugin ships five hooks on Claude Code and four on Codex. They exist because three of the framework's rules are stated in every skill and are exactly the ones an agent breaks under pressure: *Write only over a template*, *never weaken a test to go green*, *never leave a placeholder behind*.
+The plugin ships six hooks on Claude Code and five on Codex. They exist because three of the framework's rules are stated in every skill and are exactly the ones an agent breaks under pressure: *Write only over a template*, *never weaken a test to go green*, *never leave a placeholder behind*.
 
 A rule repeated in prose is a suggestion. A rule enforced at the tool call is a rule.
 
@@ -967,10 +967,17 @@ A rule repeated in prose is a suggestion. A rule enforced at the tool call is a 
 | `no-secrets` | `PreToolUse(Bash)` | Before `git commit` or `git push`, scans the **staged** diff for credentials and **blocks** on a hit |
 | `docs-complete` | `PostToolUse(Write)` | Warns when a generated document still contains `{{placeholders}}` — cannot block, the write already happened |
 | `status` | `SessionStart` | Reports where the project stands: which suites are filled, open high-risk findings and assumptions, documents built over a known gap, and the next command |
+| `stop-gate` | `Stop` | **The result gate.** Reads the working tree with `git` against the session's base commit and refuses to end the turn if a Blueprint document lost an `<!-- APPEND:... -->` marker, a test file gained a skip, or the session ends with fewer tests than it started |
+
+### Why a result gate, when `PreToolUse` already blocks
+
+`PreToolUse` deny works on Claude Code — but `docs-integrity` and `tests-integrity` only match `Write` and `Edit`. A `sed -i`, a `cat > file` or an `rm` through the `Bash` tool makes the same violation outside both matchers. Checking the *result* instead of the *call* catches it whatever tool produced it.
+
+It also catches the cheapest evasion of all: **deleting** the test instead of skipping it. That one only reads as a violation at the result level, where the count is net — a test moved between files cancels out, a test removed does not.
 
 ## On Codex, enforcement moves to `Stop`
 
-The Codex hooks are not a port of the table above, because the enforcement point is different.
+Codex runs the same `stop-gate`, `status` and `no-secrets` — they are generated from the Claude sources, because nothing in them depends on tool names or payload shapes. What differs is the weight the gate carries.
 
 Codex edits files through `apply_patch`, and a `PreToolUse` deny **is not enforced for `apply_patch`** ([openai/codex#27833](https://github.com/openai/codex/issues/27833), open). `code_mode_exec` does not fire `PreToolUse` at all ([#23411](https://github.com/openai/codex/issues/23411)). A gate that only warns is not a gate.
 
@@ -978,12 +985,11 @@ So the rule is restated: instead of *you may not make this edit*, it becomes **y
 
 | Hook | Event | What it does |
 | --- | --- | --- |
-| `stop-gate` | `Stop` | **The gate.** Reads the working tree with `git`, and returns `decision: block` with the reason if a Blueprint document lost an `<!-- APPEND:... -->` marker or a test file gained a skip. Codex turns the reason into a new prompt and the agent keeps working |
-| `apply-patch-guard` | `PreToolUse(apply_patch)` | Parses the patch text and says the same thing **early** — advisory, because the deny is not enforced. Undoing before the write is cheaper than after |
-| `no-secrets` | `PreToolUse(Bash)` | Same as on Claude Code: scans the staged diff before `git commit` / `git push` |
-| `status` | `SessionStart` | Same as on Claude Code |
+| `stop-gate` | `Stop` | The same gate, and on Codex it is the **only** enforcement: a `PreToolUse` deny is not applied to `apply_patch`, so nothing stops the write itself |
+| `apply-patch-guard` | `PreToolUse(apply_patch)` | Codex-specific, and the one hook that is *not* generated: the payload is patch text, not `file_path` + `content`. It says the same thing **early** — advisory, because the deny is not enforced. Undoing before the write is cheaper than after |
+| `no-secrets` · `status` | `PreToolUse(Bash)` · `SessionStart` | Generated from the Claude sources |
 
-Checking the *result* rather than the *call* is more robust in a second way: it catches the violation no matter which tool produced it — `apply_patch`, a shell heredoc, or `code_mode_exec`.
+On Codex this also covers `code_mode_exec`, which does not fire `PreToolUse` at all.
 
 Two details that matter if you modify them. `Stop` decides by the **JSON on stdout**, not by the exit code, and invalid stdout becomes a hook error on *every* turn — so every path through `stop-gate.sh` prints valid JSON, error paths included. And it gives up after three consecutive blocks in the same turn: an unrepairable violation must not trap the agent in a loop.
 
@@ -1001,8 +1007,8 @@ Two of them enforce asymmetric costs, which is why they block rather than warn. 
 ## Testing them
 
 ```bash
-bash hooks/test/run.sh          # 87 cases — Claude Code hooks
-bash codex/hooks/test/run.sh    # 55 cases — Codex hooks, plus the generated tree's structure
+bash hooks/test/run.sh          # 119 cases — Claude Code hooks
+bash codex/hooks/test/run.sh    # 57 cases — Codex hooks, plus the generated tree's structure
 ```
 
 Each suite covers what its hooks must block, what they must let through, and graceful degradation. Run them after changing a pattern: a malformed hook fails **silently** — it does not block, does not warn, and the plugin looks installed while doing nothing.
@@ -1134,7 +1140,7 @@ blueprint/
 ├── skills/                    # 26 skills — the source for both plugins
 ├── hooks/
 │   ├── hooks.json             # quality gates (see below)
-│   └── test/run.sh            # 87 cases
+│   └── test/run.sh            # 119 cases
 ├── codex/hooks/               # Codex hooks, hand-written (see AGENTS.md)
 ├── tools/build-codex.py       # skills/ + docs/ -> the Codex plugin
 ├── plugins/blueprint/         # GENERATED — the Codex plugin, do not edit

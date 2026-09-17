@@ -16,9 +16,12 @@
 set -u
 HOOKS="$(cd "$(dirname "$0")/.." && pwd)"
 ROOT="$(cd "$HOOKS/../.." && pwd)"
-# no-secrets e DERIVADO de hooks/no-secrets.sh pelo gerador — testa-se o que
-# realmente vai no plugin, nao uma copia a mao que pode ter ficado para tras.
+# So o apply-patch-guard e especifico do Codex. no-secrets, status e stop-gate
+# sao DERIVADOS dos do Claude pelo gerador — testa-se o que realmente vai no
+# plugin, nao uma copia a mao que pode ter ficado para tras (foi exatamente o
+# que aconteceu com o no-secrets entre os ciclos 1 e 2).
 GEN="$ROOT/plugins/blueprint/hooks"
+hookpath() { case "$1" in apply-patch-guard.sh) printf '%s' "$HOOKS/$1" ;; *) printf '%s' "$GEN/$1" ;; esac; }
 pass=0; fail=0
 
 okc()   { pass=$((pass+1)); printf '  ok    %s\n' "$1"; }
@@ -26,7 +29,7 @@ bad()   { fail=$((fail+1)); printf '  FALHA %s\n' "$1"; [ -n "${2:-}" ] && print
 
 run() { # descricao, exit esperado, payload, script
   local out rc
-  h="$HOOKS/$4"; [ "$4" = "no-secrets.sh" ] && h="$GEN/$4"
+  h=$(hookpath "$4")
   out=$(printf '%s' "$3" | bash "$h" 2>&1); rc=$?
   if [ "$rc" = "$2" ]; then okc "$1"; else bad "$1  (esperado exit $2, veio $rc)" "$out"; fi
 }
@@ -36,7 +39,7 @@ clearstate() { rm -f "${TMPDIR:-/tmp}"/.blueprint-stop-* "$1"/.git/.blueprint-st
 gate() { # descricao, block|ok, cwd
   local out dec
   clearstate "$3"
-  out=$(cd "$3" && CODEX_PROJECT_DIR="$3" bash "$HOOKS/stop-gate.sh" 2>/dev/null)
+  out=$(cd "$3" && CODEX_PROJECT_DIR="$3" bash "$GEN/stop-gate.sh" 2>/dev/null)
   dec=$(printf '%s' "$out" | python3 -c '
 import sys, json
 try:
@@ -112,8 +115,8 @@ gate "projeto alheio sem docs/blueprint nao e assunto do hook" ok "$AL"
 echo "== stop-gate: laco de bloqueio tem fim =="
 printf '# Dominio\n\nSem marcador.\n' > "$G/docs/blueprint/04-domain-model.md"
 clearstate "$G"
-for i in 1 2 3; do ( cd "$G" && CODEX_PROJECT_DIR="$G" bash "$HOOKS/stop-gate.sh" >/dev/null 2>&1 ); done
-out=$(cd "$G" && CODEX_PROJECT_DIR="$G" bash "$HOOKS/stop-gate.sh" 2>/dev/null)
+for i in 1 2 3; do ( cd "$G" && CODEX_PROJECT_DIR="$G" bash "$GEN/stop-gate.sh" >/dev/null 2>&1 ); done
+out=$(cd "$G" && CODEX_PROJECT_DIR="$G" bash "$GEN/stop-gate.sh" 2>/dev/null)
 if printf '%s' "$out" | python3 -c 'import sys,json; d=json.load(sys.stdin); raise SystemExit(0 if not d.get("decision") else 1)' 2>/dev/null; then
   okc "o quarto bloqueio seguido libera (violacao irreparavel nao prende o agente)"
 else
@@ -132,16 +135,16 @@ printf '# D\n\nreal.\n\n<!-- APPEND:entities -->\n' > "$CG/docs/blueprint/04-dom
 printf "it('soma', () => {})\n"                        > "$CG/src/__tests__/u.test.ts"
 ( cd "$CG" && git init -q . && git config user.email t@t && git config user.name t \
   && git add -A && git commit -qm base )
-( cd "$CG" && CODEX_PROJECT_DIR="$CG" bash "$HOOKS/status.sh" >/dev/null 2>&1 )   # SessionStart grava a base
+( cd "$CG" && CODEX_PROJECT_DIR="$CG" bash "$GEN/status.sh" >/dev/null 2>&1 )   # SessionStart grava a base
 printf "it.skip('soma', () => {})\n" > "$CG/src/__tests__/u.test.ts"
 gate "teste silenciado na arvore suja bloqueia" block "$CG"
 ( cd "$CG" && git add -A && git commit -qm "silencia" )
 gate "teste silenciado e COMMITADO continua bloqueando" block "$CG"
 
 # --- contador por violacao, nao por projeto ---
-( cd "$CG" && git reset -q --hard HEAD~1 && CODEX_PROJECT_DIR="$CG" bash "$HOOKS/status.sh" >/dev/null 2>&1 )
+( cd "$CG" && git reset -q --hard HEAD~1 && CODEX_PROJECT_DIR="$CG" bash "$GEN/status.sh" >/dev/null 2>&1 )
 clearstate "$CG"
-blk() { ( cd "$CG" && CODEX_PROJECT_DIR="$CG" bash "$HOOKS/stop-gate.sh" 2>/dev/null ) \
+blk() { ( cd "$CG" && CODEX_PROJECT_DIR="$CG" bash "$GEN/stop-gate.sh" 2>/dev/null ) \
           | python3 -c 'import sys,json;print(json.load(sys.stdin).get("decision") or "ok")'; }
 printf "it.skip('a',()=>{})\n" > "$CG/src/__tests__/u.test.ts"; a1=$(blk); a2=$(blk)
 printf "it('a',()=>{})\n"      > "$CG/src/__tests__/u.test.ts"; fix=$(blk)
@@ -157,7 +160,7 @@ fi
 printf "it.skip('x',()=>{})\n" > "$CG/src/__tests__/u.test.ts"
 seq=""
 for i in 1 2 3 4; do
-  seq="$seq$( ( cd "$CG" && TMPDIR=/nao/existe CODEX_PROJECT_DIR="$CG" bash "$HOOKS/stop-gate.sh" 2>/dev/null ) \
+  seq="$seq$( ( cd "$CG" && TMPDIR=/nao/existe CODEX_PROJECT_DIR="$CG" bash "$GEN/stop-gate.sh" 2>/dev/null ) \
     | python3 -c 'import sys,json;print(json.load(sys.stdin).get("decision") or "ok")')"
 done
 if [ "$seq" = "blockblockblockok" ]; then
@@ -170,7 +173,7 @@ fi
 # --- colisao de prefixo entre marcadores ---
 mkdir -p "$CG/docs/backend"
 printf '# I\n\n<!-- APPEND:webhooks -->\n\n<!-- APPEND:webhooks-enviados -->\n' > "$CG/docs/backend/13-integrations.md"
-( cd "$CG" && git add -A && git commit -qm int && CODEX_PROJECT_DIR="$CG" bash "$HOOKS/status.sh" >/dev/null 2>&1 )
+( cd "$CG" && git add -A && git commit -qm int && CODEX_PROJECT_DIR="$CG" bash "$GEN/status.sh" >/dev/null 2>&1 )
 printf '# I\n\n<!-- APPEND:webhooks-enviados -->\n' > "$CG/docs/backend/13-integrations.md"
 gate "perder APPEND:webhooks mantendo o -enviados bloqueia" block "$CG"
 ( cd "$CG" && git checkout -q -- . ); clearstate "$CG"
@@ -289,7 +292,7 @@ printf '# D\n\nv1\n' > "$RB/docs/blueprint/04-domain-model.md"
 ( cd "$RB" && git init -q . && git config user.email t@t && git config user.name t \
   && git add -A && git commit -qm c1 )
 printf '# D\n\nv2\n\n<!-- APPEND:entities -->\n' > "$RB/docs/blueprint/04-domain-model.md"
-( cd "$RB" && git add -A && git commit -qm c2 && CODEX_PROJECT_DIR="$RB" bash "$HOOKS/status.sh" >/dev/null 2>&1 )
+( cd "$RB" && git add -A && git commit -qm c2 && CODEX_PROJECT_DIR="$RB" bash "$GEN/status.sh" >/dev/null 2>&1 )
 ( cd "$RB" && git reset -q --hard HEAD~1 )
 gate "arvore limpa apos reset --hard para tras da base nao bloqueia" ok "$RB"
 
@@ -298,7 +301,7 @@ ER="$T/vaziorepo"; mkdir -p "$ER/docs/blueprint" "$ER/src/__tests__"
 printf '# D\n' > "$ER/docs/blueprint/04-domain-model.md"
 printf "it('a',()=>{})\n" > "$ER/src/__tests__/u.test.ts"
 ( cd "$ER" && git init -q . && git config user.email t@t && git config user.name t \
-  && CODEX_PROJECT_DIR="$ER" bash "$HOOKS/status.sh" >/dev/null 2>&1 )
+  && CODEX_PROJECT_DIR="$ER" bash "$GEN/status.sh" >/dev/null 2>&1 )
 b=$(cat "$ER/.git/.blueprint-base-"* 2>/dev/null)
 if [ "$b" = "EMPTY" ]; then
   okc "repo sem commit grava o sentinela, nao a string literal HEAD"
@@ -310,6 +313,41 @@ printf "it.skip('a',()=>{})\n" > "$ER/src/__tests__/u.test.ts"
 ( cd "$ER" && git add -A && git commit -qm silencia )
 gate "no repo que nasceu vazio, skip commitado continua bloqueando" block "$ER"
 
+echo "== regressao: achados do ciclo 3 (Codex) =="
+
+run "M3: '*** Move to:' nao pode cegar o hunk" 2 \
+  "$(P '*** Begin Patch
+*** Update File: src/__tests__/u.test.ts
+*** Move to: src/__tests__/v.test.ts
+-it("soma", () => {})
++it.skip("soma", () => {})
+*** End Patch')" apply-patch-guard.sh
+
+run "A3: apagar arquivo de teste avisa" 2 \
+  "$(P '*** Begin Patch
+*** Delete File: src/__tests__/u.test.ts
+*** End Patch')" apply-patch-guard.sh
+
+run "apagar arquivo de codigo normal passa" 0 \
+  "$(P '*** Begin Patch
+*** Delete File: src/legacy.ts
+*** End Patch')" apply-patch-guard.sh
+
+# M4: `grep -F "$f$TAB"` nao ancorado atribuia o corpo de sub/b.test.ts
+# tambem a b.test.ts — o falso positivo que a analise por arquivo existe para
+# eliminar. Um arquivo acusado, nao dois.
+acc=$(printf '%s' "$(P '*** Begin Patch
+*** Update File: b.test.ts
++expect(1).toBe(1)
+*** Update File: sub/b.test.ts
++it.skip("x", () => {})
+*** End Patch')" | bash "$HOOKS/apply-patch-guard.sh" 2>&1 | grep -c 'silencia teste')
+if [ "$acc" = 1 ]; then
+  okc "colisao de sufixo de caminho acusa so o arquivo culpado"
+else
+  bad "colisao de sufixo acusou $acc arquivos (esperado 1)"
+fi
+
 echo "== degradacao: payload ruim nao pode matar a sessao =="
 run "payload vazio no apply-patch-guard" 0 ""          apply-patch-guard.sh
 run "payload invalido no apply-patch-guard" 0 "nao e json" apply-patch-guard.sh
@@ -317,7 +355,7 @@ run "payload sem tool_input no apply-patch-guard" 0 '{"tool_name":"apply_patch"}
 run "payload vazio no no-secrets" 0 "" no-secrets.sh
 run "payload invalido no no-secrets" 0 "nao e json" no-secrets.sh
 
-out=$(printf 'nao e json' | CODEX_PROJECT_DIR="$G" bash "$HOOKS/stop-gate.sh" 2>/dev/null)
+out=$(printf 'nao e json' | CODEX_PROJECT_DIR="$G" bash "$GEN/stop-gate.sh" 2>/dev/null)
 if printf '%s' "$out" | python3 -c 'import sys,json; json.load(sys.stdin)' 2>/dev/null; then
   okc "stop-gate imprime JSON valido mesmo com stdin lixo"
 else
@@ -342,9 +380,9 @@ run "git log | grep commit e leitura, nao commit" 0 \
 git reset -q; rm -f f.*
 
 echo "== status: informa sem nunca bloquear =="
-out=$(CODEX_PROJECT_DIR="$NG" bash "$HOOKS/status.sh" 2>&1); rc=$?
+out=$(CODEX_PROJECT_DIR="$NG" bash "$GEN/status.sh" 2>&1); rc=$?
 if [ "$rc" = 0 ] && [ -z "$out" ]; then okc "projeto sem Blueprint nao diz nada"; else bad "status falou onde nao ha Blueprint (exit $rc)" "$out"; fi
-out=$(CODEX_PROJECT_DIR="$G" bash "$HOOKS/status.sh" 2>&1); rc=$?
+out=$(CODEX_PROJECT_DIR="$G" bash "$GEN/status.sh" 2>&1); rc=$?
 if [ "$rc" = 0 ] && printf '%s' "$out" | grep -q 'Blueprint'; then okc "projeto com Blueprint recebe o estado"; else bad "status nao reportou o estado do projeto (exit $rc)" "$out"; fi
 if printf '%s' "$out" | grep -q '/blueprint:'; then
   bad "status cita comando do Claude (/blueprint:) em vez do nome de skill do Codex"
@@ -354,7 +392,7 @@ fi
 cd "$ROOT" || exit 1
 
 echo "== portabilidade: sem extensoes GNU nos padroes =="
-for h in apply-patch-guard stop-gate status; do
+for h in apply-patch-guard; do
   offenders=$(sed 's/#.*//' "$HOOKS/$h.sh" | grep -nE '\\b|\\s|\(\?[!=]|sed[^|]*\\\\\|' 2>/dev/null)
   if [ -n "$offenders" ]; then
     bad "$h.sh usa \\b, \\s ou lookahead (falha calado no BSD grep)" "$offenders"

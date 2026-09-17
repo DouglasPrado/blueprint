@@ -1,16 +1,24 @@
 #!/usr/bin/env bash
-# Blueprint (Codex) — o portao que de fato segura
+# GERADO por tools/build-codex.py a partir de hooks/stop-gate.sh.
+# Nao edite aqui: edite a fonte e rode `python3 tools/build-codex.py`.
+# Blueprint — o portao que de fato segura
 #
 # Stop. Roda quando o agente quer encerrar o turno. Compara a arvore com a
 # BASE DA SESSAO e, se houver violacao, devolve decision:block com o motivo — o
 # Codex transforma o motivo num novo prompt e o agente continua trabalhando.
 #
-# POR QUE A APLICACAO ESTA AQUI E NAO NO PreToolUse
+# POR QUE A APLICACAO ESTA AQUI E NAO SO NO PreToolUse
 # No Codex o deny de PreToolUse nao e aplicado a apply_patch (openai/codex#27833,
 # aberta) — que e justamente por onde o agente edita arquivos. Um portao que so
-# avisa nao e portao. Movendo a verificacao para o Stop, a regra passa a ser
-# "voce nao termina o turno com a arvore nesse estado", o que nao depende de o
-# bloqueio de ferramenta funcionar.
+# avisa nao e portao.
+#
+# No Codex o deny FUNCIONA, mas so alcanca Write e Edit. Um `sed -i`, um
+# `cat > arquivo` ou um `rm` pela ferramenta Bash faz a mesma violacao por fora
+# dos dois matchers. Sem este portao o plugin do Codex era estritamente mais
+# forte que o do Claude nas duas regras centrais.
+#
+# Movendo a verificacao para o Stop, a regra passa a ser "voce nao termina o
+# turno com a arvore nesse estado", o que nao depende de qual ferramenta editou.
 #
 # E mais robusto de outra forma tambem: verifica o RESULTADO na arvore, entao
 # pega a violacao independente de qual ferramenta a produziu — apply_patch,
@@ -75,20 +83,28 @@ if [ -n "$base" ] && [ "$raw" != "EMPTY" ] && ! git -C "$root" merge-base --is-a
 fi
 [ -z "$base" ] && base="HEAD"
 
-diff=$(git -C "$root" diff --no-color "$base" 2>/dev/null)
-[ -z "$diff" ] && diff=$(git -C "$root" diff --no-color 2>/dev/null)
+# --relative: `git diff --name-only` devolve caminho relativo a RAIZ do
+# repositorio. Com o projeto num subdiretorio (monorepo, app dentro de um repo
+# maior), `apps/web/docs/...` nunca casava com `docs/*` e o pathspec por arquivo
+# resolvia errado — as duas checagens viravam no-op silencioso.
+diff=$(git -C "$root" diff --relative --no-color "$base" 2>/dev/null)
+[ -z "$diff" ] && diff=$(git -C "$root" diff --relative --no-color 2>/dev/null)
 [ -z "$diff" ] && diff=$(git -C "$root" ls-files --others --exclude-standard 2>/dev/null)
 if [ -z "$diff" ]; then
   [ -n "$state" ] && rm -f "$state"/.blueprint-stop-"$key"
   ok
 fi
 
-changed=$(git -C "$root" diff --name-only "$base" 2>/dev/null)
+changed=$(git -C "$root" diff --relative --name-only "$base" 2>/dev/null)
 # `git diff` nunca lista arquivo novo nao rastreado. Um arquivo de teste NOVO
 # cheio de it.skip passava inteiro — e as skills que escrevem no projeto-alvo
 # mandam explicitamente nao commitar, entao arvore com untracked e o estado
 # normal no Stop, nao a excecao.
 untracked=$(git -C "$root" ls-files --others --exclude-standard 2>/dev/null)
+
+# `git show <rev>:<path>` NAO aceita --relative: o caminho e sempre a partir
+# da raiz do repositorio. Guarda-se o prefixo do subdiretorio para recompo-lo.
+prefix=$(git -C "$root" rev-parse --show-prefix 2>/dev/null)
 
 problems=""
 W='[^A-Za-z0-9_.]'
@@ -107,7 +123,7 @@ if [ -d "$root/docs/blueprint" ]; then
     # ponto de insercao nao. E por marcador inteiro a colisao de prefixo
     # (APPEND:webhooks vs APPEND:webhooks-enviados) continua coberta.
     MK='<!--[[:space:]]*APPEND:[a-z0-9-]*[[:space:]]*-->'
-    was=$(git -C "$root" show "$base:$f" 2>/dev/null | grep -oE "$MK" 2>/dev/null | sort -u)
+    was=$(git -C "$root" show "$base:$prefix$f" 2>/dev/null | grep -oE "$MK" 2>/dev/null | sort -u)
     [ -z "$was" ] && continue
     now=$(grep -oE "$MK" "$root/$f" 2>/dev/null | sort -u)
     while IFS= read -r m; do
@@ -128,7 +144,7 @@ tests_changed=$(printf '%s\n' "$changed" \
   | grep -E '(\.test\.|\.spec\.|_test\.|_spec\.rb|test_.*\.py|/tests/|/test/|/__tests__/|/e2e/)' 2>/dev/null)
 while IFS= read -r f; do
   [ -z "$f" ] && continue
-  d=$(git -C "$root" diff --no-color "$base" -- "$f" 2>/dev/null)
+  d=$(git -C "$root" diff --relative --no-color "$base" -- "$f" 2>/dev/null)
   n_add=$(printf '%s' "$d" | grep '^+' | grep -v '^+++' | grep -cE "$SKIP" 2>/dev/null | tr -d ' \n')
   n_rem=$(printf '%s' "$d" | grep '^-' | grep -v '^---' | grep -cE "$SKIP" 2>/dev/null | tr -d ' \n')
   if [ "${n_add:-0}" -gt "${n_rem:-0}" ] 2>/dev/null; then
@@ -150,6 +166,33 @@ while IFS= read -r f; do
 done <<EOF
 $untracked
 EOF
+
+# --- 3. Teste APAGADO ----------------------------------------------------
+# A regra do framework e "proibido apagar, pular ou afrouxar QUALQUER teste", e
+# ate aqui so a parte do meio era verificada. Apagar e mais barato que silenciar
+# e deixa a suite igualmente verde — sem teste nenhum, nada falha.
+#
+# O saldo e LIQUIDO sobre toda a sessao, e e por isso que esta checagem vive
+# aqui e nao no PreToolUse: mover um teste de arquivo e uma remocao seguida de
+# uma adicao, e no resultado as duas se cancelam. Chamada a chamada, a remocao
+# pareceria uma perda.
+DECL="((^|$W)(it|test|describe|context|specify|scenario)[[:space:]]*\()|((^|$W)def[[:space:]]+test_)|((^|$W)func[[:space:]]+Test[A-Z])|(#\[test\])|((^|$W)(it|describe|context)[[:space:]]+[\"'][^\"']*[\"'][[:space:]]+do)"
+testfiles=$(printf '%s\n%s\n' "$changed" "$untracked" \
+  | grep -E '(\.test\.|\.spec\.|_test\.|_spec\.rb|test_.*\.py|/tests/|/test/|/__tests__/|/e2e/)' 2>/dev/null | sort -u)
+net_before=0; net_after=0
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  b=$(git -C "$root" show "$base:$prefix$f" 2>/dev/null | grep -cE "$DECL" 2>/dev/null | tr -d ' \n')
+  a=0
+  [ -f "$root/$f" ] && a=$(grep -cE "$DECL" "$root/$f" 2>/dev/null | tr -d ' \n')
+  net_before=$((net_before + ${b:-0}))
+  net_after=$((net_after + ${a:-0}))
+done <<EOF
+$testfiles
+EOF
+if [ "$net_after" -lt "$net_before" ] 2>/dev/null; then
+  problems="$problems  - a sessao termina com $((net_before - net_after)) teste(s) a menos do que comecou$NL"
+fi
 
 if [ -z "$problems" ]; then
   [ -n "$state" ] && rm -f "$state"/.blueprint-stop-"$key"
@@ -177,6 +220,8 @@ reason="O turno nao pode terminar com a arvore neste estado — o Blueprint tem 
 
 $problems
 Documento preenchido que perde <!-- APPEND:... --> deixa blueprint-increment sem ponto de insercao: a proxima adicao vai parar no fim do arquivo ou no meio de outra secao.
+
+Teste apagado e mais barato que teste silenciado e da no mesmo: sem teste, nada falha. Se ele cobre algo que deixou de existir, remova-o num commit proprio, para que a perda fique visivel na revisao em vez de vir junto com a feature.
 
 Teste silenciado nao falha e nao passa: some do sinal. A suite fica verde e a regressao fica viva. Se o teste esta certo e o codigo nao passa, corrija o CODIGO; se o blueprint mudou, atualize o blueprint com blueprint-increment e reescreva o teste a partir dele; se o teste nao consegue satisfazer o blueprint, PARE e reporte o conflito em vez de forcar.
 

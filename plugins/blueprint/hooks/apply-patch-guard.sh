@@ -60,18 +60,26 @@ problems=""
 W='[^A-Za-z0-9_.]'
 SKIP="((^|$W)(it|test|describe|context|suite)\.(skip|only|todo)\()|((^|$W)(xit|xtest|xdescribe|xcontext|xspecify|fit|fdescribe)[[:space:]]*[('\"])|(@pytest\.mark\.skip)|(@unittest\.skip)|((^|$W)t\.Skip(Now)?\()|(#\[ignore\])"
 
+# "*** Move to:" e metadado do arquivo corrente, nao um delimitador — ele vem
+# logo DEPOIS de "*** Update File:" e zerava o dono, fazendo o hunk inteiro
+# sumir de `tagged` e o hook devolver 0 para um patch que silencia teste.
 tagged=$(printf '%s' "$patch" | awk -v t="$TAB" '
   /^\*\*\* (Update|Add|Delete) File: /{ f=substr($0, index($0,": ")+2); next }
+  /^\*\*\* Move to: /{ next }
+  /^\*\*\* (Begin|End) Patch/{ f=""; next }
   /^\*\*\* /{ f=""; next }
   f != "" { print f t $0 }
 ')
 
 while IFS= read -r f; do
   [ -z "$f" ] && continue
-  # [^TAB]* e nao .* : `.*` e guloso e cortaria no ULTIMO tab, fazendo a linha
-  # perder o +/- inicial. Go e Makefile indentam com tab; um t.Skip() indentado
-  # sumia de "added" e o hook nao via nada.
-  body=$(printf '%s\n' "$tagged" | grep -F "$f$TAB" 2>/dev/null | sed "s|^[^$TAB]*$TAB||")
+  # awk com separador TAB e comparacao do PRIMEIRO campo. `grep -F "$f$TAB"`
+  # nao era ancorado: o corpo de `sub/b.test.ts` era atribuido tambem a
+  # `b.test.ts`, criando o falso positivo que esta analise por arquivo existe
+  # para eliminar. E o corte precisa ser no PRIMEIRO tab — `.*` e guloso e
+  # cortava no ultimo, fazendo a linha perder o +/- (Go indenta com tab).
+  body=$(printf '%s\n' "$tagged" | awk -F"$TAB" -v f="$f" '
+    $1 == f { i = index($0, FS); print substr($0, i + 1) }' 2>/dev/null)
   added=$(printf '%s' "$body"   | grep '^+' 2>/dev/null | sed 's/^+//')
   removed=$(printf '%s' "$body" | grep '^-' 2>/dev/null | sed 's/^-//')
 
@@ -98,6 +106,16 @@ while IFS= read -r f; do
         done <<INNER
 $(printf '%s' "$removed" | grep -o 'APPEND:[a-z0-9-]*' 2>/dev/null | sort -u)
 INNER
+      fi
+      ;;
+  esac
+
+  # --- teste apagado ---
+  # Apagar e mais barato que silenciar e deixa a suite igualmente verde.
+  case "$f" in
+    *.test.*|*.spec.*|*_test.*|*_spec.rb|*test_*.py|*/tests/*|*/test/*|*/__tests__/*|*/e2e/*)
+      if printf '%s' "$patch" | grep -qF "*** Delete File: $f" 2>/dev/null; then
+        problems="$problems  - $f: o patch APAGA um arquivo de teste$NL"
       fi
       ;;
   esac

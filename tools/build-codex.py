@@ -158,21 +158,22 @@ def build(check: bool):
                 continue
             staged[OUT / "hooks" / rel] = f.read_text(encoding="utf-8")
 
-    # no-secrets NAO diverge entre as plataformas: nada nele depende de nome de
-    # ferramenta, de formato de payload de edicao nem do evento. Manter duas
-    # copias a mao so produziu drift — a do Codex ficou para tras de correcoes
-    # de seguranca feitas na do Claude. Aqui ele e DERIVADO, como as skills.
-    ns = (ROOT / "hooks" / "no-secrets.sh").read_text(encoding="utf-8")
-    ns = (ns.replace("CLAUDE_PROJECT_DIR", "CODEX_PROJECT_DIR")
-            .replace("CLAUDE_PLUGIN_ROOT", "PLUGIN_ROOT")
-            .replace("/blueprint:", "blueprint-")
-            .replace("Claude Code", "Codex")
-            .replace("hooks.json da sua copia", "hooks/hooks.json da sua copia"))
-    ns = ns.replace("#!/usr/bin/env bash\n",
-                    "#!/usr/bin/env bash\n"
-                    "# GERADO por tools/build-codex.py a partir de hooks/no-secrets.sh.\n"
-                    "# Nao edite aqui: edite a fonte e rode `python3 tools/build-codex.py`.\n", 1)
-    staged[OUT / "hooks" / "no-secrets.sh"] = ns
+    # Hooks que NAO divergem entre as plataformas: nada neles depende de nome de
+    # ferramenta, de formato de payload de edicao nem do evento — os dois agentes
+    # usam o mesmo contrato de SessionStart e de Stop. Manter copias a mao so
+    # produziu drift: a do Codex ficou para tras de correcoes de seguranca feitas
+    # na do Claude, e as duas suites passavam. Aqui eles sao DERIVADOS.
+    for h in ("no-secrets.sh", "status.sh", "stop-gate.sh"):
+        src = (ROOT / "hooks" / h).read_text(encoding="utf-8")
+        src = (src.replace("CLAUDE_PROJECT_DIR", "CODEX_PROJECT_DIR")
+                  .replace("CLAUDE_PLUGIN_ROOT", "PLUGIN_ROOT")
+                  .replace("/blueprint:", "blueprint-")
+                  .replace("Claude Code", "Codex"))
+        src = src.replace("#!/usr/bin/env bash\n",
+                          "#!/usr/bin/env bash\n"
+                          f"# GERADO por tools/build-codex.py a partir de hooks/{h}.\n"
+                          "# Nao edite aqui: edite a fonte e rode `python3 tools/build-codex.py`.\n", 1)
+        staged[OUT / "hooks" / h] = src
 
     # Biblioteca de templates: o plugin instalado precisa ser autocontido.
     # Os templates tambem passam pela traducao — eles citam skills e o router.

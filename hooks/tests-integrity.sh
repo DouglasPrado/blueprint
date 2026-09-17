@@ -44,16 +44,27 @@ except Exception:
 file=$(field file_path)
 [ -z "$file" ] && exit 0
 
-added=$(field new_string)
-if [ -z "$added" ]; then
+# Qual ferramenta e qual e o "antes". Edit tem old_string; Write nao tem, e o
+# "antes" e o arquivo no disco.
+tool=""
+if command -v jq >/dev/null 2>&1; then
+  tool=$(printf '%s' "$payload" | jq -r '.tool_name // empty' 2>/dev/null)
+elif command -v python3 >/dev/null 2>&1; then
+  tool=$(printf '%s' "$payload" | python3 -c 'import sys,json;print(json.load(sys.stdin).get("tool_name",""))' 2>/dev/null)
+fi
+if [ "$tool" = "Write" ]; then
   added=$(field content)
-  # Write: o "antes" e o arquivo como esta no disco.
   previous=""
   [ -f "$file" ] && previous=$(cat "$file" 2>/dev/null)
 else
+  added=$(field new_string)
   previous=$(field old_string)
+  # Sem new_string nem old_string nao ha o que comparar. Mas new_string VAZIA
+  # com old_string cheia e justamente uma remocao — antes o hook saia aqui e
+  # apagar o limiar de cobertura passava por cima de tudo.
+  [ -z "$added" ] && [ -z "$previous" ] && added=$(field content)
 fi
-[ -z "$added" ] && exit 0
+[ -z "$added" ] && [ -z "$previous" ] && exit 0
 
 W='[^A-Za-z0-9_.]'   # nao-identificador, usado no lugar de \b
 
@@ -69,7 +80,7 @@ esac
 # --- 1. Teste silenciado -------------------------------------------------
 if [ "$is_test" = "1" ]; then
   # Cada padrao exige o identificador do runner: it/test/describe/context/suite.
-  SKIP="((^|$W)(it|test|describe|context|suite)\.(skip|only|todo)\()|((^|$W)(xit|xtest|xdescribe|xcontext|xspecify|fit|fdescribe)[[:space:]]*[('\"])|(@pytest\.mark\.skip)|(@unittest\.skip)|((^|$W)t\.Skip(Now)?\()|(#\[ignore\])|(\.skip\(\)[[:space:]]*$)"
+  SKIP="((^|$W)(it|test|describe|context|suite)(\.[a-z]+(\([^)]*\))?)*\.(skip|only|todo)\()|((^|$W)(xit|xtest|xdescribe|xcontext|xspecify|fit|fdescribe)[[:space:]]*[('\"])|(@pytest\.mark\.skip)|(@unittest\.skip)|((^|$W)t\.Skip(Now)?\()|(#\[ignore\])|(\.skip\(\)[[:space:]]*$)"
   if grew "$SKIP"; then
     found=$(printf '%s' "$added" | grep -oE "$SKIP" 2>/dev/null | sed "s/^[^A-Za-z@#.]//" | sort -u | tr '\n' ' ')
     cat >&2 <<MSG
@@ -117,8 +128,21 @@ case "$file" in
     #     gerado ("./src/generated/": 0) era lido como rebaixar cobertura.
     # Quando existe bloco `global`, so ele conta. Onde nao existe o conceito
     # (fail_under do Python, codecov), o minimo continua sendo a leitura certa.
-    globalblk() { printf '%s' "$1" | tr '\n' ' ' \
-        | grep -oE '["'"'"']?global["'"'"']?[[:space:]]*[:=][[:space:]]*\{[^}]*\}' 2>/dev/null; }
+    # Casamento de chaves de verdade. Com [^}]* o bloco parava na primeira `}`,
+    # entao `global: { nested: { lines: 90 }, lines: 20 }` era lido ate o 90 e o
+    # rebaixamento de 80 para 20 passava.
+    globalblk() { printf '%s' "$1" | tr '\n' ' ' | awk '
+      { s = $0
+        i = index(s, "global"); if (i == 0) exit
+        s = substr(s, i)
+        j = index(s, "{"); if (j == 0) exit
+        d = 0; out = ""
+        for (k = j; k <= length(s); k++) {
+          c = substr(s, k, 1); out = out c
+          if (c == "{") d++
+          else if (c == "}") { d--; if (d == 0) break }
+        }
+        print out }' 2>/dev/null; }
     # (^|[^A-Za-z0-9_-]) antes da chave: sem isso `max-lines = 300` casa em
     # "lines" e apertar uma regra de LINT vira "rebaixou cobertura".
     pick() { printf '%s' "$2" \
@@ -128,9 +152,44 @@ case "$file" in
       local g; g=$(globalblk "$2")
       if [ -n "$g" ]; then pick "$1" "$g"; else pick "$1" "$2"; fi
     }
+    # Ignorar caminho de teste silencia o arquivo INTEIRO — e mais forte que
+    # qualquer .skip, e nao passava por nenhuma regra.
+    ig_n=$(printf '%s' "$added"    | grep -oE '(testPathIgnorePatterns|testIgnore)' 2>/dev/null | wc -l | tr -d ' \n')
+    ig_o=$(printf '%s' "$previous" | grep -oE '(testPathIgnorePatterns|testIgnore)' 2>/dev/null | wc -l | tr -d ' \n')
+    if [ "${ig_n:-0}" -gt "${ig_o:-0}" ] 2>/dev/null; then
+      cat >&2 <<MSG
+BLOQUEADO — a edicao acrescenta exclusao de caminho de teste.
+
+  $file
+
+Excluir um caminho silencia o arquivo INTEIRO — e mais forte que um .skip, e
+igualmente invisivel no resultado: a suite fica verde porque deixou de rodar.
+
+Se o teste nao deve rodar neste ambiente, diga POR QUE no proprio teste e use o
+mecanismo do runner que aparece no relatorio. Se ele nao deve existir, remova-o
+num commit proprio, para que a perda fique visivel na revisao.
+MSG
+      exit 2
+    fi
+
     for key in branches functions statements lines fail_under minimum_coverage min_coverage; do
       vn=$(value "$key" "$added")
       vo=$(value "$key" "$previous")
+      # Apagar o portao e a forma mais forte de afrouxa-lo. Antes, com $vn
+      # vazio o if era pulado e remover o coverageThreshold inteiro passava.
+      if [ -z "$vn" ] && [ -n "$vo" ]; then
+        cat >&2 <<MSG
+BLOQUEADO — a edicao REMOVE o limiar de cobertura.
+
+  $file
+  $key: existia ($vo) e deixou de existir
+
+Apagar o portao afrouxa mais que rebaixa-lo: a suite passa a nao ter piso
+nenhum. Se a meta mudou, mude-a em docs/blueprint/12-testing_strategy.md com
+/blueprint:increment e traga a configuracao atras da decisao.
+MSG
+        exit 2
+      fi
       if [ -n "$vn" ] && [ -n "$vo" ] && [ "$vn" -lt "$vo" ] 2>/dev/null; then
         cat >&2 <<MSG
 BLOQUEADO — a edicao rebaixa o limiar de cobertura.

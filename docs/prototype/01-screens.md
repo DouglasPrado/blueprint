@@ -24,7 +24,7 @@ Mapeia cada caso de uso do blueprint tecnico para as telas que o realizam. Este 
 
 | UC sem tela | Motivo | Acao |
 | --- | --- | --- |
-| {{UC-0XX}} | {{API-only / esquecido / fora de escopo}} | {{nenhuma / criar tela / `/increment` no blueprint}} |
+| {{UC-0XX}} | {{API-only / esquecido / fora de escopo}} | {{nenhuma / criar tela / `/blueprint:increment` no blueprint}} |
 
 <!-- APPEND:uc-sem-tela -->
 

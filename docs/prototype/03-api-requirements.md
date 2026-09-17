@@ -151,11 +151,11 @@
 
 ## Divergencias com o Modelo de Dominio
 
-> Onde construir a interface discordou do que `04-domain-model.md` dizia. **Nao resolva aqui** — registre e leve para `/increment`. Resolver em silencio faz o prototipo virar uma segunda fonte de verdade.
+> Onde construir a interface discordou do que `04-domain-model.md` dizia. **Nao resolva aqui** — registre e leve para `/blueprint:increment`. Resolver em silencio faz o prototipo virar uma segunda fonte de verdade.
 
 | Divergencia | O dominio diz | A UI precisa | Proposta |
 | --- | --- | --- | --- |
-| {{Campo ausente}} | {{`User` nao tem `lastSeenAt`}} | {{Lista mostra "ativo ha 2h"}} | {{`/increment` no dominio, ou remover da tela}} |
+| {{Campo ausente}} | {{`User` nao tem `lastSeenAt`}} | {{Lista mostra "ativo ha 2h"}} | {{`/blueprint:increment` no dominio, ou remover da tela}} |
 | {{Cardinalidade}} | {{`User` 1:N `Order`}} | {{Tela de pedido compartilhado exige N:M}} | {{Decisao de produto — escalar}} |
 
 <!-- APPEND:divergencias -->

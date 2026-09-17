@@ -14,7 +14,7 @@ Define o dataset que alimenta o prototipo: personas, fixtures por entidade e cen
 | Aspecto | Decisao | Consequencia na integracao |
 | --- | --- | --- |
 | **Camada do mock** | {{Interceptacao HTTP (MSW)}} | {{Desligar o worker; o codigo da app nao muda}} |
-| **Formato das fixtures** | {{TypeScript tipado com os tipos de `src/contracts/`}} | {{Compilador acusa divergencia com o contrato}} |
+| **Formato das fixtures** | {{TypeScript tipado com os tipos de `src/types/`}} | {{Compilador acusa divergencia. Durante o prototipo os tipos vivem em `src/types/` — `src/contracts/` so nasce no `/blueprint:codegen-setup`}} |
 | **Persistencia** | {{Em memoria, reset no reload}} | {{Nenhuma — descartavel}} |
 | **Latencia simulada** | {{{{200-600}}ms aleatorio}} | {{Estados de loading aparecem de verdade}} |
 | **Taxa de erro injetada** | {{Rota de debug liga erro por endpoint}} | {{Estados de erro testaveis sem derrubar nada}} |

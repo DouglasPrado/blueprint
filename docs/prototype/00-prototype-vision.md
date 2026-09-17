@@ -66,7 +66,7 @@ Um contrato de API escrito antes da interface e uma previsao. Um contrato extrai
 
 ## Criterios de Saida
 
-> O prototipo esta pronto para a fase de backend quando TODOS os itens abaixo forem verdadeiros. Ate la, `/backend` nao deve rodar.
+> O prototipo esta pronto para a fase de backend quando TODOS os itens abaixo forem verdadeiros. Ate la, `/blueprint:backend` nao deve rodar.
 
 - [ ] Todo caso de uso `UC-XXX` de `blueprint/08-use_cases.md` tem tela correspondente em `01-screens.md`
 - [ ] Todo fluxo critico de `blueprint/07-critical_flows.md` e percorrivel ponta a ponta no app
@@ -75,7 +75,7 @@ Um contrato de API escrito antes da interface e uma previsao. Um contrato extrai
 - [ ] Cada persona de `02-mock-data.md` consegue navegar e ve apenas o que sua role permite
 - [ ] Todo formulario valida na borda e exibe erro por campo
 - [ ] `03-api-requirements.md` foi extraido do codigo, nao escrito a mao
-- [ ] `05-findings.md` esta preenchido e as lacunas de risco alto foram levadas ao `/increment`
+- [ ] `05-findings.md` esta preenchido e as lacunas de risco alto foram levadas ao `/blueprint:increment`
 
 ---
 

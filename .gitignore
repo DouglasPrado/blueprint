@@ -1,0 +1,15 @@
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Editores
+.idea/
+.vscode/
+*.swp
+
+# Node (caso o plugin ganhe scripts com dependencias)
+node_modules/
+npm-debug.log*
+
+# Saida local de teste do plugin
+*.zip

@@ -116,10 +116,10 @@ Antes de iniciar qualquer tarefa, leia os docs listados abaixo conforme o tipo d
 
 | Skill | Uso | Quando |
 |-------|-----|--------|
-| `/codegen-setup` | Gera este arquivo + tipos, schema e scaffold | Setup inicial (uma vez) |
-| `/codegen` | Apresenta entregas do build plan | Inicio de sessao |
-| `/codegen-feature` | Implementa feature (TDD) | Dia-a-dia |
-| `/codegen-verify` | Verifica codigo vs blueprint | A cada 3-5 features |
+| `/blueprint:codegen-setup` | Gera este arquivo + tipos, schema e scaffold | Setup inicial (uma vez) |
+| `/blueprint:codegen` | Apresenta entregas do build plan | Inicio de sessao |
+| `/blueprint:codegen-feature` | Implementa feature (TDD) | Dia-a-dia |
+| `/blueprint:codegen-verify` | Verifica codigo vs blueprint | A cada 3-5 features |
 
 ---
 

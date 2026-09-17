@@ -61,7 +61,7 @@ Blueprint Tecnico (docs/blueprint/)     ← FONTE PRIMARIA do DOMINIO
 | 02-mock-data.md §personas | 04-data-layer.md, 11-permissions.md | Personas → seeds de dev/staging; matriz RBAC ja exercitada |
 | 02-mock-data.md §bordas | 14-tests.md | Casos de borda → fixtures de teste |
 | 01-screens.md §validacao | 10-validation.md | Validacao exercida no formulario → regra por campo |
-| 05-findings.md | **todos** | Achado de risco alto **bloqueia** `/backend` ate ser resolvido no blueprint |
+| 05-findings.md | **todos** | Achado de risco alto **bloqueia** `/blueprint:backend` ate ser resolvido no blueprint |
 
 ## Mapeamento Prototipo → Frontend
 

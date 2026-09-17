@@ -2,7 +2,7 @@
 
 O que construir a interface revelou sobre o blueprint tecnico. **Este e o segundo motivo de a fase existir:** um modelo de dominio so e testado de verdade quando alguem tenta montar um formulario com ele.
 
-> **Regra:** achado nao se resolve aqui. Registra-se, classifica-se por risco e leva-se para `/increment` (correcao local) ou `/patch` (mudanca global). O prototipo **nao** e fonte de verdade — o blueprint tecnico e.
+> **Regra:** achado nao se resolve aqui. Registra-se, classifica-se por risco e leva-se para `/blueprint:increment` (correcao local) ou `/blueprint:patch` (mudanca global). O prototipo **nao** e fonte de verdade — o blueprint tecnico e.
 
 ---
 
@@ -10,11 +10,11 @@ O que construir a interface revelou sobre o blueprint tecnico. **Este e o segund
 
 | Risco | Qtd | Significado |
 | --- | --- | --- |
-| **Alto** | {{n}} | {{Bloqueia o backend — precisa de decisao antes de `/backend`}} |
+| **Alto** | {{n}} | {{Bloqueia o backend — precisa de decisao antes de `/blueprint:backend`}} |
 | **Medio** | {{n}} | {{Resolvivel durante a implementacao, mas melhor decidir agora}} |
 | **Baixo** | {{n}} | {{Ajuste de documentacao}} |
 
-> **Portao:** nenhum achado de risco **alto** pode permanecer aberto quando `/backend` rodar. Um contrato construido sobre uma lacuna conhecida propaga a lacuna para o schema.
+> **Portao:** nenhum achado de risco **alto** pode permanecer aberto quando `/blueprint:backend` rodar. Um contrato construido sobre uma lacuna conhecida propaga a lacuna para o schema.
 
 ---
 
@@ -24,7 +24,7 @@ O que construir a interface revelou sobre o blueprint tecnico. **Este e o segund
 
 | # | Achado | Onde apareceu | O que falta | Risco | Acao |
 | --- | --- | --- | --- | --- | --- |
-| {{1}} | {{Lista precisa de "ativo ha 2h"}} | {{UsersPage}} | {{`User.lastSeenAt`}} | {{medio}} | {{`/increment` → `04-domain-model`}} |
+| {{1}} | {{Lista precisa de "ativo ha 2h"}} | {{UsersPage}} | {{`User.lastSeenAt`}} | {{medio}} | {{`/blueprint:increment` → `04-domain-model`}} |
 | {{2}} | {{Pedido exibe nome do vendedor}} | {{OrderDetail}} | {{Relacao `Order → Seller`}} | {{alto}} | {{Decisao de produto}} |
 
 <!-- APPEND:lacunas-dominio -->
@@ -37,7 +37,7 @@ O que construir a interface revelou sobre o blueprint tecnico. **Este e o segund
 
 | UC | Problema | Evidencia na tela | Risco | Acao |
 | --- | --- | --- | --- | --- |
-| {{UC-007}} | {{Nao diz o que acontece com itens ja pagos ao cancelar}} | {{Botao "Cancelar" sem comportamento definido}} | {{alto}} | {{`/increment` → `08-use_cases` + `09-state-models`}} |
+| {{UC-007}} | {{Nao diz o que acontece com itens ja pagos ao cancelar}} | {{Botao "Cancelar" sem comportamento definido}} | {{alto}} | {{`/blueprint:increment` → `08-use_cases` + `09-state-models`}} |
 
 <!-- APPEND:use-cases -->
 
@@ -49,7 +49,7 @@ O que construir a interface revelou sobre o blueprint tecnico. **Este e o segund
 
 | Entidade | Achado | Tipo | Risco | Acao |
 | --- | --- | --- | --- | --- |
-| {{Order}} | {{UI precisa distinguir "pagamento processando" de "confirmado"}} | {{estado faltando}} | {{alto}} | {{`/increment` → `09-state-models`}} |
+| {{Order}} | {{UI precisa distinguir "pagamento processando" de "confirmado"}} | {{estado faltando}} | {{alto}} | {{`/blueprint:increment` → `09-state-models`}} |
 | {{User}} | {{`inactive` nunca aparece em tela nenhuma}} | {{estado orfao}} | {{baixo}} | {{Confirmar se e usado por worker}} |
 
 <!-- APPEND:estados -->
@@ -91,7 +91,7 @@ O que construir a interface revelou sobre o blueprint tecnico. **Este e o segund
 
 | Documento A | Documento B | Contradicao | Escolha do prototipo | Acao |
 | --- | --- | --- | --- | --- |
-| {{08-use_cases}} | {{09-state-models}} | {{UC cita gatilho que nao existe na maquina}} | {{Seguiu a maquina}} | {{`/increment` no UC}} |
+| {{08-use_cases}} | {{09-state-models}} | {{UC cita gatilho que nao existe na maquina}} | {{Seguiu a maquina}} | {{`/blueprint:increment` no UC}} |
 
 <!-- APPEND:contradicoes -->
 
@@ -116,15 +116,15 @@ O que construir a interface revelou sobre o blueprint tecnico. **Este e o segund
 
 | # | Achado | Destino | Comando | Status |
 | --- | --- | --- | --- | --- |
-| {{1}} | {{`User.lastSeenAt`}} | {{`blueprint/04-domain-model`}} | {{`/increment`}} | {{aberto}} |
-| {{2}} | {{Renomear `Booking` → `Appointment`}} | {{todos os blueprints}} | {{`/patch`}} | {{aberto}} |
+| {{1}} | {{`User.lastSeenAt`}} | {{`blueprint/04-domain-model`}} | {{`/blueprint:increment`}} | {{aberto}} |
+| {{2}} | {{Renomear `Booking` → `Appointment`}} | {{todos os blueprints}} | {{`/blueprint:patch`}} | {{aberto}} |
 
 <!-- APPEND:encaminhamento -->
 
-**Checklist antes de rodar `/backend`:**
+**Checklist antes de rodar `/blueprint:backend`:**
 
 - [ ] Todo achado de risco **alto** esta resolvido ou tem decisao registrada
-- [ ] As lacunas de dominio viraram `/increment` aplicado, nao anotacao
+- [ ] As lacunas de dominio viraram `/blueprint:increment` aplicado, nao anotacao
 - [ ] As regras de negocio descobertas estao em `04-domain-model.md` com `RN-XX`
 - [ ] As contradicoes foram resolvidas no documento fonte, nao so no prototipo
 - [ ] [`03-api-requirements.md`](03-api-requirements.md) foi regenerado apos as correcoes

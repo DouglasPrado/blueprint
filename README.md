@@ -6,7 +6,12 @@
 
 Turn a product requirements document into a traceable technical blueprint, backend and frontend specifications, implementation backlog, typed scaffold and guarded build loop.
 
-**3 blueprints + optional prototype · 58 documents · 24 Claude Code skills**
+**A Claude Code plugin · 3 blueprints + optional prototype · 58 documents · 25 skills · quality hooks**
+
+```bash
+/plugin marketplace add DouglasPrado/blueprint
+/plugin install blueprint@blueprint
+```
 
 </div>
 
@@ -141,7 +146,7 @@ Blueprint is composed of three primary specification layers plus shared cross-la
 
 With one frontend client, the standard flow produces **52 documents**; with the prototype phase, **58**.
 
-> Those are the templates the repository ships. What `/pipeline` actually *fills* is 48 (54 with the prototype): no skill generates the four cross-layer documents under `docs/shared/`, so the glossary and the two mapping files stay as templates until someone fills them by hand.
+> Those are the templates the repository ships. What `/blueprint:pipeline` actually *fills* is 48 (54 with the prototype): no skill generates the four cross-layer documents under `docs/shared/`, so the glossary and the two mapping files stay as templates until someone fills them by hand.
 
 ---
 
@@ -154,26 +159,26 @@ Blueprint supports two main ways of working.
 For a detailed PRD and a fast first pass:
 
 ```text
-/pipeline docs/prd.md web ../my-app/
-/build
+/blueprint:pipeline docs/prd.md web ../my-app/
+/blueprint:build
 ```
 
 To discover the API contract by building the interface first:
 
 ```text
-/pipeline docs/prd.md web ../my-app/ --prototype
-/build
+/blueprint:pipeline docs/prd.md web ../my-app/ --prototype
+/blueprint:build
 ```
 
-`/pipeline` generates the documentation and typed scaffold.
+`/blueprint:pipeline` generates the documentation and typed scaffold.
 
-`/build` implements the planned features using guarded TDD loops.
+`/blueprint:build` implements the planned features using guarded TDD loops.
 
 ```text
 PRD
  │
  ▼
-/pipeline
+/blueprint:pipeline
  │
  ├── Technical Blueprint
  ├── Backend Blueprint
@@ -183,7 +188,7 @@ PRD
  └── Typed scaffold
        │
        ▼
-     /build
+     /blueprint:build
        │
        ├── Feature
        ├── Tests
@@ -204,37 +209,37 @@ Missing PRD information becomes explicit assumptions instead.
 For critical systems or shallow PRDs, run the framework phase by phase.
 
 ```text
-/blueprint
-/blueprint-foundation
-/blueprint-domain
-/blueprint-architecture
-/blueprint-flows
-/blueprint-quality
-/blueprint-plan
+/blueprint:blueprint
+/blueprint:blueprint-foundation
+/blueprint:blueprint-domain
+/blueprint:blueprint-architecture
+/blueprint:blueprint-flows
+/blueprint:blueprint-quality
+/blueprint:blueprint-plan
 
-/backend
+/blueprint:backend
 
-/frontend
-/frontend-design-system
-/frontend-app web
-/frontend-quality web
+/blueprint:frontend
+/blueprint:frontend-design-system
+/blueprint:frontend-app web
+/blueprint:frontend-quality web
 ```
 
 With the prototype phase, the design system moves up and the backend moves down —
 the interface is built first, and the contract comes out of it:
 
 ```text
-/blueprint  →  the six blueprint phases
+/blueprint:blueprint  →  the six blueprint phases
 
-/frontend-design-system          tokens first — the prototype needs them
+/blueprint:frontend-design-system          tokens first — the prototype needs them
 
-/prototype web                   plan: screens, navigation, mock data
-/prototype-build web ../my-app/  code: the mocked app
-/prototype-api web ../my-app/    the discovered contract
+/blueprint:prototype web                   plan: screens, navigation, mock data
+/blueprint:prototype-build web ../my-app/  code: the mocked app
+/blueprint:prototype-api web ../my-app/    the discovered contract
 
-/backend                         now with a real consumer for every endpoint
+/blueprint:backend                         now with a real consumer for every endpoint
 
-/frontend  →  /frontend-app web  →  /frontend-quality web
+/blueprint:frontend  →  /blueprint:frontend-app web  →  /blueprint:frontend-quality web
 ```
 
 Individual skills can ask up to three grouped questions before generating their documents.
@@ -245,7 +250,7 @@ This mode gives the engineer more control over decisions before they become depe
 
 # Autonomous pipeline
 
-`/pipeline` runs the documentation phases in isolated subagents.
+`/blueprint:pipeline` runs the documentation phases in isolated subagents.
 
 Each phase:
 
@@ -294,7 +299,7 @@ If the scaffold still fails after correction, the pipeline reports failure inste
 
 The pipeline is designed to be rerunnable.
 
-If a session ends halfway through, running `/pipeline` again detects documents that already contain real generated content and skips completed phases.
+If a session ends halfway through, running `/blueprint:pipeline` again detects documents that already contain real generated content and skips completed phases.
 
 ---
 
@@ -340,13 +345,13 @@ It contains 17 documents generated by seven skills.
 
 | Skill | Documents | Focus |
 | --- | --- | --- |
-| `/blueprint` | orchestration | PRD, coverage analysis, roadmap |
-| `/blueprint-foundation` | `00`, `01`, `02`, `03` | context, vision, principles, requirements |
-| `/blueprint-domain` | `04`, `05`, `09` | domain, data and state models |
-| `/blueprint-architecture` | `06`, `10` | system architecture and ADRs |
-| `/blueprint-flows` | `07`, `08` | critical flows and use cases |
-| `/blueprint-quality` | `12`, `13`, `14`, `15` | testing, security, scalability, observability |
-| `/blueprint-plan` | `11`, `16` | build plan and evolution |
+| `/blueprint:blueprint` | orchestration | PRD, coverage analysis, roadmap |
+| `/blueprint:blueprint-foundation` | `00`, `01`, `02`, `03` | context, vision, principles, requirements |
+| `/blueprint:blueprint-domain` | `04`, `05`, `09` | domain, data and state models |
+| `/blueprint:blueprint-architecture` | `06`, `10` | system architecture and ADRs |
+| `/blueprint:blueprint-flows` | `07`, `08` | critical flows and use cases |
+| `/blueprint:blueprint-quality` | `12`, `13`, `14`, `15` | testing, security, scalability, observability |
+| `/blueprint:blueprint-plan` | `11`, `16` | build plan and evolution |
 
 The grouping follows dependency relationships.
 
@@ -374,11 +379,11 @@ Three skills, three distinct responsibilities:
 
 | Skill | Produces | Reads |
 | --- | --- | --- |
-| `/prototype` | `00-vision`, `01-screens`, `02-mock-data` | Technical blueprint + design system |
-| `/prototype-build` | **Code** — the mocked app | The plan above |
-| `/prototype-api` | `03-api-requirements`, `04-interaction-states`, `05-findings` | **The code**, not the plan |
+| `/blueprint:prototype` | `00-vision`, `01-screens`, `02-mock-data` | Technical blueprint + design system |
+| `/blueprint:prototype-build` | **Code** — the mocked app | The plan above |
+| `/blueprint:prototype-api` | `03-api-requirements`, `04-interaction-states`, `05-findings` | **The code**, not the plan |
 
-The separation matters. `/prototype-api` reads the source of the prototype — mock handlers, application calls, components that render fields — and cross-references three independent inventories:
+The separation matters. `/blueprint:prototype-api` reads the source of the prototype — mock handlers, application calls, components that render fields — and cross-references three independent inventories:
 
 ```text
 handler exists, nobody calls it   → endpoint without consumer, excluded from the contract
@@ -394,7 +399,9 @@ Two rules give the phase its discipline:
 
 ## The gate before the backend
 
-No **high-risk** finding may remain open when `/backend` runs. A contract built on a known gap propagates that gap into the schema, and a schema with data in it is not fixed with `/increment`.
+No **high-risk** finding may remain open when `/blueprint:backend` runs. A contract built on a known gap propagates that gap into the schema, and a schema with data in it is not fixed with `/blueprint:increment`.
+
+The gate holds in interactive mode, where someone can resolve the finding. `/blueprint:pipeline --prototype` disarms it explicitly: in an unattended run nobody resolves findings between phases, and a high-risk finding is the *expected product* of the phase, not an anomaly. Instead of stopping, the backend documents are generated with `<!-- construido sobre lacuna conhecida -->` at each affected point, and the final report says out loud how many were born that way.
 
 ## Cost
 
@@ -406,7 +413,7 @@ What survives the phase: the design system implementation, the typed entities (w
 
 # 3. Backend Blueprint
 
-`/backend` reads the technical blueprint and produces 15 implementation-oriented documents.
+`/blueprint:backend` reads the technical blueprint and produces 15 implementation-oriented documents.
 
 ```text
 00-backend-vision
@@ -522,14 +529,14 @@ Blueprint provides separate operations for **local evolution** and **cross-syste
 
 ---
 
-## `/increment`
+## `/blueprint:increment`
 
-Use `/increment` to add, correct, update or remove something without regenerating an entire blueprint.
+Use `/blueprint:increment` to add, correct, update or remove something without regenerating an entire blueprint.
 
 Example:
 
 ```text
-/increment
+/blueprint:increment
 target: all
 "Add real-time chat"
 ```
@@ -562,9 +569,9 @@ New content is inserted around these anchors rather than replacing the whole doc
 
 ---
 
-## `/patch`
+## `/blueprint:patch`
 
-Use `/patch` for a global change that needs impact analysis and propagation.
+Use `/blueprint:patch` for a global change that needs impact analysis and propagation.
 
 Examples:
 
@@ -609,15 +616,15 @@ Indirect effects that require human review are marked with:
 <!-- PATCH-REVIEW -->
 ```
 
-`/increment` evolves a feature.
+`/blueprint:increment` evolves a feature.
 
-`/patch` propagates a systemic change.
+`/blueprint:patch` propagates a systemic change.
 
 ---
 
 # Implementation backlog
 
-`/specs` converts the specification into a full implementation backlog:
+`/blueprint:specs` converts the specification into a full implementation backlog:
 
 ```text
 docs/specs/TASKS.md
@@ -668,38 +675,38 @@ Does every documented threat have a mitigation?
 Blueprint can move from specification to implementation through a set of code-generation skills.
 
 ```text
-/codegen-setup
+/blueprint:codegen-setup
       │
       ▼
 Contracts + schema + scaffold + CLAUDE.md router
       │
       ▼
-/codegen
+/blueprint:codegen
       │
       ▼
-/codegen-feature
+/blueprint:codegen-feature
       │
       ▼
 RED → GREEN → REFACTOR
       │
       ▼
-/codegen-verify
+/blueprint:codegen-verify
 ```
 
-`/codegen-feature` implements vertical features using TDD.
+`/blueprint:codegen-feature` implements vertical features using TDD.
 
-`/codegen-verify` independently evaluates whether the code still follows the blueprint.
+`/blueprint:codegen-verify` independently evaluates whether the code still follows the blueprint.
 
 ---
 
-# `/build` — guarded implementation loop
+# `/blueprint:build` — guarded implementation loop
 
-`/build` automates the feature loop.
+`/blueprint:build` automates the feature loop.
 
 ```text
-/build
-/build ENT-001 ENT-002
-/build --max 5
+/blueprint:build
+/blueprint:build ENT-001 ENT-002
+/blueprint:build --max 5
 ```
 
 Each feature runs in its own subagent and passes through two gates.
@@ -762,7 +769,7 @@ It does not necessarily mean:
 
 > the implementation satisfies the blueprint.
 
-`/codegen-verify` compares implementation against the specification and produces an adherence score.
+`/blueprint:codegen-verify` compares implementation against the specification and produces an adherence score.
 
 That verification is intentionally separate from feature generation.
 
@@ -826,31 +833,60 @@ Example Context7 configuration:
 }
 ```
 
-Clone Blueprint:
+## Install
+
+Blueprint is a Claude Code plugin. The repository is both the plugin and the marketplace that serves it.
+
+```bash
+# 1. add the marketplace
+/plugin marketplace add DouglasPrado/blueprint
+
+# 2. install the plugin
+/plugin install blueprint@blueprint
+```
+
+Then, **from the root of your own project**:
+
+```text
+/blueprint:init
+```
+
+`init` copies the template library into your project's `docs/`. That matters: the filled documents belong in **your** repository — your history, your code review. The plugin only supplies the initial shape.
+
+It never overwrites a file that already exists, so it is safe to re-run after a plugin update: it installs only what is missing.
+
+Place your PRD at `docs/prd.md` — `init` seeds it from the template if it is not there. The PRD is the one document the plugin cannot generate, because it carries business knowledge only you have.
+
+Then choose an execution mode.
+
+### Command namespace
+
+Plugin skills are namespaced. Every command in this documentation is invoked as `/blueprint:<skill>`:
+
+```text
+/blueprint:init          /blueprint:blueprint       /blueprint:backend
+/blueprint:prototype     /blueprint:pipeline        /blueprint:build
+```
+
+### Developing on the plugin itself
 
 ```bash
 git clone https://github.com/DouglasPrado/blueprint.git
-cd blueprint
+claude --plugin-dir ./blueprint      # loads it straight from disk, no install
 ```
 
-Place your PRD at:
-
-```text
-docs/prd.md
-```
-
-Then choose an execution mode.
+Inside a session, `/reload-plugins` picks up edits without restarting. `claude plugin validate ./blueprint` checks the manifest and structure.
 
 ### Fast autonomous pass
 
 ```text
-/pipeline docs/prd.md web ../my-app/
+/blueprint:pipeline docs/prd.md web ../my-app/
 ```
 
 After reviewing the generated documentation and `docs/ASSUMPTIONS.md`:
 
 ```text
-/build
+/blueprint:build
 ```
 
 ### Guided pass
@@ -858,10 +894,51 @@ After reviewing the generated documentation and `docs/ASSUMPTIONS.md`:
 Start with:
 
 ```text
-/blueprint
+/blueprint:blueprint
 ```
 
 Then run the technical, backend and frontend phases in order.
+
+---
+
+# Quality hooks
+
+The plugin ships five hooks. They exist because three of the framework's rules are stated in every skill and are exactly the ones an agent breaks under pressure: *Write only over a template*, *never weaken a test to go green*, *never leave a placeholder behind*.
+
+A rule repeated in prose is a suggestion. A rule enforced at the tool call is a rule.
+
+| Hook | Event | What it does |
+| --- | --- | --- |
+| `docs-integrity` | `PreToolUse(Write\|Edit)` | **Blocks** `Write` over a document that already holds real content, and **blocks** an `Edit` that would delete an `<!-- APPEND:... -->` marker |
+| `tests-integrity` | `PreToolUse(Write\|Edit)` | **Blocks** a newly introduced `.skip` / `.only` / `xit` / `xdescribe` / `@pytest.mark.skip` / `t.Skip` in a test file, and **blocks** lowering a coverage threshold |
+| `no-secrets` | `PreToolUse(Bash)` | Before `git commit` or `git push`, scans the **staged** diff for credentials and **blocks** on a hit |
+| `docs-complete` | `PostToolUse(Write)` | Warns when a generated document still contains `{{placeholders}}` — cannot block, the write already happened |
+| `status` | `SessionStart` | Reports where the project stands: which suites are filled, open high-risk findings and assumptions, documents built over a known gap, and the next command |
+
+## The design rule behind them
+
+**A hook that produces false positives is a hook the user disables — along with every other hook in the plugin.** So each one blocks only what is unambiguously destructive, and every ambiguity resolves to *allow*:
+
+- `tests-integrity` compares *before* and *after*: it only objects when a skip is **added**. Editing a file that already had one is fine.
+- `no-secrets` ignores `process.env.X`, `{{placeholder}}`, `your-key-here` and every other shape that reads as an example.
+- `docs-integrity` only speaks about `docs/` — your application code is not its business.
+- Empty payload, malformed JSON, missing `jq` and missing `python3` all resolve to exit 0. A broken hook must never break a session.
+
+Two of them enforce asymmetric costs, which is why they block rather than warn. A document overwritten by `Write` does not come back. A secret that reaches the history stays in the history, in every fork and every clone already taken — a later commit does not remove it, and rewriting published history is expensive and sometimes impossible. In both cases the only cheap moment is before.
+
+## Testing them
+
+```bash
+bash hooks/test/run.sh
+```
+
+35 cases, covering what each hook must block, what it must let through, and graceful degradation. Run it after changing a pattern: a malformed hook fails **silently** — it does not block, does not warn, and the plugin looks installed while doing nothing.
+
+## Turning one off
+
+Hooks run as you, not sandboxed. Read them before installing any plugin, this one included — they are five short shell scripts under `hooks/`.
+
+To disable one, remove its entry from `hooks/hooks.json` in your installed copy, or disable the plugin's hooks wholesale in your settings.
 
 ---
 
@@ -871,60 +948,66 @@ Then run the technical, backend and frontend phases in order.
 
 | Command | Purpose |
 | --- | --- |
-| `/pipeline` | Generate the complete documentation set and scaffold through isolated phases (`--prototype` inserts the prototype phase and moves the backend after it) |
-| `/build` | Implement planned features in a guarded TDD loop |
+| `/blueprint:pipeline` | Generate the complete documentation set and scaffold through isolated phases (`--prototype` inserts the prototype phase and moves the backend after it) |
+| `/blueprint:build` | Implement planned features in a guarded TDD loop |
 
 ## Technical Blueprint
 
 | Command | Purpose |
 | --- | --- |
-| `/blueprint` | PRD intake, coverage analysis and roadmap |
-| `/blueprint-foundation` | Context, vision, principles and requirements |
-| `/blueprint-domain` | Domain, data and state models |
-| `/blueprint-architecture` | System architecture and ADRs |
-| `/blueprint-flows` | Critical flows and use cases |
-| `/blueprint-quality` | Testing, security, scalability and observability |
-| `/blueprint-plan` | Build plan and evolution |
+| `/blueprint:blueprint` | PRD intake, coverage analysis and roadmap |
+| `/blueprint:blueprint-foundation` | Context, vision, principles and requirements |
+| `/blueprint:blueprint-domain` | Domain, data and state models |
+| `/blueprint:blueprint-architecture` | System architecture and ADRs |
+| `/blueprint:blueprint-flows` | Critical flows and use cases |
+| `/blueprint:blueprint-quality` | Testing, security, scalability and observability |
+| `/blueprint:blueprint-plan` | Build plan and evolution |
+
+## Setup
+
+| Command | Purpose |
+| --- | --- |
+| `/blueprint:init [suites]` | Install the template library into your project's `docs/` |
 
 ## Prototype
 
 | Command | Purpose |
 | --- | --- |
-| `/prototype {client}` | Plan the mocked frontend — screens, navigation, mock data |
-| `/prototype-build {client} {target}` | Build the mocked app, screen by screen, with a coverage gate |
-| `/prototype-api {client} {target}` | Extract the required API contract **from the code** |
+| `/blueprint:prototype {client}` | Plan the mocked frontend — screens, navigation, mock data |
+| `/blueprint:prototype-build {client} {target}` | Build the mocked app, screen by screen, with a coverage gate |
+| `/blueprint:prototype-api {client} {target}` | Extract the required API contract **from the code** |
 
 ## Backend
 
 | Command | Purpose |
 | --- | --- |
-| `/backend` | Generate the 15 backend specification documents |
+| `/blueprint:backend` | Generate the 15 backend specification documents |
 
 ## Frontend
 
 | Command | Purpose |
 | --- | --- |
-| `/frontend` | Frontend orchestration and shared data/API documents |
-| `/frontend-design-system` | Design tokens, typography, colors and iconography |
-| `/frontend-app {client}` | Client architecture, structure, state, routes and flows |
-| `/frontend-quality {client}` | Client testing, performance, security, observability and CI/CD |
+| `/blueprint:frontend` | Frontend orchestration and shared data/API documents |
+| `/blueprint:frontend-design-system` | Design tokens, typography, colors and iconography |
+| `/blueprint:frontend-app {client}` | Client architecture, structure, state, routes and flows |
+| `/blueprint:frontend-quality {client}` | Client testing, performance, security, observability and CI/CD |
 
 ## Evolution and backlog
 
 | Command | Purpose |
 | --- | --- |
-| `/increment` | Add, correct, update or remove scoped specification content |
-| `/patch` | Propagate a global change through the documentation graph |
-| `/specs` | Generate the implementation backlog |
+| `/blueprint:increment` | Add, correct, update or remove scoped specification content |
+| `/blueprint:patch` | Propagate a global change through the documentation graph |
+| `/blueprint:specs` | Generate the implementation backlog |
 
 ## Code generation
 
 | Command | Purpose |
 | --- | --- |
-| `/codegen-setup` | Generate routing context, contracts, schema and scaffold |
-| `/codegen` | Present build-plan deliveries for implementation |
-| `/codegen-feature` | Implement one vertical feature with TDD |
-| `/codegen-verify` | Measure implementation adherence to the blueprint |
+| `/blueprint:codegen-setup` | Generate routing context, contracts, schema and scaffold |
+| `/blueprint:codegen` | Present build-plan deliveries for implementation |
+| `/blueprint:codegen-feature` | Implement one vertical feature with TDD |
+| `/blueprint:codegen-verify` | Measure implementation adherence to the blueprint |
 
 ---
 
@@ -964,8 +1047,13 @@ The Blueprint repository itself currently contains:
 
 ```text
 blueprint/
-├── .claude/
-│   └── skills/                # 24 Claude Code skills
+├── .claude-plugin/
+│   ├── plugin.json            # plugin manifest
+│   └── marketplace.json       # the repo serves itself as a marketplace
+├── skills/                    # 25 Claude Code skills
+├── hooks/
+│   └── hooks.json             # quality gates (see below)
+├── LICENSE                    # MIT
 ├── docs/
 │   ├── adr/
 │   ├── backend/
@@ -1116,9 +1204,10 @@ Blueprint is under active development.
 
 The current repository contains:
 
+- distributed as an installable Claude Code plugin, MIT licensed
 - 3 blueprint layers plus an optional prototype phase
 - 52 standard documents for a single-client flow, 58 with the prototype
-- 24 Claude Code skills
+- 25 Claude Code skills
 - contract discovery through a mocked frontend built before the backend
 - autonomous documentation pipeline
 - resumable phases

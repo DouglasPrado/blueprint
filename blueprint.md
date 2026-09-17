@@ -6,7 +6,7 @@
 >
 > **O que este arquivo não é:** um substituto dos documentos individuais. Ele é a visão de conjunto; cada seção aponta para o arquivo-fonte onde o detalhe vive e é preenchido.
 >
-> **Sobre divergências:** onde os arquivos do repositório se contradizem entre si, este documento **registra o conflito e diz qual fonte seguir** em vez de escolher um lado em silêncio. As **sete divergências verificadas** estão em [§17.4](#174-divergências-internas-do-repositório-verificadas) e as **quatro lacunas estruturais do framework** — três em [§14.3](#143-marcadores-de-append-pontos-de-inserção-estáveis), a quarta no fecho de §17.4. A mais consequente: **nenhuma skill gera `docs/shared/`**, de modo que o `/pipeline` entrega 48 documentos preenchidos, não 52.
+> **Sobre divergências:** onde os arquivos do repositório se contradizem entre si, este documento **registra o conflito e diz qual fonte seguir** em vez de escolher um lado em silêncio. As **sete divergências verificadas** estão em [§17.4](#174-divergências-internas-do-repositório-verificadas) e as **quatro lacunas estruturais do framework** — três em [§14.3](#143-marcadores-de-append-pontos-de-inserção-estáveis), a quarta no fecho de §17.4. A mais consequente: **nenhuma skill gera `docs/shared/`**, de modo que o `/blueprint:pipeline` entrega 48 documentos preenchidos, não 52.
 
 | Campo | Valor |
 | --- | --- |
@@ -60,16 +60,16 @@
 
 Três consequências práticas, que aparecem repetidas em todas as skills:
 
-1. **Uma fonte primária por decisão.** O blueprint técnico (`docs/blueprint/`) decide *o quê*. Backend e frontend decidem *como*, sem redefinir o produto. Se backend e blueprint divergem, o blueprint vence — ou o blueprint é corrigido explicitamente com `/increment`.
+1. **Uma fonte primária por decisão.** O blueprint técnico (`docs/blueprint/`) decide *o quê*. Backend e frontend decidem *como*, sem redefinir o produto. Se backend e blueprint divergem, o blueprint vence — ou o blueprint é corrigido explicitamente com `/blueprint:increment`.
 2. **Nada é inventado silenciosamente.** SLAs, métricas, percentuais, nomes próprios e volumes vêm do PRD, de uma resposta do usuário, ou são marcados como suposição (`<!-- assumido: X — base: Y -->`) e consolidados em `docs/ASSUMPTIONS.md` com classificação de risco.
-3. **Verificação é independente.** Suíte verde prova consistência interna, não conformidade com o desenho. Por isso existe um gate separado (`/codegen-verify`) que compara código contra documento.
+3. **Verificação é independente.** Suíte verde prova consistência interna, não conformidade com o desenho. Por isso existe um gate separado (`/blueprint:codegen-verify`) que compara código contra documento.
 
 ### 0.3 Pré-requisitos do ambiente
 
 | Requisito | Por quê |
 | --- | --- |
 | **Claude Code** | Executa as skills |
-| **Um PRD** | Sem ele não há de onde inferir — o resultado seria inteiramente inventado. O `/pipeline` **para** se não encontrar `docs/prd.md` nem receber um caminho |
+| **Um PRD** | Sem ele não há de onde inferir — o resultado seria inteiramente inventado. O `/blueprint:pipeline` **para** se não encontrar `docs/prd.md` nem receber um caminho |
 | **Context7 MCP** | Documentação de tecnologia **atualizada**. Toda skill que cita versão de biblioteca consulta `resolve-library-id` → `query-docs` em vez de assumir o que o modelo memorizou no treino |
 
 ```json
@@ -91,16 +91,16 @@ Três consequências práticas, que aparecem repetidas em todas as skills:
 
 ```
 MODO AUTÔNOMO (PRD detalhado, primeira versão rápida)
-  /pipeline docs/prd.md web ../meu-saas/   → 48 docs preenchidos + scaffold tipado
+  /blueprint:pipeline docs/prd.md web ../meu-saas/   → 48 docs preenchidos + scaffold tipado
                                            (os 4 de docs/shared/ NAO sao gerados — ver §14.3)
-  revisar docs/ASSUMPTIONS.md              → corrigir risco alto com /increment
-  /build                                   → features em loop com portões
+  revisar docs/ASSUMPTIONS.md              → corrigir risco alto com /blueprint:increment
+  /blueprint:build                                   → features em loop com portões
 
 MODO GUIADO (sistema crítico, PRD raso)
-  /blueprint → -foundation → -domain → -architecture → -flows → -quality → -plan
-  /backend
-  /frontend → -design-system → -app {client} → -quality {client}
-  /specs → /codegen-setup → /codegen-feature → /codegen-verify
+  /blueprint:blueprint → -foundation → -domain → -architecture → -flows → -quality → -plan
+  /blueprint:backend
+  /blueprint:frontend → -design-system → -app {client} → -quality {client}
+  /blueprint:specs → /blueprint:codegen-setup → /blueprint:codegen-feature → /blueprint:codegen-verify
 ```
 
 **Regra de escolha:** PRD raso + sistema crítico = modo guiado. O pipeline não inventa contexto de negócio; ele extrapola o que existe, e extrapolação sobre vácuo vira ficção classificada como risco alto.
@@ -143,7 +143,7 @@ Nem todos têm o mesmo custo de errar. A ordem abaixo é a ordem de **irreversib
 8. Ferramentas de observabilidade           ← trocável a qualquer momento
 ```
 
-**Implicação prática:** o `/blueprint-domain` (fase 2) e a decisão de multi-tenancy (`backend/11-permissions.md`) merecem mais tempo humano do que qualquer outra fase. É onde a pressa cobra juros compostos.
+**Implicação prática:** o `/blueprint:blueprint-domain` (fase 2) e a decisão de multi-tenancy (`backend/11-permissions.md`) merecem mais tempo humano do que qualquer outra fase. É onde a pressa cobra juros compostos.
 
 ---
 
@@ -188,48 +188,48 @@ Cada fase consome o que a anterior produziu. Pular gera documento genérico — 
 
 | Fase | Skill | Produz | Consome obrigatoriamente |
 | --- | --- | --- | --- |
-| 1 | `/blueprint-foundation` | `00`, `01`, `02`, `03` | `prd.md` |
-| 2 | `/blueprint-domain` | `04`, `05`, `09` | `prd.md`, `00`, `01` |
-| 3 | `/blueprint-architecture` | `06`, `10` + `docs/adr/*` | `02` (princípios), `04`, `05` |
-| 4 | `/blueprint-flows` | `07`, `08` | `04`, `06`, `09`, `03` |
-| 5 | `/blueprint-quality` | `12`, `13`, `14`, `15` | `05`, `06`, `07`, `03` |
-| 6 | `/blueprint-plan` | `11`, `16` | `03`, `07`, `08`, `10`, `14` |
-| 7 | `/backend` | `backend/00-14` | os 17 docs do blueprint |
-| 8 | `/frontend-design-system` | `frontend/shared/03` | `01-vision` (identidade do produto) |
-| 9 | `/frontend` | `frontend/shared/06`, `15` | blueprint + `backend/05-api-contracts.md` **quando existir** (a skill o trata como fonte autoritativa se presente — daí a ordem recomendada abaixo) |
-| 10 | `/frontend-app {client}` | 8 docs do cliente | blueprint + shared |
-| 11 | `/frontend-quality {client}` | 5 docs do cliente | `blueprint/12,13,14,15` + docs do cliente |
-| 12 | `/codegen-setup` | `CLAUDE.md`, `src/contracts/`, schema, scaffold | `02` (patterns e convenções), `04`, `05`, `06`, `backend/00-04`, **`shared/glossary.md`** e, por cliente ativo, `{client}/02-project-structure` + `shared/03-design-system` |
+| 1 | `/blueprint:blueprint-foundation` | `00`, `01`, `02`, `03` | `prd.md` |
+| 2 | `/blueprint:blueprint-domain` | `04`, `05`, `09` | `prd.md`, `00`, `01` |
+| 3 | `/blueprint:blueprint-architecture` | `06`, `10` + `docs/adr/*` | `02` (princípios), `04`, `05` |
+| 4 | `/blueprint:blueprint-flows` | `07`, `08` | `04`, `06`, `09`, `03` |
+| 5 | `/blueprint:blueprint-quality` | `12`, `13`, `14`, `15` | `05`, `06`, `07`, `03` |
+| 6 | `/blueprint:blueprint-plan` | `11`, `16` | `03`, `07`, `08`, `10`, `14` |
+| 7 | `/blueprint:backend` | `backend/00-14` | os 17 docs do blueprint |
+| 8 | `/blueprint:frontend-design-system` | `frontend/shared/03` | `01-vision` (identidade do produto) |
+| 9 | `/blueprint:frontend` | `frontend/shared/06`, `15` | blueprint + `backend/05-api-contracts.md` **quando existir** (a skill o trata como fonte autoritativa se presente — daí a ordem recomendada abaixo) |
+| 10 | `/blueprint:frontend-app {client}` | 8 docs do cliente | blueprint + shared |
+| 11 | `/blueprint:frontend-quality {client}` | 5 docs do cliente | `blueprint/12,13,14,15` + docs do cliente |
+| 12 | `/blueprint:codegen-setup` | `CLAUDE.md`, `src/contracts/`, schema, scaffold | `02` (patterns e convenções), `04`, `05`, `06`, `backend/00-04`, **`shared/glossary.md`** e, por cliente ativo, `{client}/02-project-structure` + `shared/03-design-system` |
 
-**Com a fase de protótipo** (`/pipeline --prototype`), a ordem muda em três pontos — o design system sobe, o protótipo entra, e o backend desce:
+**Com a fase de protótipo** (`/blueprint:pipeline --prototype`), a ordem muda em três pontos — o design system sobe, o protótipo entra, e o backend desce:
 
 | # | Skill | Produz | Consome obrigatoriamente |
 | --- | --- | --- | --- |
 | 1-6 | `/blueprint-*` | os 17 docs do blueprint técnico | `prd.md` |
-| **7** | `/frontend-design-system` | `frontend/shared/03` | `01-vision` — **antecipada: o protótipo precisa dos tokens** |
-| **8** | `/prototype {client}` | `prototype/00`, `01`, `02` | `00`, `04`, `07`, `08`, `09`, `13`, `shared/03` |
-| **9** | `/prototype-build` | **código** — o app mockado | `prototype/00`, `01`, `02`, `shared/03`, `glossary` |
-| **10** | `/prototype-api` | `prototype/03`, `04`, `05` | **o código do protótipo** |
-| 11 | `/backend` | `backend/00-14` | os 17 docs **+ `prototype/03` como fonte do contrato** |
-| 12 | `/frontend` | `shared/06`, `15` | blueprint + `prototype/03` (prioridade) ou `backend/05` |
-| 13-14 | `/frontend-app`, `/frontend-quality` | docs do cliente | blueprint + shared + `prototype/01`, `04` |
-| 15 | `/codegen-setup` | scaffold | idem, **reaproveitando tipos e design system do protótipo** |
+| **7** | `/blueprint:frontend-design-system` | `frontend/shared/03` | `01-vision` — **antecipada: o protótipo precisa dos tokens** |
+| **8** | `/blueprint:prototype {client}` | `prototype/00`, `01`, `02` | `00`, `04`, `07`, `08`, `09`, `13`, `shared/03` |
+| **9** | `/blueprint:prototype-build` | **código** — o app mockado | `prototype/00`, `01`, `02`, `shared/03`, `glossary` |
+| **10** | `/blueprint:prototype-api` | `prototype/03`, `04`, `05` | **o código do protótipo** |
+| 11 | `/blueprint:backend` | `backend/00-14` | os 17 docs **+ `prototype/03` como fonte do contrato** |
+| 12 | `/blueprint:frontend` | `shared/06`, `15` | blueprint + `prototype/03` (prioridade) ou `backend/05` |
+| 13-14 | `/blueprint:frontend-app`, `/blueprint:frontend-quality` | docs do cliente | blueprint + shared + `prototype/01`, `04` |
+| 15 | `/blueprint:codegen-setup` | scaffold | idem, **reaproveitando tipos e design system do protótipo** |
 
-> A numeração acima é a do `/pipeline --prototype` (15 fases). A parte deste documento que descreve a fase é a **[7.5](#75-a-fase-de-protótipo-opcional)** — o `.5` marca que ela é opcional e intercalada, não que seja meia fase.
+> A numeração acima é a do `/blueprint:pipeline --prototype` (15 fases). A parte deste documento que descreve a fase é a **[7.5](#75-a-fase-de-protótipo-opcional)** — o `.5` marca que ela é opcional e intercalada, não que seja meia fase.
 
 > **A inversão é o ponto.** Sem protótipo, a fase 9 roda depois da 7 porque `backend/05-api-contracts` é a fonte autoritativa dos endpoints. Com protótipo, quem passa a ser autoritativo é `prototype/03-api-requirements` — e o backend vira o **consumidor** do contrato, não o autor.
 
-> **Detalhe crítico da ordem — no fluxo padrão, sem protótipo:** a fase 9 (`/frontend`, que gera `shared/15-api-dependencies.md`) roda **depois** da fase 7 (`/backend`), porque aí `backend/05-api-contracts.md` é a fonte autoritativa dos endpoints. Inverter produz um frontend que consome endpoints que não existem. **Com protótipo, a autoridade muda de mãos** — `prototype/03-api-requirements` passa a ser a fonte, e é o backend que a consome.
+> **Detalhe crítico da ordem — no fluxo padrão, sem protótipo:** a fase 9 (`/blueprint:frontend`, que gera `shared/15-api-dependencies.md`) roda **depois** da fase 7 (`/blueprint:backend`), porque aí `backend/05-api-contracts.md` é a fonte autoritativa dos endpoints. Inverter produz um frontend que consome endpoints que não existem. **Com protótipo, a autoridade muda de mãos** — `prototype/03-api-requirements` passa a ser a fonte, e é o backend que a consome.
 
 ### 2.3 As três direções de propagação
 
 | Direção | Ferramenta | Quando |
 | --- | --- | --- |
-| **Para frente** (gerar do zero) | `/pipeline` ou as skills em sequência | Primeira versão |
-| **Local** (uma feature, um doc) | `/increment` | Adicionar feature, corrigir dado, remover do escopo |
-| **Global** (um termo, todos os docs) | `/patch` | Renomear entidade, trocar tecnologia, versionar endpoint |
+| **Para frente** (gerar do zero) | `/blueprint:pipeline` ou as skills em sequência | Primeira versão |
+| **Local** (uma feature, um doc) | `/blueprint:increment` | Adicionar feature, corrigir dado, remover do escopo |
+| **Global** (um termo, todos os docs) | `/blueprint:patch` | Renomear entidade, trocar tecnologia, versionar endpoint |
 
-`/increment` **evolui uma feature**. `/patch` **propaga uma mudança sistêmica**. Confundir os dois produz documentação parcialmente atualizada — o pior estado possível.
+`/blueprint:increment` **evolui uma feature**. `/blueprint:patch` **propaga uma mudança sistêmica**. Confundir os dois produz documentação parcialmente atualizada — o pior estado possível.
 
 ---
 
@@ -252,7 +252,7 @@ Esta é a correlação integral entre arquivos. É o conteúdo de `docs/shared/M
 | `08-use_cases` | `05-api-contracts`, `11-permissions` | UC → endpoint + controller + service; atores → matriz RBAC |
 | `09-state-models` | `03-domain` | Estados → enum + máquina de estados na entidade; transições → métodos |
 | `10-decisions` | `00-backend-vision`, `01-architecture` | ADRs → justificativa de stack e de padrão arquitetural |
-| `11-build_plan` | — | Ordem de implementação (consumido por `/specs` e `/build`) |
+| `11-build_plan` | — | Ordem de implementação (consumido por `/blueprint:specs` e `/blueprint:build`) |
 | `12-testing` | `14-tests` | Pirâmide e cobertura → ferramentas e cenários obrigatórios |
 | `13-security` | `08-middlewares`, `11-permissions` | Método de auth → middleware; RBAC → matriz por recurso |
 | `14-scalability` | `08-middlewares` | Cache e rate limit → configuração por rota |
@@ -284,7 +284,7 @@ Esta é a correlação integral entre arquivos. É o conteúdo de `docs/shared/M
 | `02-mock-data` §personas | `04-data-layer`, `11-permissions` | Personas → seeds; matriz RBAC já exercitada |
 | `02` §bordas | `14-tests` | Casos de borda → fixtures de teste |
 | `01-screens` §validação | `10-validation` | Validação exercida no formulário → regra por campo |
-| `05-findings` | **todos** | Achado de risco alto **bloqueia** `/backend` |
+| `05-findings` | **todos** | Achado de risco alto **bloqueia** `/blueprint:backend` |
 
 ### 3.2 Blueprint técnico → Frontend
 
@@ -315,31 +315,31 @@ Esta é a correlação integral entre arquivos. É o conteúdo de `docs/shared/M
 
 | Diagrama | Seção que descreve textualmente | Gerado/atualizado por |
 | --- | --- | --- |
-| `context/system-context.mmd` | `blueprint/00-context` | `/blueprint-foundation` |
-| `containers/container-diagram.mmd` | `blueprint/06-system-architecture` | `/blueprint-architecture` |
-| `components/{container}-components.mmd` | `blueprint/06-system-architecture` | `/blueprint-architecture` |
-| `sequences/{fluxo}.mmd` | `blueprint/07-critical_flows` | `/blueprint-flows` |
-| `sequences/auth-flow.mmd` | `blueprint/13-security` | `/blueprint-quality` |
-| `deployment/production.mmd` | `blueprint/06`, `14-scalability` | `/blueprint-architecture`, `/blueprint-quality` |
-| `deployment/production-scaled.mmd` | `blueprint/14-scalability` | `/blueprint-quality` |
-| `domain/class-diagram.mmd` | `blueprint/04-domain-model` | `/blueprint-domain` |
-| `domain/er-diagram.mmd` | `blueprint/05-data-model` | `/blueprint-domain` |
-| `domain/state-{entidade}.mmd` | `blueprint/09-state-models` | `/blueprint-domain` |
-| `{client}/{client}-architecture.mmd` ⚠ | `frontend/{client}/01-architecture` | `/frontend-app` |
-| `{client}/fluxo-{n}.mmd` | `frontend/{client}/08-flows` | `/frontend-app` |
+| `context/system-context.mmd` | `blueprint/00-context` | `/blueprint:blueprint-foundation` |
+| `containers/container-diagram.mmd` | `blueprint/06-system-architecture` | `/blueprint:blueprint-architecture` |
+| `components/{container}-components.mmd` | `blueprint/06-system-architecture` | `/blueprint:blueprint-architecture` |
+| `sequences/{fluxo}.mmd` | `blueprint/07-critical_flows` | `/blueprint:blueprint-flows` |
+| `sequences/auth-flow.mmd` | `blueprint/13-security` | `/blueprint:blueprint-quality` |
+| `deployment/production.mmd` | `blueprint/06`, `14-scalability` | `/blueprint:blueprint-architecture`, `/blueprint:blueprint-quality` |
+| `deployment/production-scaled.mmd` | `blueprint/14-scalability` | `/blueprint:blueprint-quality` |
+| `domain/class-diagram.mmd` | `blueprint/04-domain-model` | `/blueprint:blueprint-domain` |
+| `domain/er-diagram.mmd` | `blueprint/05-data-model` | `/blueprint:blueprint-domain` |
+| `domain/state-{entidade}.mmd` | `blueprint/09-state-models` | `/blueprint:blueprint-domain` |
+| `{client}/{client}-architecture.mmd` ⚠ | `frontend/{client}/01-architecture` | `/blueprint:frontend-app` |
+| `{client}/fluxo-{n}.mmd` | `frontend/{client}/08-flows` | `/blueprint:frontend-app` |
 
 **Arquivos-base que são copiados, não editados:**
 
 | Template | Duplicado para | Por |
 | --- | --- | --- |
-| `domain/state-template.mmd` | `domain/state-{entidade}.mmd`, um por entidade com ciclo de vida | `/blueprint-domain` |
-| `sequences/template-flow.mmd` | `sequences/{nome-do-fluxo}.mmd` e `{client}/fluxo-{n}.mmd` | `/blueprint-flows`, `/frontend-app` |
-| `components/api-components.mmd` | `components/{container}-components.mmd`, um por container | `/blueprint-architecture` |
+| `domain/state-template.mmd` | `domain/state-{entidade}.mmd`, um por entidade com ciclo de vida | `/blueprint:blueprint-domain` |
+| `sequences/template-flow.mmd` | `sequences/{nome-do-fluxo}.mmd` e `{client}/fluxo-{n}.mmd` | `/blueprint:blueprint-flows`, `/blueprint:frontend-app` |
+| `components/api-components.mmd` | `components/{container}-components.mmd`, um por container | `/blueprint:blueprint-architecture` |
 
 ⚠️ **Divergências do repositório neste ponto** — verificadas, não resolvidas por escolha silenciosa. São as entradas #2 e #6 do índice consolidado de [§17.4](#174-divergências-internas-do-repositório-verificadas), que lista as sete:
 
-1. **Nome do diagrama de arquitetura do cliente web.** A skill `/frontend-app` manda criar `docs/diagrams/{client}/{client}-architecture.mmd`, o que daria `web-architecture.mmd`. Mas `docs/diagrams/web/README.md` declara **`frontend-architecture.mmd`** — e é esse o nome referenciado por `docs/frontend/web/01-architecture.md`. Para `mobile` e `desktop` os READMEs seguem o padrão da skill (`mobile-architecture.mmd`, `desktop-architecture.mmd`). **Só o cliente web diverge.**
-2. **Dono do `auth-flow.mmd`.** `docs/diagrams/README.md` §6 atribui todos os `sequences/*.mmd` a `07-critical_flows.md`; a skill `/blueprint-quality` manda atualizar `auth-flow.mmd` com o fluxo de autenticação real ao gerar `13-security.md`. Na prática o arquivo tem dois donos — o fluxo vem de `07`, o detalhe de autenticação de `13`.
+1. **Nome do diagrama de arquitetura do cliente web.** A skill `/blueprint:frontend-app` manda criar `docs/diagrams/{client}/{client}-architecture.mmd`, o que daria `web-architecture.mmd`. Mas `docs/diagrams/web/README.md` declara **`frontend-architecture.mmd`** — e é esse o nome referenciado por `docs/frontend/web/01-architecture.md`. Para `mobile` e `desktop` os READMEs seguem o padrão da skill (`mobile-architecture.mmd`, `desktop-architecture.mmd`). **Só o cliente web diverge.**
+2. **Dono do `auth-flow.mmd`.** `docs/diagrams/README.md` §6 atribui todos os `sequences/*.mmd` a `07-critical_flows.md`; a skill `/blueprint:blueprint-quality` manda atualizar `auth-flow.mmd` com o fluxo de autenticação real ao gerar `13-security.md`. Na prática o arquivo tem dois donos — o fluxo vem de `07`, o detalhe de autenticação de `13`.
 
 **Modelo C4** (Simon Brown), com o nível 4 (Code) intencionalmente omitido — o código-fonte é a documentação mais precisa daquele nível. Arquivos `.mmd` contêm Mermaid puro, sem wrapper markdown, para renderização direta por ferramentas.
 
@@ -349,31 +349,31 @@ Estas conexões não aparecem no `MAPPING.md` mas são obrigatórias segundo as 
 
 | Regra de consistência | Onde é exigida |
 | --- | --- |
-| Todo gatilho de transição em `08-use_cases` deve existir literalmente em `09-state-models` | `/blueprint-flows` — divergência é reportada, nunca inventada |
-| Todo requisito **Must** de `03-requirements` deve estar dentro de alguma entrega de `11-build_plan` | `/blueprint-plan` — Musts fora são listados explicitamente |
-| Todo threshold de alerta em `15-observability` deve bater com o limite de `14-scalability` | `/blueprint-quality` — dois números diferentes para a mesma métrica é erro |
-| Todo fluxo crítico de `07` precisa de ≥1 teste E2E nomeado em `12-testing` | `/blueprint-quality` |
-| Toda consequência negativa aceita num ADR (`10`) vira débito técnico em `16-evolution` | `/blueprint-architecture` → `/blueprint-plan` |
-| Todo template de mensagem (`backend/13-integrations`) precisa de evento disparador em `backend/12-events` | `/backend` — template órfão é proibido |
-| Toda rota de `{client}/07-routes` precisa de subseção em `{client}/14-copies` | `/frontend-app` — checklist de cobertura |
-| Todo fluxo de `{client}/08-flows` precisa de ≥1 teste E2E em `{client}/09-tests` | `/frontend-quality` |
-| Toda integração externa de `00`/`06` pede **teste de contrato** em `12-testing` | `/blueprint-quality` |
-| O glossário de produto de `{client}/14-copies` cobre os termos de domínio de `04-domain-model` | `/frontend-app` — checklist de cobertura |
-| As mensagens de erro de `{client}/14-copies` cobrem os cenários de erro dos endpoints de `shared/15-api-dependencies` | `/frontend-app` — checklist de cobertura |
-| Toda lista e tela com dados dinâmicos tem **empty state** definido em `{client}/14-copies` | `/frontend-app` — checklist de cobertura |
+| Todo gatilho de transição em `08-use_cases` deve existir literalmente em `09-state-models` | `/blueprint:blueprint-flows` — divergência é reportada, nunca inventada |
+| Todo requisito **Must** de `03-requirements` deve estar dentro de alguma entrega de `11-build_plan` | `/blueprint:blueprint-plan` — Musts fora são listados explicitamente |
+| Todo threshold de alerta em `15-observability` deve bater com o limite de `14-scalability` | `/blueprint:blueprint-quality` — dois números diferentes para a mesma métrica é erro |
+| Todo fluxo crítico de `07` precisa de ≥1 teste E2E nomeado em `12-testing` | `/blueprint:blueprint-quality` |
+| Toda consequência negativa aceita num ADR (`10`) vira débito técnico em `16-evolution` | `/blueprint:blueprint-architecture` → `/blueprint:blueprint-plan` |
+| Todo template de mensagem (`backend/13-integrations`) precisa de evento disparador em `backend/12-events` | `/blueprint:backend` — template órfão é proibido |
+| Toda rota de `{client}/07-routes` precisa de subseção em `{client}/14-copies` | `/blueprint:frontend-app` — checklist de cobertura |
+| Todo fluxo de `{client}/08-flows` precisa de ≥1 teste E2E em `{client}/09-tests` | `/blueprint:frontend-quality` |
+| Toda integração externa de `00`/`06` pede **teste de contrato** em `12-testing` | `/blueprint:blueprint-quality` |
+| O glossário de produto de `{client}/14-copies` cobre os termos de domínio de `04-domain-model` | `/blueprint:frontend-app` — checklist de cobertura |
+| As mensagens de erro de `{client}/14-copies` cobrem os cenários de erro dos endpoints de `shared/15-api-dependencies` | `/blueprint:frontend-app` — checklist de cobertura |
+| Toda lista e tela com dados dinâmicos tem **empty state** definido em `{client}/14-copies` | `/blueprint:frontend-app` — checklist de cobertura |
 | `shared/glossary.md` é a fonte única consumida por `blueprint/04-domain-model`, `backend/03-domain`, `{client}/04-components` e `{client}/14-copies` | rodapé do próprio `glossary.md` — nenhum deles cria glossário próprio |
-| Débitos de `16-evolution` alimentam os **limites conhecidos** de `backend/00-backend-vision` (além do versionamento → `05-api-contracts`) | `/backend` — mapa de extração |
-| Todo `UC-XXX` precisa de tela em `prototype/01-screens` ou de justificativa explícita | `/prototype` — a terceira opção ("esquecido") vira achado |
-| Nada entra em `prototype/03-api-requirements` sem consumidor nomeado | `/prototype-api` — endpoint sem tela e campo sem render vão para `05-findings` |
-| Todo erro tratado em `prototype/04-interaction-states` precisa existir em `backend/09-errors` | `/backend` — a UI já sabe exibir; o backend precisa emitir |
-| Nenhum achado de risco **alto** de `prototype/05-findings` pode estar aberto quando `/backend` rodar | `/backend` — portão bloqueante |
-| Todo erro de `backend/09-errors` precisa de linha em `shared/error-ux-mapping` | `docs/shared/error-ux-mapping.md` — *"Para CADA código de erro do backend, documente a resposta no frontend"*. o Passo 3 de `/specs` manda identificar consumidor de frontend "para cada endpoint/evento/erro do backend", mas o **checklist final de cobertura não inclui esse cruzamento** — a validação depende do zelo do passo intermediário |
+| Débitos de `16-evolution` alimentam os **limites conhecidos** de `backend/00-backend-vision` (além do versionamento → `05-api-contracts`) | `/blueprint:backend` — mapa de extração |
+| Todo `UC-XXX` precisa de tela em `prototype/01-screens` ou de justificativa explícita | `/blueprint:prototype` — a terceira opção ("esquecido") vira achado |
+| Nada entra em `prototype/03-api-requirements` sem consumidor nomeado | `/blueprint:prototype-api` — endpoint sem tela e campo sem render vão para `05-findings` |
+| Todo erro tratado em `prototype/04-interaction-states` precisa existir em `backend/09-errors` | `/blueprint:backend` — a UI já sabe exibir; o backend precisa emitir |
+| Nenhum achado de risco **alto** de `prototype/05-findings` pode estar aberto quando `/blueprint:backend` rodar | `/blueprint:backend` — portão bloqueante |
+| Todo erro de `backend/09-errors` precisa de linha em `shared/error-ux-mapping` | `docs/shared/error-ux-mapping.md` — *"Para CADA código de erro do backend, documente a resposta no frontend"*. o Passo 3 de `/blueprint:specs` manda identificar consumidor de frontend "para cada endpoint/evento/erro do backend", mas o **checklist final de cobertura não inclui esse cruzamento** — a validação depende do zelo do passo intermediário |
 
 ---
 
 ## 4. Fundação: contexto, visão, princípios, requisitos
 
-**Fase 1** · Skill `/blueprint-foundation` · Gera `00`, `01`, `02`, `03` · Fonte: `docs/prd.md`
+**Fase 1** · Skill `/blueprint:blueprint-foundation` · Gera `00`, `01`, `02`, `03` · Fonte: `docs/prd.md`
 
 As três perguntas que esta fase faz (máximo 3 na skill inteira), em ordem de importância: **limites do sistema e integrações** (00), **métricas de sucesso e não-objetivos** (01), **SLAs e metas de performance** (03). São exatamente os três pontos que um PRD quase nunca cobre.
 
@@ -414,7 +414,7 @@ As três perguntas que esta fase faz (máximo 3 na skill inteira), em ordem de i
 
 **Plano de comunicação (§17.2)** — público / canal / mensagem / responsável / quando, cobrindo **usuários** (e-mail, in-app), **suporte** (FAQ, runbook, treinamento **antes** do lançamento) e **stakeholders** (resultados pós-lançamento).
 
-> **Onde o PRD vira o resto:** `/blueprint` salva o PRD em `docs/prd.md`, classifica cada uma das 6 fases como **Coberto / Parcial / Lacuna** e indica nas observações o que provavelmente será perguntado em cada fase. É essa análise de cobertura que diz, antes de qualquer geração, se o modo autônomo é viável ou se o modo guiado é obrigatório.
+> **Onde o PRD vira o resto:** `/blueprint:blueprint` salva o PRD em `docs/prd.md`, classifica cada uma das 6 fases como **Coberto / Parcial / Lacuna** e indica nas observações o que provavelmente será perguntado em cada fase. É essa análise de cobertura que diz, antes de qualquer geração, se o modo autônomo é viável ou se o modo guiado é obrigatório.
 
 ### 4.1 `00-context.md` — Contexto do sistema
 
@@ -517,7 +517,7 @@ Estes blocos vivem no **blueprint master** (`docs/blueprint/README.MD` §0.3, §
 
 ## 5. Domínio, dados e estados
 
-**Fase 2** · Skill `/blueprint-domain` · Gera `04`, `05`, `09` — juntos, porque `05` e `09` são projeções diretas de `04`.
+**Fase 2** · Skill `/blueprint:blueprint-domain` · Gera `04`, `05`, `09` — juntos, porque `05` e `09` são projeções diretas de `04`.
 
 As três perguntas priorizadas: **regras de negócio e invariantes** (o mais difícil de inferir), **tecnologia de banco e volumes esperados** (determinam indexação e particionamento), **transições de estado proibidas** (o que o PRD quase nunca declara).
 
@@ -583,7 +583,7 @@ Para cada entidade com ciclo de vida (pedido, pagamento, **assinatura**, job, ta
 
 ## 6. Arquitetura do sistema e ADRs
 
-**Fase 3** · Skill `/blueprint-architecture` · Gera `06`, `10` + um arquivo por ADR em `docs/adr/`.
+**Fase 3** · Skill `/blueprint:blueprint-architecture` · Gera `06`, `10` + um arquivo por ADR em `docs/adr/`.
 
 Os dois documentos saem juntos de propósito: **ADR escrito longe da arquitetura vira genérico**.
 
@@ -642,7 +642,7 @@ ADR-{ID}: {Título}     Data · Status (Proposta|Aceita|Deprecada|Substituída p
 
 ## 7. Fluxos críticos e casos de uso
 
-**Fase 4** · Skill `/blueprint-flows` · Gera `07`, `08` — juntos porque usam a mesma matéria-prima; separados, divergem.
+**Fase 4** · Skill `/blueprint:blueprint-flows` · Gera `07`, `08` — juntos porque usam a mesma matéria-prima; separados, divergem.
 
 As três perguntas priorizadas: **cenários de erro** (o que o PRD quase sempre omite), **SLAs por fluxo**, **fluxos alternativos**.
 
@@ -687,7 +687,7 @@ Os casos de uso são a ponte para o frontend: `08-use_cases` → `{client}/07-ro
 
 > **Numeração:** esta parte é `7.5` porque a fase é **opcional** e roda **entre** os fluxos (parte 7) e o backend (parte 8). Quando existe, ela inverte a relação entre frontend e backend.
 
-**Skills:** `/prototype` · `/prototype-build` · `/prototype-api` · **Gera:** `docs/prototype/` (6 docs) + um app mockado que roda.
+**Skills:** `/blueprint:prototype` · `/blueprint:prototype-build` · `/blueprint:prototype-api` · **Gera:** `docs/prototype/` (6 docs) + um app mockado que roda.
 
 ### 7.5.1 Por que a interface vem antes do contrato
 
@@ -702,7 +702,7 @@ Os casos de uso são a ponte para o frontend: `08-use_cases` → `{client}/07-ro
 | Lacuna do domínio aparece durante a implementação | Lacuna do domínio aparece ao montar o formulário |
 | Regra de negócio descoberta no incidente | Regra descoberta ao decidir se um botão fica habilitado |
 
-**O custo é real:** a UI é construída duas vezes — mockada e integrada. **O retorno:** o retrabalho acontece em código descartável, não em schema com dados. Migração de produção não se desfaz com `/increment`.
+**O custo é real:** a UI é construída duas vezes — mockada e integrada. **O retorno:** o retrabalho acontece em código descartável, não em schema com dados. Migração de produção não se desfaz com `/blueprint:increment`.
 
 ### 7.5.2 As três skills
 
@@ -710,11 +710,11 @@ A separação não é burocrática: cada uma tem uma fonte de verdade diferente,
 
 | Skill | Produz | **Lê** |
 | --- | --- | --- |
-| `/prototype` | `00-vision`, `01-screens`, `02-mock-data` — o **plano** | Blueprint técnico + design system |
-| `/prototype-build` | **Código** — o app mockado, tela por tela | O plano acima |
-| `/prototype-api` | `03-api-requirements`, `04-interaction-states`, `05-findings` | **O código**, nunca o plano |
+| `/blueprint:prototype` | `00-vision`, `01-screens`, `02-mock-data` — o **plano** | Blueprint técnico + design system |
+| `/blueprint:prototype-build` | **Código** — o app mockado, tela por tela | O plano acima |
+| `/blueprint:prototype-api` | `03-api-requirements`, `04-interaction-states`, `05-findings` | **O código**, nunca o plano |
 
-> **A regra que define `/prototype-api`:** se `03-api-requirements.md` sair idêntico a `01-screens.md`, a fase falhou — copiou a intenção em vez de extrair o fato. `01-screens` diz o que se pretendia construir; o código diz o que foi construído. Onde divergem, **o código vence e a divergência vira achado**.
+> **A regra que define `/blueprint:prototype-api`:** se `03-api-requirements.md` sair idêntico a `01-screens.md`, a fase falhou — copiou a intenção em vez de extrair o fato. `01-screens` diz o que se pretendia construir; o código diz o que foi construído. Onde divergem, **o código vence e a divergência vira achado**.
 
 ### 7.5.3 Os seis documentos
 
@@ -725,11 +725,11 @@ A separação não é burocrática: cada uma tem uma fonte de verdade diferente,
 | `02-mock-data` | Personas por perfil · fixtures com casos de borda · cenários acionáveis | `backend/04-data-layer` (seeds), `14-tests` (fixtures) |
 | **`03-api-requirements`** | **O contrato descoberto** — endpoints com consumidor, campos com ponto de renderização, latência tolerada, idempotência, operações atômicas, agregações | **`backend/05-api-contracts`** |
 | `04-interaction-states` | Matriz de estados por tela · catálogo de erros exercidos · mutações otimistas · transições disparáveis | `backend/09-errors`, `shared/error-ux-mapping` |
-| `05-findings` | Lacunas do domínio · regras descobertas · contradições · suposições · **encaminhamento** | `/increment`, `/patch` |
+| `05-findings` | Lacunas do domínio · regras descobertas · contradições · suposições · **encaminhamento** | `/blueprint:increment`, `/blueprint:patch` |
 
 ### 7.5.4 Como o contrato é extraído
 
-`/prototype-api` coleta **três inventários independentes** do código e os cruza. As lacunas entre eles são o achado mais valioso da fase:
+`/blueprint:prototype-api` coleta **três inventários independentes** do código e os cruza. As lacunas entre eles são o achado mais valioso da fase:
 
 | Inventário | Onde |
 | --- | --- |
@@ -752,16 +752,16 @@ campo exibido, nunca devolvido   → lacuna de domínio        → RISCO ALTO
 ### 7.5.5 O portão antes do backend
 
 ```
-Nenhum achado de risco ALTO pode permanecer aberto quando /backend rodar.
+Nenhum achado de risco ALTO pode permanecer aberto quando /blueprint:backend rodar.
 ```
 
-`/backend` lê `05-findings.md` **antes** de gerar qualquer documento e **para** se houver achado alto em aberto. O motivo é assimetria de custo: um contrato construído sobre lacuna conhecida propaga a lacuna para o schema, e schema com dados não se corrige com `/increment`.
+`/blueprint:backend` lê `05-findings.md` **antes** de gerar qualquer documento e **para** se houver achado alto em aberto. O motivo é assimetria de custo: um contrato construído sobre lacuna conhecida propaga a lacuna para o schema, e schema com dados não se corrige com `/blueprint:increment`.
 
-Resolver significa: `/increment` (local) ou `/patch` (global) no **blueprint técnico**, depois `/prototype-api` de novo para regenerar o contrato. O protótipo é evidência; o blueprint continua sendo a fonte de verdade.
+Resolver significa: `/blueprint:increment` (local) ou `/blueprint:patch` (global) no **blueprint técnico**, depois `/blueprint:prototype-api` de novo para regenerar o contrato. O protótipo é evidência; o blueprint continua sendo a fonte de verdade.
 
-> **O portão tem uma exceção declarada, e ela é interessante.** No `/pipeline --prototype` não existe quem resolva um achado entre a fase 10 e a 11 — e achado de risco alto é o *produto esperado* da fase, não uma anomalia: um protótipo que não achou nada provavelmente não olhou direito. Se o portão valesse no modo autônomo, o caso **normal** seria o pipeline entregar o protótipo e nenhum documento de backend.
+> **O portão tem uma exceção declarada, e ela é interessante.** No `/blueprint:pipeline --prototype` não existe quem resolva um achado entre a fase 10 e a 11 — e achado de risco alto é o *produto esperado* da fase, não uma anomalia: um protótipo que não achou nada provavelmente não olhou direito. Se o portão valesse no modo autônomo, o caso **normal** seria o pipeline entregar o protótipo e nenhum documento de backend.
 >
-> A saída não é esconder: o pipeline desarma o portão, manda marcar cada ponto afetado com `<!-- construido sobre lacuna conhecida -->` e reporta no final quantos documentos nasceram assim, com instrução explícita de resolver **antes** de `/build`. É a mesma disciplina de `ASSUMPTIONS.md` aplicada a evidência em vez de inferência — e é o único lugar do framework onde a regra "fase que falha não interrompe a cadeia" precisou ser tensionada, porque aqui o documento incompleto **corrompe** o próximo.
+> A saída não é esconder: o pipeline desarma o portão, manda marcar cada ponto afetado com `<!-- construido sobre lacuna conhecida -->` e reporta no final quantos documentos nasceram assim, com instrução explícita de resolver **antes** de `/blueprint:build`. É a mesma disciplina de `ASSUMPTIONS.md` aplicada a evidência em vez de inferência — e é o único lugar do framework onde a regra "fase que falha não interrompe a cadeia" precisou ser tensionada, porque aqui o documento incompleto **corrompe** o próximo.
 
 ### 7.5.6 O que sobrevive à fase
 
@@ -770,7 +770,7 @@ O protótipo é majoritariamente descartável — mas não inteiramente:
 | Artefato | Destino | Por quê |
 | --- | --- | --- |
 | **Design system implementado** (`components/ui/`) | **Mantido** | Construído a partir de `03-design-system.md`; é código de produção |
-| **Tipos das entidades** (`src/types/`) | **Promovidos a `src/contracts/`** | Já nomeados pelo glossário; `/codegen-setup` os confere contra `04-domain-model` |
+| **Tipos das entidades** (`src/types/`) | **Promovidos a `src/contracts/`** | Já nomeados pelo glossário; `/blueprint:codegen-setup` os confere contra `04-domain-model` |
 | **Fixtures** | **Viram seeds** (dev/staging) e **fixtures de teste** | Já cobrem os estados e os casos de borda |
 | **Telas** | Esqueleto de layout | A integração troca a origem dos dados, não o layout |
 | **Handlers de mock** | **Descartados** | O backend real os substitui |
@@ -798,7 +798,7 @@ O protótipo é majoritariamente descartável — mas não inteiramente:
 
 ## 8. Backend — especificação de implementação
 
-**Skill `/backend`** · Lê os 17 docs do blueprint · Gera 15 documentos em `docs/backend/`.
+**Skill `/blueprint:backend`** · Lê os 17 docs do blueprint · Gera 15 documentos em `docs/backend/`.
 
 > O blueprint é a fonte primária. O backend especifica **detalhes de implementação** — framework, ORM, estrutura de classes, métodos — sem redefinir o produto.
 
@@ -1135,7 +1135,7 @@ Access token: 15 min. Refresh token: 7 dias (`POST /auth/refresh`).
 
 ## 9. Frontend — multi-client
 
-**Skills:** `/frontend` (orquestrador + shared 06, 15) · `/frontend-design-system` (shared 03) · `/frontend-app {client}` (8 docs) · `/frontend-quality {client}` (5 docs).
+**Skills:** `/blueprint:frontend` (orquestrador + shared 06, 15) · `/blueprint:frontend-design-system` (shared 03) · `/blueprint:frontend-app {client}` (8 docs) · `/blueprint:frontend-quality {client}` (5 docs).
 
 ```
 docs/frontend/
@@ -1235,7 +1235,7 @@ Este documento existe para tornar visível o acoplamento que normalmente é invi
 
 #### Adaptação por plataforma — o que muda em cada um dos 8 documentos
 
-A mesma estrutura de documento produz conteúdo substancialmente diferente por cliente. Esta é a matriz que `/frontend-app` aplica:
+A mesma estrutura de documento produz conteúdo substancialmente diferente por cliente. Esta é a matriz que `/blueprint:frontend-app` aplica:
 
 | Doc | web | mobile | desktop |
 | --- | --- | --- | --- |
@@ -1338,7 +1338,7 @@ O nome do documento tem duas partes e a segunda costuma ser esquecida. Além do 
 | **Ferramentas de qualidade** | ESLint · Prettier · TypeScript strict mode · **Husky** (git hooks) · **lint-staged** (lint só nos arquivos staged) |
 | **Documentação viva** | Storybook para componentes · README por feature · ADRs para decisões técnicas · blueprint atualizado a cada milestone |
 
-> *"Documentação que não é mantida atualizada é pior que nenhuma documentação."* — a frase está literalmente no template, e é o motivo de `/increment` e `/patch` existirem.
+> *"Documentação que não é mantida atualizada é pior que nenhuma documentação."* — a frase está literalmente no template, e é o motivo de `/blueprint:increment` e `/blueprint:patch` existirem.
 
 **Versionamento do app (mobile):** além do SemVer, `version` + `buildNumber`/`versionCode` incrementais, e a política de quando um update vai por **OTA** (JS apenas) vs **submissão à store** (código nativo).
 
@@ -1456,13 +1456,13 @@ Para cada evento: origem (service) / **canal** / ação no frontend / store impa
 
 ### 10.4 `MAPPING.md` — Índice mestre
 
-O grafo completo PRD → blueprint → backend/frontend/shared, expandido na §3 deste documento. Use-o para rastrear qualquer decisão até sua origem — e é o arquivo que `/codegen-feature` lê para descobrir **quais 2-3 documentos** carregar para uma tarefa específica.
+O grafo completo PRD → blueprint → backend/frontend/shared, expandido na §3 deste documento. Use-o para rastrear qualquer decisão até sua origem — e é o arquivo que `/blueprint:codegen-feature` lê para descobrir **quais 2-3 documentos** carregar para uma tarefa específica.
 
 ---
 
 ## 11. Atributos de qualidade
 
-**Fase 5** · Skill `/blueprint-quality` · Gera `12`, `13`, `14`, `15` — juntos porque derivam da mesma base (arquitetura `06` + fluxos `07`).
+**Fase 5** · Skill `/blueprint:blueprint-quality` · Gera `12`, `13`, `14`, `15` — juntos porque derivam da mesma base (arquitetura `06` + fluxos `07`).
 
 ### 11.1 `12-testing_strategy.md`
 
@@ -1595,7 +1595,7 @@ Cada severidade com SLA de resposta, e **política de escalação em 3 etapas** 
 
 ## 12. Construção, evolução e operação
 
-**Fase 6** · Skill `/blueprint-plan` · Gera `11`, `16` — fechamento do blueprint.
+**Fase 6** · Skill `/blueprint:blueprint-plan` · Gera `11`, `16` — fechamento do blueprint.
 
 ### 12.1 `11-build_plan.md` — Plano de construção
 
@@ -1625,7 +1625,7 @@ Mais: **riscos técnicos** (risco / impacto / probabilidade / mitigação) e **d
 
 ### 12.2 Deploy e ambientes
 
-> **Fonte:** este bloco **não** é produzido por `/blueprint-plan`. Ele vive em `blueprint/06-system-architecture.md` (§Infraestrutura e Deploy, gerado na **fase 3**), no blueprint master `README.MD` §22, e é detalhado por cliente em `frontend/{client}/13-cicd-conventions.md` e por ambiente em `backend/01-architecture.md` §Estratégia de Deploy. Está aqui por proximidade temática com o plano de construção, não por autoria.
+> **Fonte:** este bloco **não** é produzido por `/blueprint:blueprint-plan`. Ele vive em `blueprint/06-system-architecture.md` (§Infraestrutura e Deploy, gerado na **fase 3**), no blueprint master `README.MD` §22, e é detalhado por cliente em `frontend/{client}/13-cicd-conventions.md` e por ambiente em `backend/01-architecture.md` §Estratégia de Deploy. Está aqui por proximidade temática com o plano de construção, não por autoria.
 
 | Bloco | Decisões |
 | --- | --- |
@@ -1667,21 +1667,21 @@ ENT-XXX   Entrega          blueprint/11-build_plan.md · unidade de VALOR e de d
    │                           tipo (backend/frontend/infra/banco/teste/doc),
    │                           checklist de implementação, critérios técnicos
    │
-   └── TASK-{GRP}-{NNN}      docs/specs/TASKS.md · gerado por /specs
+   └── TASK-{GRP}-{NNN}      docs/specs/TASKS.md · gerado por /blueprint:specs
                               derivado de docs/backend/, com camada, entidade, origem
                               (arquivo), dependências entre tasks, RN-XX, arquivos a
                               criar/editar, testes e componente de frontend dependente
 ```
 
-| Eixo | `EP → ST → TSK` (templates) | `TASK-{GRP}-{NNN}` (`/specs`) |
+| Eixo | `EP → ST → TSK` (templates) | `TASK-{GRP}-{NNN}` (`/blueprint:specs`) |
 | --- | --- | --- |
 | Origem | Escrito por pessoas, a partir de `11-build_plan` e do PRD | **Derivado mecanicamente** de `docs/backend/` |
 | Linguagem | Produto — valor, persona, benefício | Implementação — classes, métodos, campos, tipos |
 | Agrupamento | Por valor de negócio | Por camada técnica — 14 grupos (SETUP, DOM, DATA, SVC, API, CTRL, AUTH, ERR, VAL, MW, EVT, INT, TEST, FE); ver o aviso em [§14.8](#148-specs--backlog-integral) |
-| Consumidor | Time, board ágil, stakeholders | `/build` e `/codegen-feature` |
+| Consumidor | Time, board ágil, stakeholders | `/blueprint:build` e `/blueprint:codegen-feature` |
 | Estimativa | P/M/G/GG (story), S/M/L/XL (entrega) | — (dependências, não estimativa) |
 
-**Como usar os dois sem duplicar:** a entrega (`ENT-XXX`) é a fonte comum. Para o time, ela vira epics e stories com linguagem de produto. Para o agente, `/specs` a decompõe em tasks técnicas rastreáveis até o arquivo de origem. O `/build` quebra cada entrega em **features verticais** (banco + API + frontend + testes) e usa `TASKS.md`, quando existe, para detalhar o escopo de cada uma.
+**Como usar os dois sem duplicar:** a entrega (`ENT-XXX`) é a fonte comum. Para o time, ela vira epics e stories com linguagem de produto. Para o agente, `/blueprint:specs` a decompõe em tasks técnicas rastreáveis até o arquivo de origem. O `/blueprint:build` quebra cada entrega em **features verticais** (banco + API + frontend + testes) e usa `TASKS.md`, quando existe, para detalhar o escopo de cada uma.
 
 O blueprint master (`README.MD` §17.3-17.5) traz as três tabelas — Epics, Stories e Tasks técnicas — no mesmo documento, para quem prefere um arquivo único a templates separados.
 
@@ -1784,7 +1784,7 @@ De `blueprint/13-security` e do README mestre §7.3 e §19.6:
 
 ### 13.6 As lacunas honestas do repositório
 
-O framework cobre a engenharia de um SaaS com profundidade, mas há temas de SaaS que ele **não** documenta explicitamente. São decisões que você precisa acrescentar (via `/increment`) e que este mapa marca para que não passem despercebidas:
+O framework cobre a engenharia de um SaaS com profundidade, mas há temas de SaaS que ele **não** documenta explicitamente. São decisões que você precisa acrescentar (via `/blueprint:increment`) e que este mapa marca para que não passem despercebidas:
 
 | Tema ausente | Onde deveria entrar |
 | --- | --- |
@@ -1822,47 +1822,67 @@ O framework cobre a engenharia de um SaaS com profundidade, mas há temas de Saa
 
 | Grupo | Skill | Produz |
 | --- | --- | --- |
-| **Automação** | `/pipeline` | Todos os documentos + scaffold, em fases isoladas |
-| | `/build` | Features implementadas em loop com portões |
-| **Blueprint técnico** | `/blueprint` | PRD salvo, análise de cobertura, roadmap de 6 fases |
-| | `/blueprint-foundation` | `00`, `01`, `02`, `03` |
-| | `/blueprint-domain` | `04`, `05`, `09` + diagramas de domínio |
-| | `/blueprint-architecture` | `06`, `10` + ADRs individuais |
-| | `/blueprint-flows` | `07`, `08` + diagramas de sequência |
-| | `/blueprint-quality` | `12`, `13`, `14`, `15` + deployment scaled |
-| | `/blueprint-plan` | `11`, `16` |
-| **Protótipo** *(opcional)* | `/prototype {client}` | `prototype/00`, `01`, `02` — plano de telas e dados |
-| | `/prototype-build {client} {alvo}` | **Código** — o app mockado, com portão de cobertura |
-| | `/prototype-api {client} {alvo}` | `prototype/03`, `04`, `05` — contrato extraído do código |
-| **Backend** | `/backend` | 15 documentos |
-| **Frontend** | `/frontend` | `shared/06`, `shared/15` + orquestração |
-| | `/frontend-design-system` | `shared/03` |
-| | `/frontend-app {client}` | 8 documentos do cliente |
-| | `/frontend-quality {client}` | 5 documentos do cliente |
-| **Evolução** | `/increment` | Alteração local em um blueprint |
-| | `/patch` | Propagação global com adaptação de case |
-| | `/specs` | `docs/specs/TASKS.md` |
-| **Codegen** | `/codegen-setup` | `CLAUDE.md`, `src/contracts/`, schema, scaffold |
-| | `/codegen` | Dashboard de entregas e próxima recomendada |
-| | `/codegen-feature` | Feature vertical com TDD |
-| | `/codegen-verify` | Score de aderência código × blueprint |
+| **Automação** | `/blueprint:pipeline` | Todos os documentos + scaffold, em fases isoladas |
+| | `/blueprint:build` | Features implementadas em loop com portões |
+| **Blueprint técnico** | `/blueprint:blueprint` | PRD salvo, análise de cobertura, roadmap de 6 fases |
+| | `/blueprint:blueprint-foundation` | `00`, `01`, `02`, `03` |
+| | `/blueprint:blueprint-domain` | `04`, `05`, `09` + diagramas de domínio |
+| | `/blueprint:blueprint-architecture` | `06`, `10` + ADRs individuais |
+| | `/blueprint:blueprint-flows` | `07`, `08` + diagramas de sequência |
+| | `/blueprint:blueprint-quality` | `12`, `13`, `14`, `15` + deployment scaled |
+| | `/blueprint:blueprint-plan` | `11`, `16` |
+| **Protótipo** *(opcional)* | `/blueprint:prototype {client}` | `prototype/00`, `01`, `02` — plano de telas e dados |
+| | `/blueprint:prototype-build {client} {alvo}` | **Código** — o app mockado, com portão de cobertura |
+| | `/blueprint:prototype-api {client} {alvo}` | `prototype/03`, `04`, `05` — contrato extraído do código |
+| **Backend** | `/blueprint:backend` | 15 documentos |
+| **Frontend** | `/blueprint:frontend` | `shared/06`, `shared/15` + orquestração |
+| | `/blueprint:frontend-design-system` | `shared/03` |
+| | `/blueprint:frontend-app {client}` | 8 documentos do cliente |
+| | `/blueprint:frontend-quality {client}` | 5 documentos do cliente |
+| **Evolução** | `/blueprint:increment` | Alteração local em um blueprint |
+| | `/blueprint:patch` | Propagação global com adaptação de case |
+| | `/blueprint:specs` | `docs/specs/TASKS.md` |
+| **Codegen** | `/blueprint:codegen-setup` | `CLAUDE.md`, `src/contracts/`, schema, scaffold |
+| | `/blueprint:codegen` | Dashboard de entregas e próxima recomendada |
+| | `/blueprint:codegen-feature` | Feature vertical com TDD |
+| | `/blueprint:codegen-verify` | Score de aderência código × blueprint |
+
+### 14.1.5 Os hooks — as regras que param de ser sugestão
+
+O plugin embarca cinco hooks. Eles existem porque três regras do framework são repetidas em **todas** as skills e são exatamente as que um agente quebra sob pressão:
+
+| Hook | Evento | Regra que impõe |
+| --- | --- | --- |
+| `docs-integrity` | `PreToolUse(Write\|Edit)` | *"documento com conteúdo real → Edit, nunca Write"* · e não remover marcador `APPEND` |
+| `tests-integrity` | `PreToolUse(Write\|Edit)` | *"proibido apagar, pular ou afrouxar teste para ficar verde"* (`/blueprint:build`) · e não rebaixar limiar de cobertura |
+| `no-secrets` | `PreToolUse(Bash)` | *"secrets nunca commitados"* (checklist de segurança) |
+| `docs-complete` | `PostToolUse(Write)` | *"preencha TODOS os `{{placeholders}}`"* |
+| `status` | `SessionStart` | — reporta onde o projeto está na cadeia, o que está pendente e qual o próximo comando |
+
+**Por que hook e não apenas documentação:** uma regra escrita em prosa é uma sugestão que depende de o agente lembrar dela no momento certo. Uma regra verificada na chamada da ferramenta é uma regra. A diferença aparece justamente quando o contexto está cheio e a pressão é entregar — que é quando a documentação preenchida é sobrescrita e o teste vermelho vira `it.skip`.
+
+**A regra de projeto dos hooks:** *hook com falso-positivo é hook desligado* — e desligar um costuma significar desligar todos. Por isso cada um bloqueia só o inequívoco e toda ambiguidade resolve para **deixar passar**: `tests-integrity` compara antes e depois e só reclama do skip **acrescentado**; `no-secrets` ignora `process.env`, `{{placeholder}}` e `your-key-here`; payload vazio, JSON malformado e ausência de `jq`/`python3` saem com 0.
+
+**Por que dois bloqueiam em vez de avisar:** custo assimétrico. Documento sobrescrito por `Write` não volta. Segredo que entra no histórico fica no histórico, nos forks e em cada clone já feito — commit posterior não remove, e reescrever histórico publicado é caro e nem sempre possível. Nos dois casos o único momento barato é antes.
+
+`bash hooks/test/run.sh` — 35 casos, cobrindo o que cada hook deve bloquear, o que deve deixar passar e a degradação. Hook malformado falha **em silêncio**: não bloqueia, não avisa, e o plugin parece instalado sem fazer nada.
 
 ### 14.2 O contrato comum a todas as skills
 
 | Convenção | Regra |
 | --- | --- |
-| **Write vs Edit** | Documento só com `{{placeholders}}` → **Write**. Documento com conteúdo real → **Edit**, inserindo antes de `<!-- APPEND:... -->`. Alteração pontual → `/increment` |
+| **Write vs Edit** | Documento só com `{{placeholders}}` → **Write**. Documento com conteúdo real → **Edit**, inserindo antes de `<!-- APPEND:... -->`. Alteração pontual → `/blueprint:increment` |
 | **Rastreabilidade** | Conteúdo derivado é marcado: `<!-- do PRD -->`, `<!-- inferido do PRD -->`, `<!-- do blueprint: XX-arquivo.md -->` |
 | **Versões de tecnologia** | Consultadas via Context7 (`resolve-library-id` → `query-docs`), nunca assumidas do treino do modelo |
 | **Números são sensíveis a evidência** | Nunca inventar SLAs, metas de performance, métricas de negócio, nomes próprios ou constraints numéricos |
-| **Perguntas são limitadas** | Nas skills de fase (as 6 do blueprint técnico, `/frontend`, `/frontend-app`, `/frontend-quality`, `/prototype`, `/prototype-api`): máximo **3 por skill inteira** (não por documento), agrupadas e feitas **antes** de gerar. **Exceções declaradas:** `/backend` faz até **14 perguntas** de implementação em grupos temáticos, aguardando resposta entre grupos; `/frontend-design-system` não tem teto — as escolhas de tipografia e paleta *são* as perguntas da skill |
+| **Perguntas são limitadas** | Nas skills de fase (as 6 do blueprint técnico, `/blueprint:frontend`, `/blueprint:frontend-app`, `/blueprint:frontend-quality`, `/blueprint:prototype`, `/blueprint:prototype-api`): máximo **3 por skill inteira** (não por documento), agrupadas e feitas **antes** de gerar. **Exceções declaradas:** `/blueprint:backend` faz até **14 perguntas** de implementação em grupos temáticos, aguardando resposta entre grupos; `/blueprint:frontend-design-system` não tem teto — as escolhas de tipografia e paleta *são* as perguntas da skill |
 | **Idioma** | Identificadores técnicos em inglês; descrições em português |
 
 ### 14.3 Marcadores de append (pontos de inserção estáveis)
 
-`/increment` insere conteúdo **antes** destes marcadores, em vez de reescrever o documento:
+`/blueprint:increment` insere conteúdo **antes** destes marcadores, em vez de reescrever o documento:
 
-> ⚠️ **Divergência do repositório, verificada arquivo por arquivo.** A skill `/increment` afirma que os documentos `02`, `05`, `06`, `07`, `08`, `14`, `15` e `16` do blueprint técnico **não têm** marcador `APPEND` e devem receber inserção "na seção apropriada". **Isso é falso: todos os oito têm marcador.** E mesmo entre os documentos que a skill reconhece, a lista dela é incompleta — omite `relationships` (04), `external-dependencies` (11) e `security-checklist` (13). A lista abaixo é o inventário real, extraído dos arquivos. Seguir a skill neste ponto faz um agente inserir conteúdo no lugar errado — este é o erro mais caro que o documento poderia propagar, e por isso ele é corrigido aqui em vez de repetido.
+> ⚠️ **Divergência do repositório, verificada arquivo por arquivo.** A skill `/blueprint:increment` afirma que os documentos `02`, `05`, `06`, `07`, `08`, `14`, `15` e `16` do blueprint técnico **não têm** marcador `APPEND` e devem receber inserção "na seção apropriada". **Isso é falso: todos os oito têm marcador.** E mesmo entre os documentos que a skill reconhece, a lista dela é incompleta — omite `relationships` (04), `external-dependencies` (11) e `security-checklist` (13). A lista abaixo é o inventário real, extraído dos arquivos. Seguir a skill neste ponto faz um agente inserir conteúdo no lugar errado — este é o erro mais caro que o documento poderia propagar, e por isso ele é corrigido aqui em vez de repetido.
 
 **Blueprint técnico** (inventário completo, com linha do arquivo):
 
@@ -1904,17 +1924,17 @@ O framework cobre a engenharia de um SaaS com profundidade, mas há temas de Saa
 | `event-mapping.md` | `eventos`, `impacto` *(linhas 18, 45)* |
 | `MAPPING.md` | **nenhum** — é índice, não acumula entradas |
 
-> ⚠️ **Segunda lacuna do framework:** `docs/shared/` tem marcadores de append, mas **não é alvo de `/increment`**. Atenção à ambiguidade: a skill *oferece* a opção `shared`, mas apenas como **cliente de frontend** (`docs/frontend/shared/` — design system, data layer, api-dependencies). `docs/shared/` (glossário, error-ux-mapping, event-mapping, MAPPING) não é alvo em nenhum nível. Adicionar um termo ao glossário exige edição manual ou `/patch`.
+> ⚠️ **Segunda lacuna do framework:** `docs/shared/` tem marcadores de append, mas **não é alvo de `/blueprint:increment`**. Atenção à ambiguidade: a skill *oferece* a opção `shared`, mas apenas como **cliente de frontend** (`docs/frontend/shared/` — design system, data layer, api-dependencies). `docs/shared/` (glossário, error-ux-mapping, event-mapping, MAPPING) não é alvo em nenhum nível. Adicionar um termo ao glossário exige edição manual ou `/blueprint:patch`.
 >
-> ⚠️ **Terceira lacuna, e a mais consequente: nenhuma skill gera `docs/shared/`.** Verificado nas 24 skills: as 12 fases do `/pipeline` vão de `blueprint-foundation` a `codegen-setup` e **não incluem** os quatro documentos cross-layer; `/specs`, `/codegen-*` e `/patch` apenas os **leem**. Na prática, `glossary.md`, `error-ux-mapping.md` e `event-mapping.md` permanecem com `{{placeholders}}` depois de um `/pipeline` completo — e são justamente os documentos que impedem os três blueprints de divergirem. Consequências diretas:
+> ⚠️ **Terceira lacuna, e a mais consequente: nenhuma skill gera `docs/shared/`.** Verificado nas 24 skills: as 12 fases do `/blueprint:pipeline` vão de `blueprint-foundation` a `codegen-setup` e **não incluem** os quatro documentos cross-layer; `/blueprint:specs`, `/codegen-*` e `/blueprint:patch` apenas os **leem**. Na prática, `glossary.md`, `error-ux-mapping.md` e `event-mapping.md` permanecem com `{{placeholders}}` depois de um `/blueprint:pipeline` completo — e são justamente os documentos que impedem os três blueprints de divergirem. Consequências diretas:
 >
-> - O `/pipeline` entrega **48 documentos preenchidos**, não 52. Os 4 de `docs/shared/` continuam template.
+> - O `/blueprint:pipeline` entrega **48 documentos preenchidos**, não 52. Os 4 de `docs/shared/` continuam template.
 > - A regra *"fonte única de termos"* de `glossary.md` não tem quem a execute: cada blueprint acaba com seu próprio glossário local, exatamente o que o arquivo existe para evitar.
-> - `/specs` valida cobertura **contra** `shared/glossary.md` (linguagem ubíqua) e `/codegen-feature` lê `error-ux-mapping.md` — ambos leem um arquivo que ninguém preencheu.
+> - `/blueprint:specs` valida cobertura **contra** `shared/glossary.md` (linguagem ubíqua) e `/blueprint:codegen-feature` lê `error-ux-mapping.md` — ambos leem um arquivo que ninguém preencheu.
 >
-> **O que fazer:** preencher os quatro manualmente após o `/pipeline`, ou com `/increment` mirando `blueprint` e propagando à mão. `04-domain-model.md` já instrui: *"Fonte única de termos: `docs/shared/glossary.md`. Ao preencher esta seção, atualize também o glossário compartilhado."* — a instrução existe; o automatismo não.
+> **O que fazer:** preencher os quatro manualmente após o `/blueprint:pipeline`, ou com `/blueprint:increment` mirando `blueprint` e propagando à mão. `04-domain-model.md` já instrui: *"Fonte única de termos: `docs/shared/glossary.md`. Ao preencher esta seção, atualize também o glossário compartilhado."* — a instrução existe; o automatismo não.
 
-### 14.4 `/pipeline` — modo autônomo
+### 14.4 `/blueprint:pipeline` — modo autônomo
 
 **Pré-requisitos validados antes do run** (depois, nenhuma interrupção): PRD existe · projeto-alvo definido (ou `pular`).
 
@@ -1929,7 +1949,7 @@ O framework cobre a engenharia de um SaaS com profundidade, mas há temas de Saa
 
 **A flag `--prototype`** insere três fases e move o backend para depois delas: **15 fases** em vez de 12, **54 documentos preenchidos** em vez de 48, mais o app mockado. Exige projeto-alvo — o protótipo *é* código, não existe versão só-documentação dele. As fases 9 (`prototype-build`) e 10 (`prototype-api`) seguem o mesmo regime da `codegen-setup`: escrevem fora do repositório, têm **portão objetivo** (telas, fluxos percorríveis, estados, typecheck, lint) e reportam falha em vez de declarar sucesso. Os achados de risco alto de `05-findings.md` entram no relatório final **acima** das suposições — são evidência de código, não inferência.
 
-**Retomada:** verifica quais documentos já têm conteúdo real (sem `{{placeholders}}`) e pula as fases concluídas. Rodar `/pipeline` de novo continua de onde parou.
+**Retomada:** verifica quais documentos já têm conteúdo real (sem `{{placeholders}}`) e pula as fases concluídas. Rodar `/blueprint:pipeline` de novo continua de onde parou.
 
 **Isolamento de contexto:** cada fase roda num subagente com contexto limpo, lê só o que precisa, escreve seus documentos e devolve um **resumo compacto**. O orquestrador acumula os resumos — **nunca relê os documentos gerados**. É isso que permite produzir 48 documentos sem estourar a janela de contexto (os 4 de `docs/shared/` ficam de fora das 12 fases — ver §14.3).
 
@@ -1952,7 +1972,7 @@ Tudo é consolidado em `docs/ASSUMPTIONS.md` — **escrito pelo orquestrador**, 
 
 **Tolerância a falha:** uma fase que falha **não para o pipeline** (documento incompleto não corrompe os seguintes), é registrada e reportada no final. A exceção é a fase 12 (`codegen-setup`), que tem **portão objetivo**: typecheck + lint + validação de schema. Se falhar após correção, reporta falha em vez de declarar sucesso.
 
-### 14.5 `/build` — loop de implementação com portões
+### 14.5 `/blueprint:build` — loop de implementação com portões
 
 **Por que este loop para e o pipeline não:** documentação ruim não contamina o documento seguinte; **uma abstração errada na feature 1 contamina as features 4, 8 e 15**. O resultado é um código internamente consistente, todo verde e arquiteturalmente errado. Por isso: **na dúvida, para.**
 
@@ -1965,7 +1985,7 @@ Tudo é consolidado em `docs/ASSUMPTIONS.md` — **escrito pelo orquestrador**, 
 | Portão | Frequência | Falha se |
 | --- | --- | --- |
 | **Suíte completa** | Toda feature | Qualquer teste vermelho · **contagem de testes menor que baseline + novos** · `red_ok: não` (código veio antes do teste) · `BLOCKED` preenchido |
-| **Aderência (`/codegen-verify`)** | A cada 3 features | Score < 90% |
+| **Aderência (`/blueprint:codegen-verify`)** | A cada 3 features | Score < 90% |
 
 A checagem de **contagem de testes** existe para pegar o modo de falha mais perigoso: teste apagado ou pulado para deixar a suíte verde.
 
@@ -1984,7 +2004,7 @@ Entrega: {ENT-XXX}
 Testes: {n} novos, suíte com {total} verdes
 ```
 
-### 14.6 `/codegen-feature` — ciclo TDD/XP
+### 14.6 `/blueprint:codegen-feature` — ciclo TDD/XP
 
 ```
 1. Carregar contexto  ← apenas 2-3 docs relevantes, via CLAUDE.md + MAPPING.md
@@ -2007,7 +2027,7 @@ Testes: {n} novos, suíte com {total} verdes
 | Dashboard | `07-flows` | `05-api-contracts`, `06-services` | `{client}/04-components` |
 | Integração | `06-architecture` | `13-integrations`, `12-events` | `{client}/08-flows` |
 
-### 14.7 `/codegen-verify` — as 8 verificações
+### 14.7 `/blueprint:codegen-verify` — as 8 verificações
 
 | # | Verificação | Documento × Código | Checklist |
 | --- | --- | --- | --- |
@@ -2020,17 +2040,17 @@ Testes: {n} novos, suíte com {total} verdes
 | V7 | Frontend (por cliente) | `{client}/04` + `shared/03` × componentes | Props? Estados? Design tokens? |
 | V8 | Cross-layer | `shared/event-mapping` + `error-ux-mapping` × handlers | Eventos consumidos? Erros com UX? Payloads consistentes? |
 
-**Resultado:** score de aderência (%). Ação por divergência: código errado → `/codegen-feature` · doc desatualizado → `/increment` · ambíguo → perguntar.
+**Resultado:** score de aderência (%). Ação por divergência: código errado → `/blueprint:codegen-feature` · doc desatualizado → `/blueprint:increment` · ambíguo → perguntar.
 
 > Este é o único gate **externo** do sistema. Teste escrito pelo mesmo agente que escreveu o código não é verificação independente.
 
-### 14.8 `/specs` — backlog integral
+### 14.8 `/blueprint:specs` — backlog integral
 
 Gera `docs/specs/TASKS.md` a partir de `docs/backend/` (fonte primária), validado contra frontend e blueprint.
 
 **Grupos de task — 14, não 12:** `SETUP` · `DOM` · `DATA` · `SVC` · `API` · **`CTRL`** · `AUTH` · `ERR` · **`VAL`** · `MW` · `EVT` · `INT` · `TEST` · `FE`.
 
-> ⚠️ **Inconsistência interna da skill.** O mapa de extração de `/specs` declara `07-controllers → CTRL` (1 task por controller) e `10-validation → VAL` (1 task por grupo de validação), mas a lista de IDs da estrutura de saída omite os dois. Seguir a lista de saída faz o backlog **perder duas camadas inteiras** — controllers e validação — que o mapa mandou gerar. Use os 14.
+> ⚠️ **Inconsistência interna da skill.** O mapa de extração de `/blueprint:specs` declara `07-controllers → CTRL` (1 task por controller) e `10-validation → VAL` (1 task por grupo de validação), mas a lista de IDs da estrutura de saída omite os dois. Seguir a lista de saída faz o backlog **perder duas camadas inteiras** — controllers e validação — que o mapa mandou gerar. Use os 14.
 
 **Regra de derivação:** cada entidade gera no mínimo `DOM` + `DATA` + `SVC` + `API`.
 
@@ -2045,7 +2065,7 @@ Toda ameaça documentada tem mitigação?
 Todo template de comunicação tem evento disparador?
 ```
 
-### 14.9 `/patch` — propagação global com adaptação de case
+### 14.9 `/blueprint:patch` — propagação global com adaptação de case
 
 Varredura em `docs/blueprint/`, `docs/backend/`, `docs/frontend/shared/`, `docs/frontend/*/`, `docs/shared/`, `docs/specs/`, `docs/adr/`.
 
@@ -2071,9 +2091,9 @@ Um blueprint preenchido de projeto real ultrapassa em muito o que cabe numa jane
 
 ### 15.1 `CLAUDE.md` router
 
-Mapeia **tipo de tarefa → 2-3 documentos relevantes**. Gerado por `/codegen-setup` a partir de `docs/templates/claudemd-template.md`.
+Mapeia **tipo de tarefa → 2-3 documentos relevantes**. Gerado por `/blueprint:codegen-setup` a partir de `docs/templates/claudemd-template.md`.
 
-> ⚠️ A tabela abaixo usa os **nomes reais** dos arquivos. O template de origem ainda traz nomes em português e em caminho flat (`04-componentes.md`, `05-estado.md`, `07-rotas.md`…) que **não existem** — ver §17.4 #4. Como `docs/templates/` está fora do escopo de `/patch` e `/increment`, essa correção é manual.
+> ⚠️ A tabela abaixo usa os **nomes reais** dos arquivos. O template de origem ainda traz nomes em português e em caminho flat (`04-componentes.md`, `05-estado.md`, `07-rotas.md`…) que **não existem** — ver §17.4 #4. Como `docs/templates/` está fora do escopo de `/blueprint:patch` e `/blueprint:increment`, essa correção é manual.
 
 | Tipo de tarefa | Documentos a ler |
 | --- | --- |
@@ -2114,7 +2134,7 @@ Regras: entidades PascalCase, campos camelCase (conforme glossário) · enums em
 
 Com os contratos corretos, cada sessão futura gera código tipado **sem reler o domain model inteiro**.
 
-> **Quando houve protótipo,** `src/contracts/` não nasce do zero: os tipos das entidades já existem em `src/types/`, nomeados pelo glossário e validados por uso real numa interface. `/codegen-setup` os **promove**, conferindo contra `04-domain-model.md` — e um conflito aí significa que `/prototype-api` deixou um achado passar.
+> **Quando houve protótipo,** `src/contracts/` não nasce do zero: os tipos das entidades já existem em `src/types/`, nomeados pelo glossário e validados por uso real numa interface. `/blueprint:codegen-setup` os **promove**, conferindo contra `04-domain-model.md` — e um conflito aí significa que `/blueprint:prototype-api` deixou um achado passar.
 
 ### 15.4 Orçamento de contexto
 
@@ -2211,19 +2231,19 @@ Sessões de implementação miram um contexto de documentação limitado (~70-10
 | Token em `localStorage` / `AsyncStorage` | Legível por XSS / gravado em texto puro | `{client}/11-security` (web e mobile) |
 | Misturar organização por camada e por módulo | Ninguém acha nada | `backend/02-project-structure` |
 | Template de mensagem sem evento disparador | Órfão, nunca é enviado | `backend/13-integrations` |
-| Apagar/pular teste para ficar verde | Destrói o único sinal de regressão | `/build` |
-| Dois números para a mesma métrica | Alerta e limite divergem | `/blueprint-quality` |
+| Apagar/pular teste para ficar verde | Destrói o único sinal de regressão | `/blueprint:build` |
+| Dois números para a mesma métrica | Alerta e limite divergem | `/blueprint:blueprint-quality` |
 | `NSAllowsArbitraryLoads: true` em produção | Desliga o TLS obrigatório | `mobile/11-security` |
 
 ### 17.2 As armadilhas de trabalhar com agentes de IA
 
 | Armadilha | Mitigação no framework |
 | --- | --- |
-| **Suíte verde = código correto** | `/codegen-verify` compara código × documento; verde só prova consistência interna |
+| **Suíte verde = código correto** | `/blueprint:codegen-verify` compara código × documento; verde só prova consistência interna |
 | **Suposição vira fato silenciosamente** | Marcadores `<!-- assumido -->` + `ASSUMPTIONS.md` com classificação de risco |
-| **Deriva arquitetural acumulada** | `/build` para na primeira suíte vermelha; verify a cada 3 features |
+| **Deriva arquitetural acumulada** | `/blueprint:build` para na primeira suíte vermelha; verify a cada 3 features |
 | **Contexto estourado / documentação irrelevante carregada** | Router `CLAUDE.md` + context excerpting + `src/contracts/` como cache |
-| **Mudança aplicada numa camada e esquecida na outra** | `/patch` com varredura global e `PATCH-REVIEW` |
+| **Mudança aplicada numa camada e esquecida na outra** | `/blueprint:patch` com varredura global e `PATCH-REVIEW` |
 | **Versão de biblioteca alucinada do treino** | Context7 obrigatório para toda tecnologia com versão |
 | **Documento parece preenchido mas é genérico** | Detecção de `{{placeholders}}` + regra de nunca inventar números |
 | **Agente pergunta sem parar / trava o pipeline** | Máximo 3 perguntas por skill; modo autônomo infere e marca |
@@ -2239,7 +2259,7 @@ Do próprio README e das seções "Limites conhecidos" das skills:
 - **O pipeline produz um rascunho completo, não verdade inquestionável.** Revisão de engenharia continua necessária.
 - **O scaffold herda as suposições.** Se a fase de dados supôs PostgreSQL, o schema nasce em PostgreSQL.
 - **Teste não é verificação de arquitetura.** Suíte verde é necessária, não suficiente.
-- **Deriva arquitetural é detectada tarde.** Rode `/build --max 3` nas primeiras features e revise antes de soltar o loop inteiro.
+- **Deriva arquitetural é detectada tarde.** Rode `/blueprint:build --max 3` nas primeiras features e revise antes de soltar o loop inteiro.
 - **Blueprint é pesado para trabalho pequeno.** Experimento descartável, arquitetura temporária, exploração pré-requisitos ou uma sessão curta de agente não justificam o custo.
 - **O pipeline autônomo é má escolha para sistema crítico com PRD raso.** Nesse caso, skills guiadas e resolução de incerteza antes da implementação.
 
@@ -2250,14 +2270,14 @@ Um framework documentation-driven também sofre de deriva documental. Estas **se
 | # | Divergência | Fontes em conflito | Qual seguir |
 | --- | --- | --- | --- |
 | 1 | **Marcadores `APPEND` do blueprint técnico** | `.claude/skills/increment/SKILL.md` diz que `02, 05, 06, 07, 08, 14, 15, 16` não têm marcador; **os oito arquivos têm** | Os arquivos. Inventário real em §14.3 |
-| 2 | **Nome do diagrama de arquitetura do cliente web** | `/frontend-app` gera `{client}-architecture.mmd`; `docs/diagrams/web/README.md` declara `frontend-architecture.mmd` | O README do diagrama, que é o que `frontend/web/01-architecture.md` referencia |
-| 3 | **Numeração de fluxos alternativos e exceções em casos de uso** | `/blueprint-flows` diz `1a, 2a…` e `E1, E2…`; `docs/blueprint/08-use_cases.md` e `docs/templates/use-case-template.md` usam `2a` (alternativo) e `2b` (exceção) | Os templates, que são o que o documento gerado precisa espelhar |
+| 2 | **Nome do diagrama de arquitetura do cliente web** | `/blueprint:frontend-app` gera `{client}-architecture.mmd`; `docs/diagrams/web/README.md` declara `frontend-architecture.mmd` | O README do diagrama, que é o que `frontend/web/01-architecture.md` referencia |
+| 3 | **Numeração de fluxos alternativos e exceções em casos de uso** | `/blueprint:blueprint-flows` diz `1a, 2a…` e `E1, E2…`; `docs/blueprint/08-use_cases.md` e `docs/templates/use-case-template.md` usam `2a` (alternativo) e `2b` (exceção) | Os templates, que são o que o documento gerado precisa espelhar |
 | 4 | **Referências cruzadas em português e em caminho flat, apontando para arquivos inexistentes** | Não é um template isolado: **37 ocorrências em 25 arquivos**, em quatro classes — (a) o template do router `docs/templates/claudemd-template.md` (`04-componentes.md`, `05-estado.md`, `07-rotas.md`, `08-fluxos.md`, `09-testes.md`, `11-seguranca.md`, `12-observabilidade.md` e o flat `docs/frontend/06-data-layer.md`); (b) **`01-arquitetura.md`, referenciado em 6 documentos de cliente** (`{web,desktop}/00-frontend-vision.md`, `.../02-project-structure.md`, `.../05-state.md`); (c) o resto dos docs de cliente (`07-rotas.md`, `11-seguranca.md`, `09-testes.md`, `13-cicd-convencoes.md`, `12-observabilidade.md`, `00-visao-frontend.md`); (d) os **compartilhados e cross-layer** — `frontend/shared/03-design-system.md:122`, `frontend/shared/06-data-layer.md:149`, `frontend/shared/15-api-dependencies.md:90`, `docs/shared/event-mapping.md:49-51` e `docs/shared/error-ux-mapping.md:60-61`, estes últimos com o caminho **flat** `docs/frontend/06-data-layer.md`, `docs/frontend/11-security.md`, `docs/frontend/12-observability.md` | A estrutura real (`docs/frontend/{shared,web,mobile,desktop}/`, nomes em inglês). **Deriva sistêmica** da migração flat → multi-client: atingiu o template do router, os documentos gerados *e* os conectores cross-layer |
-| 5 | **Prefixo de regra de negócio** | `docs/blueprint/04-domain-model.md`, `08-use_cases.md`, `backend/03-domain.md` e `/specs` usam **`RN-XX`**; `docs/templates/use-case-template.md:54` e `docs/blueprint/README.MD:356,608` usam **`RB-01`** | **`RN-XX`** — é o que os documentos modulares, o backend e o gerador de backlog usam. `RB-` sobrevive só no master e no template de caso de uso |
-| 6 | **Dono do `auth-flow.mmd`** | `docs/diagrams/README.md` §6 atribui todos os `sequences/*.mmd` a `07-critical_flows.md`; `/blueprint-quality` manda atualizá-lo ao gerar `13-security.md` | Ambos, em momentos diferentes: o fluxo nasce em `07` (fase 4) e o detalhe de autenticação é refinado por `13` (fase 5). Detalhado em §3.3 |
+| 5 | **Prefixo de regra de negócio** | `docs/blueprint/04-domain-model.md`, `08-use_cases.md`, `backend/03-domain.md` e `/blueprint:specs` usam **`RN-XX`**; `docs/templates/use-case-template.md:54` e `docs/blueprint/README.MD:356,608` usam **`RB-01`** | **`RN-XX`** — é o que os documentos modulares, o backend e o gerador de backlog usam. `RB-` sobrevive só no master e no template de caso de uso |
+| 6 | **Dono do `auth-flow.mmd`** | `docs/diagrams/README.md` §6 atribui todos os `sequences/*.mmd` a `07-critical_flows.md`; `/blueprint:blueprint-quality` manda atualizá-lo ao gerar `13-security.md` | Ambos, em momentos diferentes: o fluxo nasce em `07` (fase 4) e o detalhe de autenticação é refinado por `13` (fase 5). Detalhado em §3.3 |
 | 7 | **Seletor do tema escuro** | `docs/frontend/shared/03-design-system.md:80` usa `[data-theme="dark"]`; `.claude/skills/frontend-design-system/SKILL.md:149` usa `.dark` | Qualquer um — mas **um só**, e o mesmo em todo o projeto. Detalhado em §9.1 |
 
-> ⚠️ **E aqui está a quarta lacuna estrutural do framework:** `/patch` e `/increment` **não alcançam seis destas sete divergências**. A varredura do `/patch` cobre apenas `docs/blueprint/`, `docs/backend/`, `docs/frontend/shared/`, `docs/frontend/*/`, `docs/prototype/`, `docs/shared/`, `docs/specs/` e `docs/adr/`. Ficam **inteiramente fora de alcance** três diretórios: **`docs/templates/`**, **`docs/diagrams/`** e — o mais importante — **`.claude/skills/`**, já que a varredura só desce em `docs/**`. `/increment` é mais restrito ainda (`blueprint`, `backend`, `frontend`, `prototype`).
+> ⚠️ **E aqui está a quarta lacuna estrutural do framework:** `/blueprint:patch` e `/blueprint:increment` **não alcançam seis destas sete divergências**. A varredura do `/blueprint:patch` cobre apenas `docs/blueprint/`, `docs/backend/`, `docs/frontend/shared/`, `docs/frontend/*/`, `docs/prototype/`, `docs/shared/`, `docs/specs/` e `docs/adr/`. Ficam **inteiramente fora de alcance** três diretórios: **`docs/templates/`**, **`docs/diagrams/`** e — o mais importante — **`.claude/skills/`**, já que a varredura só desce em `docs/**`. `/blueprint:increment` é mais restrito ainda (`blueprint`, `backend`, `frontend`, `prototype`).
 >
 > Onde cada divergência mora, e o que isso implica:
 >
@@ -2265,17 +2285,17 @@ Um framework documentation-driven também sofre de deriva documental. Estas **se
 > | --- | --- | --- | --- |
 > | 1 | `.claude/skills/increment/SKILL.md` | — | **manual** |
 > | 2 | `docs/diagrams/web/README.md` + `.claude/skills/frontend-app/SKILL.md` | — | **manual (as duas pontas)** |
-> | 3 | `.claude/skills/blueprint-flows/SKILL.md` + `docs/templates/use-case-template.md` | `docs/blueprint/08-use_cases.md` | **manual** nas fontes; o doc gerado o `/patch` alcança |
-> | 4 | classe (a): `docs/templates/claudemd-template.md` (8 ocorrências) | classes (b)(c)(d): **24 arquivos, 29 ocorrências** em `docs/frontend/` e `docs/shared/` | `/patch` resolve 29 das 37; o template é manual |
+> | 3 | `.claude/skills/blueprint-flows/SKILL.md` + `docs/templates/use-case-template.md` | `docs/blueprint/08-use_cases.md` | **manual** nas fontes; o doc gerado o `/blueprint:patch` alcança |
+> | 4 | classe (a): `docs/templates/claudemd-template.md` (8 ocorrências) | classes (b)(c)(d): **24 arquivos, 29 ocorrências** em `docs/frontend/` e `docs/shared/` | `/blueprint:patch` resolve 29 das 37; o template é manual |
 > | 5 | `docs/templates/use-case-template.md:54` | `docs/blueprint/README.MD:356,608` | parcial |
 > | 6 | `docs/diagrams/README.md` + `.claude/skills/blueprint-quality/SKILL.md` | — | **manual (as duas pontas)** |
 | 7 | `.claude/skills/frontend-design-system/SKILL.md` | `frontend/shared/03-design-system.md` | parcial |
 >
-> **Quem usar §17.4 como lista de tarefas precisa saber disto:** rodar `/patch` corrige 29 das 37 ocorrências da #4 e metade das #5 e #7 — e nada mais. As outras quatro exigem edição manual dentro de `.claude/skills/`, `docs/templates/` e `docs/diagrams/`.
+> **Quem usar §17.4 como lista de tarefas precisa saber disto:** rodar `/blueprint:patch` corrige 29 das 37 ocorrências da #4 e metade das #5 e #7 — e nada mais. As outras quatro exigem edição manual dentro de `.claude/skills/`, `docs/templates/` e `docs/diagrams/`.
 >
 > *(Detalhe de execução: a varredura da skill está escrita como `docs/blueprint/*.md`, em minúsculas, e o blueprint master é `README.MD` — num filesystem sensível a maiúsculas, o glob literal não o pega. A ponta "alcançável" da #5 depende de o agente ajustar o padrão.)* O framework tem ferramenta para corrigir a si mesmo, mas não para corrigir as próprias ferramentas — as skills, os templates e os diagramas estão fora de todo automatismo que ele oferece.
 >
-> Somem-se a estas as **três lacunas estruturais** registradas em §14.3: marcadores que a skill `/increment` não conhece · `docs/shared/` fora do alvo de `/increment` · `docs/shared/` sem skill que o gere. E a **inconsistência interna do `/specs`** (grupos `CTRL` e `VAL` no mapa, ausentes na saída), em §14.8.
+> Somem-se a estas as **três lacunas estruturais** registradas em §14.3: marcadores que a skill `/blueprint:increment` não conhece · `docs/shared/` fora do alvo de `/blueprint:increment` · `docs/shared/` sem skill que o gere. E a **inconsistência interna do `/blueprint:specs`** (grupos `CTRL` e `VAL` no mapa, ausentes na saída), em §14.8.
 
 ---
 
@@ -2346,8 +2366,8 @@ docs/
 │   ├── error-ux-mapping.md             erro do backend → comportamento visual
 │   └── event-mapping.md                evento do backend → estado do frontend
 │
-├── backend-answers.md                  respostas de implementação coletadas por /backend (14 perguntas)
-├── specs/TASKS.md                      backlog integral (gerado por /specs)
+├── backend-answers.md                  respostas de implementação coletadas por /blueprint:backend (14 perguntas)
+├── specs/TASKS.md                      backlog integral (gerado por /blueprint:specs)
 │
 ├── templates/                          prd (468 linhas, ENTRADA) · claudemd (router) ·
 │                                       epic · story · task · use-case
@@ -2377,38 +2397,38 @@ docs/
 
 ```
 # Documentação
-/blueprint [prd]                 intake do PRD, análise de cobertura, roadmap
-/blueprint-foundation            00, 01, 02, 03
-/blueprint-domain                04, 05, 09
-/blueprint-architecture          06, 10 + ADRs
-/blueprint-flows                 07, 08
-/blueprint-quality               12, 13, 14, 15
-/blueprint-plan                  11, 16
-/backend                         15 docs do servidor
-/frontend                        shared 06, 15 + orquestração
-/frontend-design-system          shared 03
-/frontend-app {client}           8 docs do cliente
-/frontend-quality {client}       5 docs do cliente
+/blueprint:blueprint [prd]                 intake do PRD, análise de cobertura, roadmap
+/blueprint:blueprint-foundation            00, 01, 02, 03
+/blueprint:blueprint-domain                04, 05, 09
+/blueprint:blueprint-architecture          06, 10 + ADRs
+/blueprint:blueprint-flows                 07, 08
+/blueprint:blueprint-quality               12, 13, 14, 15
+/blueprint:blueprint-plan                  11, 16
+/blueprint:backend                         15 docs do servidor
+/blueprint:frontend                        shared 06, 15 + orquestração
+/blueprint:frontend-design-system          shared 03
+/blueprint:frontend-app {client}           8 docs do cliente
+/blueprint:frontend-quality {client}       5 docs do cliente
 
 # Protótipo (opcional — roda entre os fluxos e o backend)
-/prototype {client}                     plano: telas, navegação, dados mock
-/prototype-build {client} {alvo}        código: o app mockado
-/prototype-api {client} {alvo}          o contrato descoberto, extraído do código
+/blueprint:prototype {client}                     plano: telas, navegação, dados mock
+/blueprint:prototype-build {client} {alvo}        código: o app mockado
+/blueprint:prototype-api {client} {alvo}          o contrato descoberto, extraído do código
 
 # Automação
-/pipeline [prd] [clientes] [alvo] [--prototype]   tudo, em fases isoladas, sem perguntas
-/build [ENT-XXX...] [--max N]       features em loop com portões
+/blueprint:pipeline [prd] [clientes] [alvo] [--prototype]   tudo, em fases isoladas, sem perguntas
+/blueprint:build [ENT-XXX...] [--max N]       features em loop com portões
 
 # Evolução
-/increment                       adicionar, corrigir, atualizar, remover (Edit)
-/patch                           propagar mudança global com adaptação de case
-/specs                           backlog integral em docs/specs/TASKS.md
+/blueprint:increment                       adicionar, corrigir, atualizar, remover (Edit)
+/blueprint:patch                           propagar mudança global com adaptação de case
+/blueprint:specs                           backlog integral em docs/specs/TASKS.md
 
 # Código
-/codegen-setup [alvo]            CLAUDE.md + contracts + schema + scaffold (1×)
-/codegen                         dashboard de entregas
-/codegen-feature [nome]          feature vertical com TDD
-/codegen-verify                  score de aderência código × blueprint
+/blueprint:codegen-setup [alvo]            CLAUDE.md + contracts + schema + scaffold (1×)
+/blueprint:codegen                         dashboard de entregas
+/blueprint:codegen-feature [nome]          feature vertical com TDD
+/blueprint:codegen-verify                  score de aderência código × blueprint
 ```
 
 ---

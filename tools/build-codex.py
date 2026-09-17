@@ -188,14 +188,21 @@ def build(check: bool):
     if check:
         stale = [p for p, c in staged.items()
                  if not p.is_file() or p.read_text(encoding="utf-8") != c]
+        # Modo de execucao tambem e drift. Hook sem +x nao roda e falha em
+        # SILENCIO — o modo de falha que este projeto mais persegue. O build
+        # faz chmod 755; o --check precisa conferir.
+        noexec = [p for p in staged
+                  if p.suffix == ".sh" and p.is_file() and not (p.stat().st_mode & 0o111)]
         existing = {p for p in OUT.rglob("*") if p.is_file()} | ({MARKETPLACE} if MARKETPLACE.is_file() else set())
         orphan = sorted(existing - set(staged))
-        if stale or orphan:
+        if stale or orphan or noexec:
             print("A arvore do Codex esta defasada em relacao a fonte.\n")
             for p in sorted(stale)[:15]:
                 print(f"  desatualizado: {p.relative_to(ROOT)}")
             for p in orphan[:15]:
                 print(f"  orfao:         {p.relative_to(ROOT)}")
+            for p in sorted(noexec)[:15]:
+                print(f"  sem +x:        {p.relative_to(ROOT)}")
             print("\nRode: python3 tools/build-codex.py")
             return 1
         print(f"Codex em dia — {len(staged)} arquivos derivados de skills/ e docs/.")

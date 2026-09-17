@@ -967,13 +967,15 @@ A rule repeated in prose is a suggestion. A rule enforced at the tool call is a 
 | `no-secrets` | `PreToolUse(Bash)` | Before `git commit` or `git push`, scans the **staged** diff for credentials and **blocks** on a hit |
 | `docs-complete` | `PostToolUse(Write)` | Warns when a generated document still contains `{{placeholders}}` — cannot block, the write already happened |
 | `status` | `SessionStart` | Reports where the project stands: which suites are filled, open high-risk findings and assumptions, documents built over a known gap, and the next command |
-| `stop-gate` | `Stop` | **The result gate.** Reads the working tree with `git` against the session's base commit and refuses to end the turn if a Blueprint document lost an `<!-- APPEND:... -->` marker, a test file gained a skip, or the session ends with fewer tests than it started |
+| `stop-gate` | `Stop` | **The result gate.** Reads the working tree with `git` against the session's base commit and refuses to end the turn if a Blueprint document lost an `<!-- APPEND:... -->` marker or was deleted, a test file gained a skip, the session ends with fewer tests than it started, or a coverage threshold was lowered or removed |
 
 ### Why a result gate, when `PreToolUse` already blocks
 
 `PreToolUse` deny works on Claude Code — but `docs-integrity` and `tests-integrity` only match `Write` and `Edit`. A `sed -i`, a `cat > file` or an `rm` through the `Bash` tool makes the same violation outside both matchers. Checking the *result* instead of the *call* catches it whatever tool produced it.
 
-It also catches the cheapest evasion of all: **deleting** the test instead of skipping it. That one only reads as a violation at the result level, where the count is net — a test moved between files cancels out, a test removed does not.
+It also catches the two cheapest evasions: **deleting** the test, and **commenting it out**. Both only read as violations at the result level, where the count is net — a test moved between files cancels out, a test removed does not, and a commented-out declaration stops counting.
+
+The session base is written once per session, not on every `SessionStart`. That event also fires on compaction, and rewriting the base mid-turn would erase from the gate everything already committed — which is the exact bypass the base exists to close. When a turn ends clean, the gate deletes the base so the next session starts fresh.
 
 ## On Codex, enforcement moves to `Stop`
 
@@ -1007,7 +1009,7 @@ Two of them enforce asymmetric costs, which is why they block rather than warn. 
 ## Testing them
 
 ```bash
-bash hooks/test/run.sh          # 119 cases — Claude Code hooks
+bash hooks/test/run.sh          # 147 cases — Claude Code hooks
 bash codex/hooks/test/run.sh    # 57 cases — Codex hooks, plus the generated tree's structure
 ```
 
@@ -1140,7 +1142,7 @@ blueprint/
 ├── skills/                    # 26 skills — the source for both plugins
 ├── hooks/
 │   ├── hooks.json             # quality gates (see below)
-│   └── test/run.sh            # 119 cases
+│   └── test/run.sh            # 147 cases
 ├── codex/hooks/               # Codex hooks, hand-written (see AGENTS.md)
 ├── tools/build-codex.py       # skills/ + docs/ -> the Codex plugin
 ├── plugins/blueprint/         # GENERATED — the Codex plugin, do not edit

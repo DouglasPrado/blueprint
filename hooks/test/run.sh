@@ -109,7 +109,10 @@ if command -v git >/dev/null 2>&1; then
   stage 'AWS_KEY = "AKIAQQQQWWWWEEEERRRR"'
   run "comando que nao e commit nem push passa" 0 '{"tool_name":"Bash","tool_input":{"command":"ls -la"}}' no-secrets.sh
   run "git status passa" 0 '{"tool_name":"Bash","tool_input":{"command":"git status"}}' no-secrets.sh
-  run "git push com segredo staged bloqueia" 2 '{"tool_name":"Bash","tool_input":{"command":"git push origin main"}}' no-secrets.sh
+  # Segredo apenas STAGED nao vai a lugar nenhum num push — bloquear ali era
+  # falso positivo. O push varre o que ele de fato publica: os commits que
+  # ainda nao estao no remoto (ver o caso M4 do ciclo 4).
+  run "git push com segredo so staged, sem commit, passa" 0 '{"tool_name":"Bash","tool_input":{"command":"git push origin main"}}' no-secrets.sh
   cd "$ORIG" || exit 1
 else
   echo "  (pulado: git nao encontrado)"
@@ -490,6 +493,139 @@ printf '# g\n\nreal.\n' > "$ST/docs/shared/glossary.md"
 ordcase "so entao specs/codegen-setup" "$ST" "codegen-setup"
 mkdir -p "$ST/docs/prototype"; printf '# p\n\n{{placeholder}}\n' > "$ST/docs/prototype/00-d.md"
 ordcase "prototipo em template com backend PRONTO nao e mais sugerido" "$ST" "codegen-setup"
+
+echo "== regressao: achados do ciclo 4 =="
+
+if command -v git >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
+  Q="$T/acentos"; mkdir -p "$Q/docs/blueprint" "$Q/src/__tests__" "$Q/e2e"
+  printf '# D\n\nreal.\n\n<!-- APPEND:entities -->\n' > "$Q/docs/blueprint/04-domínio.md"
+  printf "it('a',()=>{})\nit('b',()=>{})\n"           > "$Q/src/__tests__/sessão.test.js"
+  printf "test.describe('login',()=>{})\n"            > "$Q/e2e/login.spec.ts"
+  printf 'module.exports = { preset: "ts-jest", globals: { "ts-jest": { isolatedModules: true } }, coverageThreshold: { global: { lines: 90, branches: 90 } } }\n' > "$Q/jest.config.js"
+  ( cd "$Q" && git init -q . && git config user.email t@t && git config user.name t \
+    && git add -A && git commit -qm base && CLAUDE_PROJECT_DIR="$Q" bash "$HOOKS/status.sh" >/dev/null 2>&1 )
+  qd() { ( cd "$Q" && CLAUDE_PROJECT_DIR="$Q" bash "$HOOKS/stop-gate.sh" 2>/dev/null ) \
+           | python3 -c 'import sys,json;print(json.load(sys.stdin).get("decision") or "ok")'; }
+  qcase() { local d; d=$(qd); rm -f "$Q"/.git/.blueprint-stop-*
+    if [ "$d" = "$2" ]; then pass=$((pass+1)); printf '  ok    %s\n' "$1"
+    else fail=$((fail+1)); printf '  FALHA %s (esperado %s, veio %s)\n' "$1" "$2" "$d"; fi
+    ( cd "$Q" && git checkout -q -- . 2>/dev/null; git clean -qfd 2>/dev/null ); rm -f "$Q"/.git/.blueprint-stop-*; }
+
+  # A1: core.quotepath devolve o nome entre aspas e com escapes octais.
+  sed -i '/APPEND/d' "$Q/docs/blueprint/04-domínio.md"
+  qcase "A1 marcador perdido em arquivo com ACENTO bloqueia" block
+  printf "it.skip('a',()=>{})\n" > "$Q/src/__tests__/sessão.test.js"
+  qcase "A1 skip em arquivo de teste com ACENTO bloqueia" block
+  rm "$Q/src/__tests__/sessão.test.js"
+  qcase "A1 teste apagado em arquivo com ACENTO bloqueia" block
+
+  # A3: comentar e a forma mais barata de apagar.
+  printf "// it('a',()=>{})\n// it('b',()=>{})\n" > "$Q/src/__tests__/sessão.test.js"
+  qcase "A3 comentar todos os testes bloqueia" block
+
+  # M6: refatoracao legitima nao pode bloquear.
+  printf "it.each([[1,2]])('soma %%i',(a,b)=>{})\nit('b',()=>{})\n" > "$Q/src/__tests__/sessão.test.js"
+  qcase "M6 refatorar it( para it.each( NAO bloqueia" ok
+
+  # M2: apagar o documento inteiro e pior que perder um marcador.
+  rm "$Q/docs/blueprint/04-domínio.md"
+  qcase "M2 apagar o documento do Blueprint bloqueia" block
+
+  # A4 + M1: limiar de cobertura no portao de resultado, com a chave globals.
+  sed -i 's/lines: 90, branches: 90/lines: 10, branches: 10/' "$Q/jest.config.js"
+  qcase "A4 rebaixar o limiar com 'globals:' do ts-jest presente bloqueia" block
+  rm "$Q/jest.config.js"
+  qcase "M1 apagar o arquivo de config de cobertura bloqueia" block
+
+  # A5: a cadeia do SKIP tem de valer nos tres hooks.
+  printf "test.describe.skip('login',()=>{})\n" > "$Q/e2e/login.spec.ts"
+  qcase "A5 test.describe.skip do Playwright bloqueia no stop-gate" block
+  qcase "arvore limpa continua liberando" ok
+fi
+
+# A4 tambem no PreToolUse.
+run "A4 rebaixar limiar com 'globals:' presente bloqueia (tests-integrity)" 2 \
+  "$(mk Edit "$T/proj/jest.config.js" \
+      'globals: { "ts-jest": { isolatedModules: true } }, coverageThreshold: { global: { lines: 90 } }' \
+      'globals: { "ts-jest": { isolatedModules: true } }, coverageThreshold: { global: { lines: 10 } }')" tests-integrity.sh
+
+# B1: a alternativa nao ancorada saiu; chamada fluente nao e skip de teste.
+run "B1 .skip() de query fluente nao e skip de teste" 0 \
+  "$(mk Edit "$T/proj/src/__tests__/u.test.ts" 'x' 'const r = await col.find(q).limit(10).skip()')" tests-integrity.sh
+
+# A5 (drift): os tres SKIP precisam ser o MESMO padrao.
+s1=$(sed -n 's/.*SKIP="\(.*\)"$/\1/p' "$HOOKS/tests-integrity.sh")
+s2=$(sed -n 's/.*SKIP="\(.*\)"$/\1/p' "$HOOKS/stop-gate.sh")
+s3=$(sed -n 's/.*SKIP="\(.*\)"$/\1/p' "$HOOKS/../codex/hooks/apply-patch-guard.sh")
+if [ -n "$s1" ] && [ "$s1" = "$s2" ] && [ "$s1" = "$s3" ]; then
+  pass=$((pass+1)); printf '  ok    o padrao SKIP e identico nos tres hooks\n'
+else
+  fail=$((fail+1)); printf '  FALHA os tres hooks divergiram no padrao SKIP\n'
+fi
+
+# A6 + M4: no-secrets.
+if command -v git >/dev/null 2>&1; then
+  NS="$T/nosec"; mkdir -p "$NS/sub"
+  ( cd "$NS" && git init -q . && git config user.email t@t && git config user.name t \
+    && printf 'limpo = 1\n' > ok.txt && git add -A && git commit -qm init \
+    && printf 'AWS_KEY="AKIAABCDEFGHIJKLMNOP"\n' >> ok.txt \
+    && printf 'x = 1\n' > sub/f.txt && git add sub/f.txt )
+  nsc() { python3 -c 'import json,sys;print(json.dumps({"tool_name":"Bash","tool_input":{"command":sys.argv[1]}}))' "$2"; }
+  for m in 'corrige flag -a do parser' 'docs: explica a flag --all' 'fix: trata -amount negativo'; do
+    run "A6 ' -a' na MENSAGEM nao liga o modo -a" 0 "$(nsc x "cd $NS && git commit -m \"$m\"")" no-secrets.sh
+  done
+  run "A6 '-a' de verdade continua ligando" 2 "$(nsc x "cd $NS && git commit -a -m x")" no-secrets.sh
+  run "A6 '-am' de verdade continua ligando" 2 "$(nsc x "cd $NS && git commit -am x")" no-secrets.sh
+  ( cd "$NS" && git add -A && git commit -qm "leak commitado" )
+  run "M4 git push varre os commits ainda nao publicados" 2 "$(nsc x "cd $NS && git push origin main")" no-secrets.sh
+fi
+
+# M3: docs/frontend/shared/ era invisivel na cadeia do proximo passo.
+FS="$T/fshared"; mkfull "$FS"
+mkdir -p "$FS/docs/frontend/shared" "$FS/docs/frontend/web" "$FS/docs/shared"
+printf '# ds\n\n{{placeholder}}\n' > "$FS/docs/frontend/shared/03-design-system.md"
+printf '# f\n\nreal.\n' > "$FS/docs/frontend/web/00-d.md"
+printf '# g\n\nreal.\n' > "$FS/docs/shared/glossary.md"
+ordcase "M3 frontend/shared em template vem antes de tudo que depende dele" "$FS" "frontend-design-system"
+printf '# ds\n\nreal.\n' > "$FS/docs/frontend/shared/03-design-system.md"
+ordcase "M3 com frontend/shared pronto, segue para o scaffold" "$FS" "codegen-setup"
+
+echo "== A7: o registro dos hooks e o proprio contrato =="
+# Sabotar hooks.json passava nas duas suites: o plugin ficava sem portao de
+# resultado nenhum e 119/119 continuava verde.
+hj="$HOOKS/hooks.json"
+chkhook() { # evento, script esperado
+  if python3 - "$hj" "$1" "$2" <<'PYEOF' 2>/dev/null
+import json, sys
+d = json.load(open(sys.argv[1]))["hooks"]
+ev, want = sys.argv[2], sys.argv[3]
+assert ev in d, f"evento {ev} nao registrado"
+assert any(want in h.get("command", "") for g in d[ev] for h in g.get("hooks", [])), \
+    f"{want} nao registrado em {ev}"
+PYEOF
+  then pass=$((pass+1)); printf '  ok    %s registrado em %s\n' "$2" "$1"
+  else fail=$((fail+1)); printf '  FALHA %s NAO esta registrado em %s\n' "$2" "$1"; fi
+}
+chkhook Stop         stop-gate.sh
+chkhook SessionStart status.sh
+chkhook PreToolUse   docs-integrity.sh
+chkhook PreToolUse   tests-integrity.sh
+chkhook PreToolUse   no-secrets.sh
+chkhook PostToolUse  docs-complete.sh
+# Todo script referenciado existe, e todo script existente e referenciado.
+miss=""; orf=""
+for s in "$HOOKS"/*.sh; do
+  b=$(basename "$s")
+  grep -q "$b" "$hj" || orf="$orf $b"
+done
+for b in $(python3 -c 'import json,re,sys;print(" ".join(sorted(set(re.findall(r"([a-z-]+\.sh)", open(sys.argv[1]).read())))))' "$hj"); do
+  [ -f "$HOOKS/$b" ] || miss="$miss $b"
+done
+if [ -z "$miss" ] && [ -z "$orf" ]; then
+  pass=$((pass+1)); printf '  ok    hooks.json e hooks/ estao em correspondencia exata\n'
+else
+  fail=$((fail+1)); printf '  FALHA hooks.json: ausentes:%s orfaos:%s\n' "${miss:- nenhum}" "${orf:- nenhum}"
+fi
 
 echo "== portabilidade: sem extensoes GNU nos padroes =="
 # Comentario pode citar \b e \s para explicar por que nao se usa; o que importa

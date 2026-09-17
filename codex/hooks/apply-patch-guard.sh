@@ -58,7 +58,7 @@ files=$(printf '%s' "$patch" \
 
 problems=""
 W='[^A-Za-z0-9_.]'
-SKIP="((^|$W)(it|test|describe|context|suite)\.(skip|only|todo)\()|((^|$W)(xit|xtest|xdescribe|xcontext|xspecify|fit|fdescribe)[[:space:]]*[('\"])|(@pytest\.mark\.skip)|(@unittest\.skip)|((^|$W)t\.Skip(Now)?\()|(#\[ignore\])"
+SKIP="((^|$W)(it|test|describe|context|suite)(\.[a-z]+(\([^)]*\))?)*\.(skip|only|todo)\()|((^|$W)(xit|xtest|xdescribe|xcontext|xspecify|fit|fdescribe)[[:space:]]*[('\"])|(@pytest\.mark\.skip)|(@unittest\.skip)|((^|$W)t\.Skip(Now)?\()|(#\[ignore\])"
 
 # "*** Move to:" e metadado do arquivo corrente, nao um delimitador — ele vem
 # logo DEPOIS de "*** Update File:" e zerava o dono, fazendo o hunk inteiro

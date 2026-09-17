@@ -76,6 +76,12 @@ como aviso antecipado (sai mais barato desfazer antes), mas não é o portão.
 Se a issue #27833 fechar, o `apply-patch-guard` pode virar bloqueio de verdade —
 o `stop-gate` continua valendo de qualquer forma, por causa do `code_mode_exec`.
 
+**Nomes de arquivo não-ASCII:** toda invocação de git que lista nomes usa
+`-c core.quotepath=false`. Por padrão o git devolve `"docs/04-dom\303\255nio.md"`
+— entre aspas e com escapes octais — para qualquer caractere fora do ASCII, e o
+nome literal não casa com nada. Num framework escrito em português isso desligava
+as três checagens de uma vez, caladas.
+
 **Limite conhecido do `stop-gate`:** a base da sessão é um arquivo em `.git/`.
 Um `rm -f .git/.blueprint-base-*` restabelece o bypass por commit. Isso não tem
 conserto dentro do modelo: o hook roda como o usuário, com as permissões do
@@ -91,7 +97,7 @@ de erro. Se você mexer nesse script, o teste que verifica isso é obrigatório.
 ## Antes de commitar
 
 ```bash
-bash hooks/test/run.sh          # 119 casos — hooks do Claude Code
+bash hooks/test/run.sh          # 147 casos — hooks do Claude Code
 bash codex/hooks/test/run.sh    # 57 casos — hooks do Codex + estrutura do gerado
 python3 tools/build-codex.py --check
 ```

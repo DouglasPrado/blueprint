@@ -91,16 +91,42 @@ esac
 [ -d "$target" ] || exit 0
 git -C "$target" rev-parse --git-dir >/dev/null 2>&1 || exit 0
 
-# `git commit -a` commita arquivo RASTREADO sem passar pelo indice, entao
-# `diff --cached` sai vazio e o hook saia calado — na forma de commit mais
-# comum de um agente. Com -a/-am/--all, o que vai ser commitado e o diff
-# contra o HEAD, nao o indice.
-staged=$(git -C "$target" diff --cached --no-color 2>/dev/null)
-case "$cmd" in
-  *" -a"[!a-zA-Z0-9-]*|*" -a"|*" -am"*|*" -ma"*|*" --all"*|*" -a"[a-z]*)
-    staged="$staged
+# O que vai ser publicado depende do subcomando.
+#
+# commit  -> o indice. Com -a/-am/--all tambem a arvore de trabalho, porque
+#            esses commitam arquivo RASTREADO sem passar pelo indice: `diff
+#            --cached` sai vazio e o hook saia calado na forma de commit mais
+#            comum de um agente.
+# push    -> os COMMITS que ainda nao estao no remoto. Ate aqui o push casava o
+#            gatilho e depois varria `diff --cached`, que esta vazio logo apos
+#            um commit: o ramo push era codigo morto, e a ultima chance barata
+#            de impedir que o segredo va a publico nao fazia nada.
+#
+# A deteccao de `-a` olha o comando SEM as strings entre aspas. Procurar " -a"
+# no texto cru bloqueava `git commit -m "corrige flag -a do parser"` — mensagem
+# perfeitamente plausivel no formato de commit deste proprio repositorio.
+cmdnoq=$(printf '%s' "$cmd" | sed 's/"[^"]*"/""/g; s/'"'"'[^'"'"']*'"'"'/'"''"'/g')
+
+sub=commit
+printf '%s' "$cmdnoq" | grep -qE '(^|[;&|[:space:]])git([[:space:]]+[^[:space:]]+)*[[:space:]]+push([[:space:]]|$)' 2>/dev/null && sub=push
+
+if [ "$sub" = "push" ]; then
+  # O que este push acrescenta ao remoto. Sem upstream configurado, cai para o
+  # ultimo commit — melhor varrer pouco que varrer nada.
+  up=$(git -C "$target" rev-parse --abbrev-ref '@{upstream}' 2>/dev/null)
+  if [ -n "$up" ]; then
+    staged=$(git -C "$target" diff --no-color "$up"...HEAD 2>/dev/null)
+  else
+    staged=$(git -C "$target" diff --no-color 'HEAD~1' HEAD 2>/dev/null)
+  fi
+else
+  staged=$(git -C "$target" diff --cached --no-color 2>/dev/null)
+  case " $cmdnoq " in
+    *" -a "*|*" --all "*|*" -am "*|*" -ma "*|*" -av "*|*" -va "*)
+      staged="$staged
 $(git -C "$target" diff --no-color HEAD 2>/dev/null)" ;;
-esac
+  esac
+fi
 staged=$(printf '%s' "$staged" | grep '^+' | grep -v '^+++' 2>/dev/null)
 [ -z "$staged" ] && exit 0
 

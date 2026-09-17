@@ -1867,7 +1867,7 @@ O plugin embarca cinco hooks. Eles existem porque três regras do framework são
 
 **Por que dois bloqueiam em vez de avisar:** custo assimétrico. Documento sobrescrito por `Write` não volta. Segredo que entra no histórico fica no histórico, nos forks e em cada clone já feito — commit posterior não remove, e reescrever histórico publicado é caro e nem sempre possível. Nos dois casos o único momento barato é antes.
 
-`bash hooks/test/run.sh` — 119 casos (e `bash codex/hooks/test/run.sh` — 57 para o Codex), cobrindo o que cada hook deve bloquear, o que deve deixar passar e a degradação. Hook malformado falha **em silêncio**: não bloqueia, não avisa, e o plugin parece instalado sem fazer nada.
+`bash hooks/test/run.sh` — 147 casos (e `bash codex/hooks/test/run.sh` — 57 para o Codex), cobrindo o que cada hook deve bloquear, o que deve deixar passar e a degradação. Hook malformado falha **em silêncio**: não bloqueia, não avisa, e o plugin parece instalado sem fazer nada.
 
 ### 14.2 O contrato comum a todas as skills
 

@@ -59,14 +59,37 @@ if command -v git >/dev/null 2>&1 && git -C "$root" rev-parse --git-dir >/dev/nu
   case "$_h" in *[!0-9a-f]*|"") _h="" ;; esac
   # Repositorio ainda sem commit: a base correta e "nada".
   [ -z "$_h" ] && _h="EMPTY"
+  # SO GRAVA SE AINDA NAO HOUVER BASE VALIDA.
+  #
+  # O SessionStart dispara em startup, resume, clear E compact. Reescrever a
+  # base a cada disparo faz um auto-compact no meio de um build longo mover a
+  # base para o HEAD corrente — apagando do portao tudo que ja foi commitado no
+  # turno, que e exatamente o bypass que a base existe para fechar.
+  #
+  # Base so e substituida quando nao existe ou quando deixou de ser ancestral do
+  # HEAD (branch trocado, historico reescrito). O stop-gate APAGA a base quando
+  # o turno termina com a arvore limpa, entao a proxima sessao comeca do zero
+  # sem que uma base velha continue valendo.
+  _existing=""
   for _d in "$_gd" "${TMPDIR:-/tmp}"; do
-    [ -n "$_d" ] && [ -d "$_d" ] || continue
-    printf '%s\n' "$_h" > "$_d/.blueprint-base-$_k" 2>/dev/null && break
+    [ -n "$_d" ] && [ -f "$_d/.blueprint-base-$_k" ] || continue
+    _existing=$(cat "$_d/.blueprint-base-$_k" 2>/dev/null | tr -d ' \n'); break
   done
-  # Base nova, contador de bloqueios zerado.
-  for _d in "$_gd" "${TMPDIR:-/tmp}"; do
-    [ -n "$_d" ] && rm -f "$_d/.blueprint-stop-$_k" 2>/dev/null
-  done
+  _keep=0
+  if [ "$_existing" = "EMPTY" ]; then
+    _keep=1
+  elif [ -n "$_existing" ] && git -C "$root" merge-base --is-ancestor "$_existing" HEAD 2>/dev/null; then
+    _keep=1
+  fi
+  if [ "$_keep" = "0" ]; then
+    for _d in "$_gd" "${TMPDIR:-/tmp}"; do
+      [ -n "$_d" ] && [ -d "$_d" ] || continue
+      printf '%s\n' "$_h" > "$_d/.blueprint-base-$_k" 2>/dev/null && break
+    done
+    for _d in "$_gd" "${TMPDIR:-/tmp}"; do
+      [ -n "$_d" ] && rm -f "$_d/.blueprint-stop-$_k" 2>/dev/null
+    done
+  fi
 fi
 
 blueprint=$(suite_state "$docs/blueprint")
@@ -81,6 +104,14 @@ printf 'blueprint tecnico: %s' "$blueprint"
 [ "$prototype" != "ausente" ] && printf ' | prototipo: %s' "$prototype"
 [ "$backend"   != "ausente" ] && printf ' | backend: %s'   "$backend"
 [ "$shared"    != "ausente" ] && printf ' | shared: %s'    "$shared"
+
+# docs/frontend/shared/ (design system, data layer, api-dependencies) sao as
+# fases 8 e 9 do pipeline e eram invisiveis aqui: nao apareciam no painel e
+# nunca viravam "Proximo". Tres skills param se elas nao estiverem preenchidas
+# — prototype, frontend-app e codegen-setup —, entao o hook mandava seguir para
+# um passo que ia abortar.
+fshared=$(suite_state "$docs/frontend/shared")
+[ "$fshared" != "ausente" ] && printf ' | frontend/shared: %s' "$fshared"
 
 frontend_falta=""
 for c in web mobile desktop; do
@@ -125,7 +156,8 @@ case "$blueprint" in
     if [ "${blueprint%%/*}" != "${blueprint##*/}" ]; then
       falta=$(( ${blueprint##*/} - ${blueprint%%/*} )); if [ "$falta" -eq 1 ]; then next="continuar o blueprint tecnico — falta 1 documento"; else next="continuar o blueprint tecnico — faltam $falta documentos"; fi
     elif [ "$prototype" != "ausente" ] && [ "${prototype%%/*}" != "${prototype##*/}" ] \
-         && { [ "$backend" = "ausente" ] || [ "${backend%%/*}" != "${backend##*/}" ]; }; then
+         && { [ "$backend" = "ausente" ] || [ "${backend%%/*}" != "${backend##*/}" ]; } \
+         && { [ "$fshared" = "ausente" ] || [ "${fshared%%/*}" = "${fshared##*/}" ]; }; then
       # So faz sentido ANTES do backend: a fase existe para o contrato de API
       # sair da interface. Com o backend ja preenchido, sugerir o prototipo
       # inverte a razao de ser dele — e no fluxo padrao de 13 fases ninguem
@@ -133,6 +165,8 @@ case "$blueprint" in
       next="blueprint-prototype  (o contrato de API sai da interface, nao o contrario)"
     elif [ "$backend" != "ausente" ] && [ "${backend%%/*}" != "${backend##*/}" ]; then
       next="blueprint-backend"
+    elif [ "$fshared" != "ausente" ] && [ "${fshared%%/*}" != "${fshared##*/}" ]; then
+      next="blueprint-frontend-design-system e blueprint-frontend  (docs/frontend/shared/ — o prototipo e o scaffold param sem eles)"
     elif [ -n "$frontend_falta" ]; then
       # O frontend era calculado e ignorado: o hook mandava gerar scaffold e
       # router sobre documentacao de cliente que ainda era template.

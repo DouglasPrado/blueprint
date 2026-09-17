@@ -80,7 +80,7 @@ esac
 # --- 1. Teste silenciado -------------------------------------------------
 if [ "$is_test" = "1" ]; then
   # Cada padrao exige o identificador do runner: it/test/describe/context/suite.
-  SKIP="((^|$W)(it|test|describe|context|suite)(\.[a-z]+(\([^)]*\))?)*\.(skip|only|todo)\()|((^|$W)(xit|xtest|xdescribe|xcontext|xspecify|fit|fdescribe)[[:space:]]*[('\"])|(@pytest\.mark\.skip)|(@unittest\.skip)|((^|$W)t\.Skip(Now)?\()|(#\[ignore\])|(\.skip\(\)[[:space:]]*$)"
+  SKIP="((^|$W)(it|test|describe|context|suite)(\.[a-z]+(\([^)]*\))?)*\.(skip|only|todo)\()|((^|$W)(xit|xtest|xdescribe|xcontext|xspecify|fit|fdescribe)[[:space:]]*[('\"])|(@pytest\.mark\.skip)|(@unittest\.skip)|((^|$W)t\.Skip(Now)?\()|(#\[ignore\])"
   if grew "$SKIP"; then
     found=$(printf '%s' "$added" | grep -oE "$SKIP" 2>/dev/null | sed "s/^[^A-Za-z@#.]//" | sort -u | tr '\n' ' ')
     cat >&2 <<MSG
@@ -133,8 +133,12 @@ case "$file" in
     # rebaixamento de 80 para 20 passava.
     globalblk() { printf '%s' "$1" | tr '\n' ' ' | awk '
       { s = $0
-        i = index(s, "global"); if (i == 0) exit
-        s = substr(s, i)
+        # `global` como CHAVE, nao como substring: `globals: {...}` do preset
+        # ts-jest vem antes do coverageThreshold e sequestrava o bloco — o awk
+        # extraia o bloco do ts-jest, nenhum numero era encontrado, e rebaixar
+        # de 90 para 10 passava. Vale igual para globalSetup/globalTeardown.
+        if (match(s, /(^|[^A-Za-z0-9_])["'"'"']?global["'"'"']?[ \t]*[:=][ \t]*\{/) == 0) exit
+        s = substr(s, RSTART)
         j = index(s, "{"); if (j == 0) exit
         d = 0; out = ""
         for (k = j; k <= length(s); k++) {

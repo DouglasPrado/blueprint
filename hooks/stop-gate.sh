@@ -6,17 +6,21 @@
 # Codex transforma o motivo num novo prompt e o agente continua trabalhando.
 #
 # POR QUE A APLICACAO ESTA AQUI E NAO SO NO PreToolUse
-# No Codex o deny de PreToolUse nao e aplicado a apply_patch (openai/codex#27833,
-# aberta) — que e justamente por onde o agente edita arquivos. Um portao que so
-# avisa nao e portao.
 #
-# No Claude Code o deny FUNCIONA, mas so alcanca Write e Edit. Um `sed -i`, um
-# `cat > arquivo` ou um `rm` pela ferramenta Bash faz a mesma violacao por fora
-# dos dois matchers. Sem este portao o plugin do Codex era estritamente mais
-# forte que o do Claude nas duas regras centrais.
+# Este arquivo e a fonte dos dois plugins e o gerador traduz nome de produto,
+# entao a explicacao abaixo nao cita nenhum: cita o comportamento.
+#
+# Num dos agentes o deny de PreToolUse NAO e aplicado a ferramenta de patch
+# (openai/codex#27833, aberta) — que e justamente por onde ele edita arquivos.
+# Um portao que so avisa nao e portao.
+#
+# No outro o deny funciona, mas so alcanca as ferramentas Write e Edit. Um
+# `sed -i`, um `cat > arquivo` ou um `rm` pela ferramenta de shell faz a mesma
+# violacao por fora dos dois matchers.
 #
 # Movendo a verificacao para o Stop, a regra passa a ser "voce nao termina o
-# turno com a arvore nesse estado", o que nao depende de qual ferramenta editou.
+# turno com a arvore nesse estado", o que nao depende de qual ferramenta editou
+# nem de o bloqueio de ferramenta funcionar.
 #
 # E mais robusto de outra forma tambem: verifica o RESULTADO na arvore, entao
 # pega a violacao independente de qual ferramenta a produziu — apply_patch,
@@ -34,14 +38,21 @@
 
 ok() { printf '{}\n'; exit 0; }
 
+# -c core.quotepath=false em TODA invocacao que lista nomes: por padrao o git
+# devolve `"docs/blueprint/04-dom\303\255nio.md"` — entre aspas e com escapes
+# octais — para qualquer caractere nao-ASCII. O nome literal nao casava com
+# `docs/*`, nao existia no disco e nao existia no `git show`: as tres checagens
+# desligavam juntas, caladas. Num framework escrito em portugues, `sessao` com
+# til e `dominio` com acento sao nomes normais.
+
 # NAO ler stdin. O Stop nao precisa do payload aqui, e um `cat` sem entrada
 # disponivel trava o hook — que no Stop significa travar o turno.
 
 command -v git >/dev/null 2>&1 || ok
 root="${CLAUDE_PROJECT_DIR:-$PWD}"
-git -C "$root" rev-parse --git-dir >/dev/null 2>&1 || ok
+git -c core.quotepath=false -C "$root" rev-parse --git-dir >/dev/null 2>&1 || ok
 
-gitdir=$(git -C "$root" rev-parse --absolute-git-dir 2>/dev/null)
+gitdir=$(git -c core.quotepath=false -C "$root" rev-parse --absolute-git-dir 2>/dev/null)
 key=$(printf '%s' "$root" | cksum | cut -d' ' -f1)
 
 # Onde guardar estado. O .git do proprio repositorio e gravavel sempre que o git
@@ -63,19 +74,19 @@ raw=""
 if [ "$raw" = "EMPTY" ]; then
   # O repositorio nao tinha commit nenhum quando a sessao comecou: a base e a
   # arvore vazia, entao TUDO que existe hoje e trabalho desta sessao.
-  base=$(git -C "$root" hash-object -t tree /dev/null 2>/dev/null)
+  base=$(git -c core.quotepath=false -C "$root" hash-object -t tree /dev/null 2>/dev/null)
 else
   base=$(printf '%s' "$raw" | tr -cd '0-9a-f')
 fi
 # Base invalida (branch reescrito, commit removido) nao serve.
-if [ -n "$base" ] && [ "$raw" != "EMPTY" ] && ! git -C "$root" cat-file -e "$base^{commit}" 2>/dev/null; then
+if [ -n "$base" ] && [ "$raw" != "EMPTY" ] && ! git -c core.quotepath=false -C "$root" cat-file -e "$base^{commit}" 2>/dev/null; then
   base=""
 fi
 # Base que NAO e ancestral do HEAD tambem nao serve: depois de um `git reset
 # --hard` para tras dela, ou de uma troca de branch, `git diff <base>` mostra o
 # INVERSO das mudancas — um marcador que a base tinha e o HEAD atual nao vira
 # "perdeu o marcador", com a arvore limpa e nada para o agente desfazer.
-if [ -n "$base" ] && [ "$raw" != "EMPTY" ] && ! git -C "$root" merge-base --is-ancestor "$base" HEAD 2>/dev/null; then
+if [ -n "$base" ] && [ "$raw" != "EMPTY" ] && ! git -c core.quotepath=false -C "$root" merge-base --is-ancestor "$base" HEAD 2>/dev/null; then
   base=""
   [ -n "$state" ] && rm -f "$state/.blueprint-base-$key"
 fi
@@ -85,24 +96,24 @@ fi
 # repositorio. Com o projeto num subdiretorio (monorepo, app dentro de um repo
 # maior), `apps/web/docs/...` nunca casava com `docs/*` e o pathspec por arquivo
 # resolvia errado — as duas checagens viravam no-op silencioso.
-diff=$(git -C "$root" diff --relative --no-color "$base" 2>/dev/null)
-[ -z "$diff" ] && diff=$(git -C "$root" diff --relative --no-color 2>/dev/null)
-[ -z "$diff" ] && diff=$(git -C "$root" ls-files --others --exclude-standard 2>/dev/null)
+diff=$(git -c core.quotepath=false -C "$root" diff --relative --no-color "$base" 2>/dev/null)
+[ -z "$diff" ] && diff=$(git -c core.quotepath=false -C "$root" diff --relative --no-color 2>/dev/null)
+[ -z "$diff" ] && diff=$(git -c core.quotepath=false -C "$root" ls-files --others --exclude-standard 2>/dev/null)
 if [ -z "$diff" ]; then
-  [ -n "$state" ] && rm -f "$state"/.blueprint-stop-"$key"
+  [ -n "$state" ] && rm -f "$state"/.blueprint-stop-"$key" "$state"/.blueprint-base-"$key"
   ok
 fi
 
-changed=$(git -C "$root" diff --relative --name-only "$base" 2>/dev/null)
+changed=$(git -c core.quotepath=false -C "$root" diff --relative --name-only "$base" 2>/dev/null)
 # `git diff` nunca lista arquivo novo nao rastreado. Um arquivo de teste NOVO
 # cheio de it.skip passava inteiro — e as skills que escrevem no projeto-alvo
 # mandam explicitamente nao commitar, entao arvore com untracked e o estado
 # normal no Stop, nao a excecao.
-untracked=$(git -C "$root" ls-files --others --exclude-standard 2>/dev/null)
+untracked=$(git -c core.quotepath=false -C "$root" ls-files --others --exclude-standard 2>/dev/null)
 
 # `git show <rev>:<path>` NAO aceita --relative: o caminho e sempre a partir
 # da raiz do repositorio. Guarda-se o prefixo do subdiretorio para recompo-lo.
-prefix=$(git -C "$root" rev-parse --show-prefix 2>/dev/null)
+prefix=$(git -c core.quotepath=false -C "$root" rev-parse --show-prefix 2>/dev/null)
 
 problems=""
 W='[^A-Za-z0-9_.]'
@@ -114,14 +125,22 @@ if [ -d "$root/docs/blueprint" ]; then
   while IFS= read -r f; do
     [ -z "$f" ] && continue
     case "$f" in docs/*) ;; *) continue ;; esac
-    [ -f "$root/$f" ] || continue
+    if [ ! -f "$root/$f" ]; then
+      # Documento APAGADO perde TODOS os marcadores de uma vez — e passava,
+      # enquanto perder um so bloqueava. Perder o arquivo e estritamente pior.
+      if git -c core.quotepath=false -C "$root" show "$base:$prefix$f" 2>/dev/null \
+           | grep -qE '<!--[[:space:]]*APPEND:' 2>/dev/null; then
+        problems="$problems  - $f foi apagado, e era um documento do Blueprint$NL"
+      fi
+      continue
+    fi
     # Compara o MARCADOR INTEIRO, nao so o token. Conferir `APPEND:entities`
     # deixava passar `<!-- APPEND:entities` (comentario sem fecho, que renderiza
     # como texto) e ate prosa solta com o token no meio: o token sobrevivia, o
     # ponto de insercao nao. E por marcador inteiro a colisao de prefixo
     # (APPEND:webhooks vs APPEND:webhooks-enviados) continua coberta.
     MK='<!--[[:space:]]*APPEND:[a-z0-9-]*[[:space:]]*-->'
-    was=$(git -C "$root" show "$base:$prefix$f" 2>/dev/null | grep -oE "$MK" 2>/dev/null | sort -u)
+    was=$(git -c core.quotepath=false -C "$root" show "$base:$prefix$f" 2>/dev/null | grep -oE "$MK" 2>/dev/null | sort -u)
     [ -z "$was" ] && continue
     now=$(grep -oE "$MK" "$root/$f" 2>/dev/null | sort -u)
     while IFS= read -r m; do
@@ -137,12 +156,12 @@ EOF
 fi
 
 # --- 2. Teste silenciado -------------------------------------------------
-SKIP="((^|$W)(it|test|describe|context|suite)\.(skip|only|todo)\()|((^|$W)(xit|xtest|xdescribe|xcontext|xspecify|fit|fdescribe)[[:space:]]*[('\"])|(@pytest\.mark\.skip)|(@unittest\.skip)|((^|$W)t\.Skip(Now)?\()|(#\[ignore\])"
+SKIP="((^|$W)(it|test|describe|context|suite)(\.[a-z]+(\([^)]*\))?)*\.(skip|only|todo)\()|((^|$W)(xit|xtest|xdescribe|xcontext|xspecify|fit|fdescribe)[[:space:]]*[('\"])|(@pytest\.mark\.skip)|(@unittest\.skip)|((^|$W)t\.Skip(Now)?\()|(#\[ignore\])"
 tests_changed=$(printf '%s\n' "$changed" \
   | grep -E '(\.test\.|\.spec\.|_test\.|_spec\.rb|test_.*\.py|/tests/|/test/|/__tests__/|/e2e/)' 2>/dev/null)
 while IFS= read -r f; do
   [ -z "$f" ] && continue
-  d=$(git -C "$root" diff --relative --no-color "$base" -- "$f" 2>/dev/null)
+  d=$(git -c core.quotepath=false -C "$root" diff --relative --no-color "$base" -- "$f" 2>/dev/null)
   n_add=$(printf '%s' "$d" | grep '^+' | grep -v '^+++' | grep -cE "$SKIP" 2>/dev/null | tr -d ' \n')
   n_rem=$(printf '%s' "$d" | grep '^-' | grep -v '^---' | grep -cE "$SKIP" 2>/dev/null | tr -d ' \n')
   if [ "${n_add:-0}" -gt "${n_rem:-0}" ] 2>/dev/null; then
@@ -174,15 +193,26 @@ EOF
 # aqui e nao no PreToolUse: mover um teste de arquivo e uma remocao seguida de
 # uma adicao, e no resultado as duas se cancelam. Chamada a chamada, a remocao
 # pareceria uma perda.
-DECL="((^|$W)(it|test|describe|context|specify|scenario)[[:space:]]*\()|((^|$W)def[[:space:]]+test_)|((^|$W)func[[:space:]]+Test[A-Z])|(#\[test\])|((^|$W)(it|describe|context)[[:space:]]+[\"'][^\"']*[\"'][[:space:]]+do)"
+# (\.[a-z]+(\([^)]*\))?)* : `it.each([...])('...')` e UM teste, nao zero.
+# Sem isso, refatorar `it(` para `it.each(` era contado como teste apagado e o
+# agente levava bloqueio por uma refatoracao legitima.
+DECL="((^|$W)(it|test|describe|context|specify|scenario)(\.[a-z]+(\([^)]*\))?)*[[:space:]]*\()|((^|$W)def[[:space:]]+test_)|((^|$W)func[[:space:]]+Test[A-Z])|(#\[test\])|((^|$W)(it|describe|context)[[:space:]]+[\"'][^\"']*[\"'][[:space:]]+do)"
+
+# Linha comentada nao conta como teste. Comentar e a forma mais barata de
+# apagar: `// it('x')` casava o DECL (o caractere antes do `it` e espaco), o
+# saldo nao mudava, e a suite ficava verde rodando zero teste.
+#
+# O filtro vale so para a CONTAGEM de declaracoes. O SKIP nao passa por ele, e
+# de proposito: `#[ignore]` do Rust comeca com `#`.
+nocomment() { sed 's|^[[:space:]]*//.*||; s|^[[:space:]]*\*.*||; s|^[[:space:]]*/\*.*||; s|^[[:space:]]*#[^[].*||' 2>/dev/null; }
 testfiles=$(printf '%s\n%s\n' "$changed" "$untracked" \
   | grep -E '(\.test\.|\.spec\.|_test\.|_spec\.rb|test_.*\.py|/tests/|/test/|/__tests__/|/e2e/)' 2>/dev/null | sort -u)
 net_before=0; net_after=0
 while IFS= read -r f; do
   [ -z "$f" ] && continue
-  b=$(git -C "$root" show "$base:$prefix$f" 2>/dev/null | grep -cE "$DECL" 2>/dev/null | tr -d ' \n')
+  b=$(git -c core.quotepath=false -C "$root" show "$base:$prefix$f" 2>/dev/null | nocomment | grep -cE "$DECL" 2>/dev/null | tr -d ' \n')
   a=0
-  [ -f "$root/$f" ] && a=$(grep -cE "$DECL" "$root/$f" 2>/dev/null | tr -d ' \n')
+  [ -f "$root/$f" ] && a=$(nocomment < "$root/$f" 2>/dev/null | grep -cE "$DECL" 2>/dev/null | tr -d ' \n')
   net_before=$((net_before + ${b:-0}))
   net_after=$((net_after + ${a:-0}))
 done <<EOF
@@ -192,8 +222,54 @@ if [ "$net_after" -lt "$net_before" ] 2>/dev/null; then
   problems="$problems  - a sessao termina com $((net_before - net_after)) teste(s) a menos do que comecou$NL"
 fi
 
+# --- 4. Limiar de cobertura rebaixado ou apagado -------------------------
+# O cabecalho deste arquivo diz que o portao existe porque um `sed -i` faz a
+# mesma violacao por fora dos matchers de Write|Edit. Valia para duas das tres
+# regras: o limiar de cobertura ficava de fora — e num dos agentes nao existe
+# hook de PreToolUse para testes, entao la a protecao de limiar nao existia em
+# evento nenhum.
+CFG='(jest\.config|vitest\.config|\.nycrc|setup\.cfg|pyproject\.toml|\.coveragerc|codecov\.yml)'
+cfgs=$(printf '%s\n' "$changed" | grep -E "$CFG" 2>/dev/null)
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  was_cfg=$(git -c core.quotepath=false -C "$root" show "$base:$prefix$f" 2>/dev/null)
+  [ -z "$was_cfg" ] && continue
+  now_cfg=""
+  [ -f "$root/$f" ] && now_cfg=$(cat "$root/$f" 2>/dev/null)
+  gblk() { printf '%s' "$1" | tr '\n' ' ' | awk '
+    { s = $0
+      if (match(s, /(^|[^A-Za-z0-9_])["'"'"']?global["'"'"']?[ \t]*[:=][ \t]*\{/) == 0) exit
+      s = substr(s, RSTART)
+      j = index(s, "{"); if (j == 0) exit
+      d = 0; out = ""
+      for (k = j; k <= length(s); k++) {
+        c = substr(s, k, 1); out = out c
+        if (c == "{") d++
+        else if (c == "}") { d--; if (d == 0) break }
+      }
+      print out }' 2>/dev/null; }
+  cpick() { printf '%s' "$2" \
+      | grep -oE "(^|[^A-Za-z0-9_-])\"?$1\"?[[:space:]]*[:=][[:space:]]*[0-9]+" 2>/dev/null \
+      | grep -oE '[0-9]+$' | sort -n | head -1; }
+  cval() { g=$(gblk "$2"); if [ -n "$g" ]; then cpick "$1" "$g"; else cpick "$1" "$2"; fi; }
+  for key in branches functions statements lines fail_under minimum_coverage min_coverage; do
+    vo=$(cval "$key" "$was_cfg"); vn=$(cval "$key" "$now_cfg")
+    [ -z "$vo" ] && continue
+    if [ -z "$vn" ]; then
+      problems="$problems  - $f: o limiar de cobertura \`$key\` ($vo) deixou de existir$NL"
+      break
+    fi
+    if [ "$vn" -lt "$vo" ] 2>/dev/null; then
+      problems="$problems  - $f: limiar de cobertura \`$key\` caiu de $vo para $vn$NL"
+      break
+    fi
+  done
+done <<EOF
+$cfgs
+EOF
+
 if [ -z "$problems" ]; then
-  [ -n "$state" ] && rm -f "$state"/.blueprint-stop-"$key"
+  [ -n "$state" ] && rm -f "$state"/.blueprint-stop-"$key" "$state"/.blueprint-base-"$key"
   ok
 fi
 
@@ -218,6 +294,8 @@ reason="O turno nao pode terminar com a arvore neste estado — o Blueprint tem 
 
 $problems
 Documento preenchido que perde <!-- APPEND:... --> deixa blueprint-increment sem ponto de insercao: a proxima adicao vai parar no fim do arquivo ou no meio de outra secao.
+
+Limiar de cobertura rebaixado ou apagado faz o portao medir o que ja existe em vez do que foi combinado; apagado, ele deixa de medir. Os limiares vivem em docs/blueprint/12-testing_strategy.md — se a meta mudou, mude-a la primeiro.
 
 Teste apagado e mais barato que teste silenciado e da no mesmo: sem teste, nada falha. Se ele cobre algo que deixou de existir, remova-o num commit proprio, para que a perda fique visivel na revisao em vez de vir junto com a feature.
 

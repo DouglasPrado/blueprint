@@ -199,7 +199,8 @@ Cada fase consome o que a anterior produziu. Pular gera documento genérico — 
 | 9 | `/blueprint:frontend` | `frontend/shared/06`, `15` | blueprint + `backend/05-api-contracts.md` **quando existir** (a skill o trata como fonte autoritativa se presente — daí a ordem recomendada abaixo) |
 | 10 | `/blueprint:frontend-app {client}` | 8 docs do cliente | blueprint + shared |
 | 11 | `/blueprint:frontend-quality {client}` | 5 docs do cliente | `blueprint/12,13,14,15` + docs do cliente |
-| 12 | `/blueprint:codegen-setup` | `CLAUDE.md`, `src/contracts/`, schema, scaffold | `02` (patterns e convenções), `04`, `05`, `06`, `backend/00-04`, **`shared/glossary.md`** e, por cliente ativo, `{client}/02-project-structure` + `shared/03-design-system` |
+| 12 | `/blueprint:shared` | `shared/glossary`, `event-mapping`, `error-ux-mapping` | `blueprint/04`, `backend/09`, `backend/12`, `frontend/{client}/05` — projeção das duas camadas |
+| 13 | `/blueprint:codegen-setup` | `CLAUDE.md`, `src/contracts/`, schema, scaffold | `02` (patterns e convenções), `04`, `05`, `06`, `backend/00-04`, **`shared/glossary.md`** e, por cliente ativo, `{client}/02-project-structure` + `shared/03-design-system` |
 
 **Com a fase de protótipo** (`/blueprint:pipeline --prototype`), a ordem muda em três pontos — o design system sobe, o protótipo entra, e o backend desce:
 
@@ -213,9 +214,10 @@ Cada fase consome o que a anterior produziu. Pular gera documento genérico — 
 | 11 | `/blueprint:backend` | `backend/00-14` | os 17 docs **+ `prototype/03` como fonte do contrato** |
 | 12 | `/blueprint:frontend` | `shared/06`, `15` | blueprint + `prototype/03` (prioridade) ou `backend/05` |
 | 13-14 | `/blueprint:frontend-app`, `/blueprint:frontend-quality` | docs do cliente | blueprint + shared + `prototype/01`, `04` |
-| 15 | `/blueprint:codegen-setup` | scaffold | idem, **reaproveitando tipos e design system do protótipo** |
+| 15 | `/blueprint:shared` | conectores cross-layer | `blueprint/04`, `backend/09`, `backend/12`, `frontend/{client}/05` |
+| 16 | `/blueprint:codegen-setup` | scaffold | idem, **reaproveitando tipos e design system do protótipo** |
 
-> A numeração acima é a do `/blueprint:pipeline --prototype` (15 fases). A parte deste documento que descreve a fase é a **[7.5](#75-a-fase-de-protótipo-opcional)** — o `.5` marca que ela é opcional e intercalada, não que seja meia fase.
+> A numeração acima é a do `/blueprint:pipeline --prototype` (16 fases). A parte deste documento que descreve a fase é a **[7.5](#75-a-fase-de-protótipo-opcional)** — o `.5` marca que ela é opcional e intercalada, não que seja meia fase.
 
 > **A inversão é o ponto.** Sem protótipo, a fase 9 roda depois da 7 porque `backend/05-api-contracts` é a fonte autoritativa dos endpoints. Com protótipo, quem passa a ser autoritativo é `prototype/03-api-requirements` — e o backend vira o **consumidor** do contrato, não o autor.
 
@@ -1865,7 +1867,7 @@ O plugin embarca cinco hooks. Eles existem porque três regras do framework são
 
 **Por que dois bloqueiam em vez de avisar:** custo assimétrico. Documento sobrescrito por `Write` não volta. Segredo que entra no histórico fica no histórico, nos forks e em cada clone já feito — commit posterior não remove, e reescrever histórico publicado é caro e nem sempre possível. Nos dois casos o único momento barato é antes.
 
-`bash hooks/test/run.sh` — 70 casos (e `bash codex/hooks/test/run.sh` — 49 para o Codex), cobrindo o que cada hook deve bloquear, o que deve deixar passar e a degradação. Hook malformado falha **em silêncio**: não bloqueia, não avisa, e o plugin parece instalado sem fazer nada.
+`bash hooks/test/run.sh` — 87 casos (e `bash codex/hooks/test/run.sh` — 55 para o Codex), cobrindo o que cada hook deve bloquear, o que deve deixar passar e a degradação. Hook malformado falha **em silêncio**: não bloqueia, não avisa, e o plugin parece instalado sem fazer nada.
 
 ### 14.2 O contrato comum a todas as skills
 
@@ -1934,7 +1936,7 @@ O plugin embarca cinco hooks. Eles existem porque três regras do framework são
 > - **Antes do scaffold** porque `codegen-setup` congela nomes: termo corrigido depois de `src/contracts/` existir já nasceu errado nos tipos.
 > - `MAPPING.md` **não** é gerado, e isso é correto: ele descreve a estrutura do framework, não o projeto, e já vem completo (zero `{{placeholders}}`). Os documentos geráveis são três, não quatro.
 >
-> Com isso o `/blueprint:pipeline` entrega **51 documentos preenchidos** (54 com protótipo), e o critério **V8: Cross-Layer** do `/blueprint:codegen-verify` passa a ser avaliável contra conteúdo real em vez de template vazio.
+> Com isso o `/blueprint:pipeline` entrega **51 documentos preenchidos** (57 com protótipo), e o critério **V8: Cross-Layer** do `/blueprint:codegen-verify` passa a ser avaliável contra conteúdo real em vez de template vazio.
 
 ### 14.4 `/blueprint:pipeline` — modo autônomo
 
@@ -1972,7 +1974,7 @@ GAPS:         - {o que o PRD não cobre e onde a suposição ficou frágil}
 
 Tudo é consolidado em `docs/ASSUMPTIONS.md` — **escrito pelo orquestrador**, nunca pelos subagentes (evita conflito de escrita) — com resumo por risco e seção de lacunas do PRD.
 
-**Tolerância a falha:** uma fase que falha **não para o pipeline** (documento incompleto não corrompe os seguintes), é registrada e reportada no final. A exceção é a fase 12 (`codegen-setup`), que tem **portão objetivo**: typecheck + lint + validação de schema. Se falhar após correção, reporta falha em vez de declarar sucesso.
+**Tolerância a falha:** uma fase que falha **não para o pipeline** (documento incompleto não corrompe os seguintes), é registrada e reportada no final. A exceção é a fase 13 (`codegen-setup`), que tem **portão objetivo**: typecheck + lint + validação de schema. Se falhar após correção, reporta falha em vez de declarar sucesso.
 
 ### 14.5 `/blueprint:build` — loop de implementação com portões
 
@@ -2281,7 +2283,7 @@ Um framework documentation-driven também sofre de deriva documental. Estas **se
 
 > ✅ **Quatro templates órfãos removidos.** `docs/templates/` trazia `epic-`, `story-`, `task-` e `use-case-template.md`: instalados por `/blueprint:init` no projeto do usuário e lidos por **nenhuma skill**. `/blueprint:specs` gera `TASKS.md` com formato próprio; `/blueprint:blueprint-flows` gera os casos de uso a partir da seção `## Template` que vive dentro de `08-use_cases.md`. Eram resto de um modelo arquivo-por-item, estilo Jira, incompatível com o modelo real do framework — *o documento é o template*, com `{{placeholders}}` e marcador `APPEND`. Pior: o de caso de uso **contradizia** o template inline do documento que dizia espelhar (ator principal/secundário vs. ator, prioridade e objetivo ausentes no inline, regras de negócio ausentes no solto), originando as divergências 3 e 5 desta mesma tabela. A hierarquia `EP → ST → TSK` descrita em §12.4 permanece válida como modelo conceitual de backlog para o time — ela só não tem mais templates soltos que competem com os documentos gerados.
 >
-> ⚠️ **E aqui está a quarta lacuna estrutural do framework:** `/blueprint:patch` e `/blueprint:increment` **não alcançam seis destas sete divergências**. A varredura do `/blueprint:patch` cobre apenas `docs/blueprint/`, `docs/backend/`, `docs/frontend/shared/`, `docs/frontend/*/`, `docs/prototype/`, `docs/shared/`, `docs/specs/` e `docs/adr/`. Ficam **inteiramente fora de alcance** três diretórios: **`docs/templates/`**, **`docs/diagrams/`** e — o mais importante — **`skills/`**, já que a varredura só desce em `docs/**`. `/blueprint:increment` é mais restrito ainda (`blueprint`, `backend`, `frontend`, `prototype`).
+> ⚠️ **E aqui está a quarta lacuna estrutural do framework:** `/blueprint:patch` e `/blueprint:increment` **não alcançam seis destas sete divergências**. A varredura do `/blueprint:patch` cobre apenas `docs/blueprint/`, `docs/backend/`, `docs/frontend/shared/`, `docs/frontend/*/`, `docs/prototype/`, `docs/shared/`, `docs/specs/` e `docs/adr/`. Ficam **inteiramente fora de alcance** três diretórios: **`docs/templates/`**, **`docs/diagrams/`** e — o mais importante — **`skills/`**, já que a varredura só desce em `docs/**`. `/blueprint:increment` é mais restrito ainda (`blueprint`, `backend`, `frontend`, `prototype`, `connectors`).
 >
 > Onde cada divergência mora, e o que isso implica:
 >

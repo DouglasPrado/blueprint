@@ -16,6 +16,9 @@
 set -u
 HOOKS="$(cd "$(dirname "$0")/.." && pwd)"
 ROOT="$(cd "$HOOKS/../.." && pwd)"
+# no-secrets e DERIVADO de hooks/no-secrets.sh pelo gerador — testa-se o que
+# realmente vai no plugin, nao uma copia a mao que pode ter ficado para tras.
+GEN="$ROOT/plugins/blueprint/hooks"
 pass=0; fail=0
 
 okc()   { pass=$((pass+1)); printf '  ok    %s\n' "$1"; }
@@ -23,7 +26,8 @@ bad()   { fail=$((fail+1)); printf '  FALHA %s\n' "$1"; [ -n "${2:-}" ] && print
 
 run() { # descricao, exit esperado, payload, script
   local out rc
-  out=$(printf '%s' "$3" | bash "$HOOKS/$4" 2>&1); rc=$?
+  h="$HOOKS/$4"; [ "$4" = "no-secrets.sh" ] && h="$GEN/$4"
+  out=$(printf '%s' "$3" | bash "$h" 2>&1); rc=$?
   if [ "$rc" = "$2" ]; then okc "$1"; else bad "$1  (esperado exit $2, veio $rc)" "$out"; fi
 }
 
@@ -260,6 +264,52 @@ run "xit do RSpec, sem parenteses, avisa" 2 \
 +xit 'soma' do
 *** End Patch")" apply-patch-guard.sh
 
+run "patch com TAB no conteudo (Go) nao cega o hook" 2 \
+  "$(P "$(printf '*** Begin Patch\n*** Update File: internal/user/user_test.go\n+func TestA(t *testing.T) {\n+\tt.Skip(\"quebrado\")\n+}\n*** End Patch')")" apply-patch-guard.sh
+
+echo "== regressao: achados do ciclo 2 (Codex) =="
+
+# #3: arquivo de teste NOVO, nao rastreado — e o estado NORMAL no projeto-alvo,
+# porque codegen-setup e prototype-build mandam nao commitar la.
+printf "it.skip('novo',()=>{})\n" > "$CG/src/__tests__/novo.test.ts"
+gate "arquivo de teste novo ja nascendo silenciado bloqueia" block "$CG"
+rm -f "$CG/src/__tests__/novo.test.ts"
+printf "it('novo',()=>{})\n" > "$CG/src/__tests__/ok.test.ts"
+gate "arquivo de teste novo e limpo passa" ok "$CG"
+rm -f "$CG/src/__tests__/ok.test.ts"; clearstate "$CG"
+
+# #8: o token sobrevive, o ponto de insercao nao.
+printf '# D\n\nreal.\n\n<!-- APPEND:entities\n' > "$CG/docs/blueprint/04-domain-model.md"
+gate "comentario do marcador quebrado bloqueia" block "$CG"
+( cd "$CG" && git checkout -q -- . ); clearstate "$CG"
+
+# #10: base atras do HEAD (reset --hard, troca de branch) dava bloqueio falso.
+RB="$T/resetado"; mkdir -p "$RB/docs/blueprint"
+printf '# D\n\nv1\n' > "$RB/docs/blueprint/04-domain-model.md"
+( cd "$RB" && git init -q . && git config user.email t@t && git config user.name t \
+  && git add -A && git commit -qm c1 )
+printf '# D\n\nv2\n\n<!-- APPEND:entities -->\n' > "$RB/docs/blueprint/04-domain-model.md"
+( cd "$RB" && git add -A && git commit -qm c2 && CODEX_PROJECT_DIR="$RB" bash "$HOOKS/status.sh" >/dev/null 2>&1 )
+( cd "$RB" && git reset -q --hard HEAD~1 )
+gate "arvore limpa apos reset --hard para tras da base nao bloqueia" ok "$RB"
+
+# #9: repositorio sem commit nenhum no SessionStart.
+ER="$T/vaziorepo"; mkdir -p "$ER/docs/blueprint" "$ER/src/__tests__"
+printf '# D\n' > "$ER/docs/blueprint/04-domain-model.md"
+printf "it('a',()=>{})\n" > "$ER/src/__tests__/u.test.ts"
+( cd "$ER" && git init -q . && git config user.email t@t && git config user.name t \
+  && CODEX_PROJECT_DIR="$ER" bash "$HOOKS/status.sh" >/dev/null 2>&1 )
+b=$(cat "$ER/.git/.blueprint-base-"* 2>/dev/null)
+if [ "$b" = "EMPTY" ]; then
+  okc "repo sem commit grava o sentinela, nao a string literal HEAD"
+else
+  bad "base gravada em repo vazio e invalida" "$b"
+fi
+( cd "$ER" && git add -A && git commit -qm primeiro )
+printf "it.skip('a',()=>{})\n" > "$ER/src/__tests__/u.test.ts"
+( cd "$ER" && git add -A && git commit -qm silencia )
+gate "no repo que nasceu vazio, skip commitado continua bloqueando" block "$ER"
+
 echo "== degradacao: payload ruim nao pode matar a sessao =="
 run "payload vazio no apply-patch-guard" 0 ""          apply-patch-guard.sh
 run "payload invalido no apply-patch-guard" 0 "nao e json" apply-patch-guard.sh
@@ -304,8 +354,8 @@ fi
 cd "$ROOT" || exit 1
 
 echo "== portabilidade: sem extensoes GNU nos padroes =="
-for h in apply-patch-guard stop-gate no-secrets status; do
-  offenders=$(sed 's/#.*//' "$HOOKS/$h.sh" | grep -nE '\\b|\\s|\(\?[!=]' 2>/dev/null)
+for h in apply-patch-guard stop-gate status; do
+  offenders=$(sed 's/#.*//' "$HOOKS/$h.sh" | grep -nE '\\b|\\s|\(\?[!=]|sed[^|]*\\\\\|' 2>/dev/null)
   if [ -n "$offenders" ]; then
     bad "$h.sh usa \\b, \\s ou lookahead (falha calado no BSD grep)" "$offenders"
   else

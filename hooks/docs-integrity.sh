@@ -91,7 +91,10 @@ fi
 # Arquivo que carrega uma delas foi preenchido, tenha chaves ou nao.
 pristine() { # 0 = e o template intocado
   [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] || return 1
-  rel=${1#*/docs/}; [ "$rel" = "$1" ] && rel=${1#docs/}
+  # ## e nao # : queremos o ULTIMO /docs/ do caminho. Com # , um projeto em
+  # ~/docs/proj/ derivava rel="proj/docs/frontend/..." , o template nao era
+  # encontrado e o hook voltava a heuristica que este ramo existe para substituir.
+  rel=${1##*/docs/}; [ "$rel" = "$1" ] && rel=${1#docs/}
   [ "$rel" = "$1" ] && return 1
   tpl="$CLAUDE_PLUGIN_ROOT/docs/$rel"
   [ -f "$tpl" ] || return 1
@@ -102,7 +105,7 @@ if [ "$tool" = "Write" ] && [ -f "$file" ]; then
   filled=1
   if pristine "$file"; then
     filled=0
-  elif [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -f "$CLAUDE_PLUGIN_ROOT/docs/${file#*/docs/}" ]; then
+  elif [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -f "$CLAUDE_PLUGIN_ROOT/docs/${file##*/docs/}" ]; then
     filled=1   # existe template correspondente e o arquivo difere dele
   elif grep -qE '<!-- (do blueprint|do backend|do frontend|assumido|adicionado|corrigido|atualizado|construido sobre lacuna):?' "$file" 2>/dev/null; then
     filled=1   # marca de procedencia: alguma skill ja escreveu aqui
@@ -141,13 +144,17 @@ if [ "$tool" = "Edit" ]; then
     # "APPEND:webhooks-enviados", e docs/backend/13-integrations.md tem os dois.
     # Com grep -F, apagar o primeiro passava despercebido porque o segundo
     # continuava no texto.
-    new_markers=$(printf '%s' "$new" | grep -o 'APPEND:[a-z0-9-]*' 2>/dev/null | sort -u)
+    # Compara o MARCADOR INTEIRO. So o token deixava passar
+    # `<!-- APPEND:entities` (comentario sem fecho, que renderiza como texto) e
+    # ate prosa com o token no meio: o token sobrevivia, o ponto de insercao nao.
+    MK='<!--[[:space:]]*APPEND:[a-z0-9-]*[[:space:]]*-->'
+    new_markers=$(printf '%s' "$new" | grep -oE "$MK" 2>/dev/null | sort -u)
     lost=""
     while IFS= read -r marker; do
       [ -z "$marker" ] && continue
-      printf '%s\n' "$new_markers" | grep -qx "$marker" 2>/dev/null || lost="$lost  $marker\n"
+      printf '%s\n' "$new_markers" | grep -qxF "$marker" 2>/dev/null || lost="$lost  $marker\n"
     done <<EOF
-$(printf '%s' "$old" | grep -o 'APPEND:[a-z0-9-]*' 2>/dev/null | sort -u)
+$(printf '%s' "$old" | grep -oE "$MK" 2>/dev/null | sort -u)
 EOF
     if [ -n "$lost" ]; then
       printf 'BLOQUEADO — a edicao remove marcador(es) de append:\n\n' >&2

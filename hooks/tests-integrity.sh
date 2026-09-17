@@ -103,20 +103,34 @@ fi
 # `max-lines: 300 -> 200` como afrouxar cobertura.
 case "$file" in
   *jest.config*|*vitest.config*|*.nycrc*|*setup.cfg|*pyproject.toml|*.coveragerc|*codecov.yml|*.codecov.yml|*package.json)
-    KEYS='(coverageThreshold|fail_under|minimum_coverage|min_coverage|branches|functions|statements|lines)'
     # Em package.json/config so olha se ha bloco de cobertura por perto.
     case "$file" in
       *package.json)
         printf '%s' "$added$previous" | grep -qE 'coverageThreshold' 2>/dev/null || exit 0 ;;
     esac
-    # MINIMO, nao primeira ocorrencia. Com head -1 bastava acrescentar um bloco
-    # por diretorio com valor alto ANTES do global para o portao ler so o novo
-    # bloco e nunca ver o global caindo de 80 para 20.
-    lowest() { printf '%s' "$2" | grep -oE "\"?$1\"?[[:space:]]*[:=][[:space:]]*[0-9]+" 2>/dev/null \
-                 | grep -oE '[0-9]+$' | sort -n | head -1; }
+
+    # O limiar que importa e o GLOBAL. Comparar o minimo do texto inteiro
+    # errava dos dois lados:
+    #   - bypass: com um bloco por diretorio ja mais permissivo no arquivo, o
+    #     global podia cair de 80 para 20 sem mudar o minimo;
+    #   - falso positivo: acrescentar um bloco legitimo e permissivo para codigo
+    #     gerado ("./src/generated/": 0) era lido como rebaixar cobertura.
+    # Quando existe bloco `global`, so ele conta. Onde nao existe o conceito
+    # (fail_under do Python, codecov), o minimo continua sendo a leitura certa.
+    globalblk() { printf '%s' "$1" | tr '\n' ' ' \
+        | grep -oE '["'"'"']?global["'"'"']?[[:space:]]*[:=][[:space:]]*\{[^}]*\}' 2>/dev/null; }
+    # (^|[^A-Za-z0-9_-]) antes da chave: sem isso `max-lines = 300` casa em
+    # "lines" e apertar uma regra de LINT vira "rebaixou cobertura".
+    pick() { printf '%s' "$2" \
+        | grep -oE "(^|[^A-Za-z0-9_-])\"?$1\"?[[:space:]]*[:=][[:space:]]*[0-9]+" 2>/dev/null \
+        | grep -oE '[0-9]+$' | sort -n | head -1; }
+    value() { # chave, texto
+      local g; g=$(globalblk "$2")
+      if [ -n "$g" ]; then pick "$1" "$g"; else pick "$1" "$2"; fi
+    }
     for key in branches functions statements lines fail_under minimum_coverage min_coverage; do
-      vn=$(lowest "$key" "$added")
-      vo=$(lowest "$key" "$previous")
+      vn=$(value "$key" "$added")
+      vo=$(value "$key" "$previous")
       if [ -n "$vn" ] && [ -n "$vo" ] && [ "$vn" -lt "$vo" ] 2>/dev/null; then
         cat >&2 <<MSG
 BLOQUEADO — a edicao rebaixa o limiar de cobertura.

@@ -22,7 +22,7 @@ Insere a **fase de prototipo** — um frontend completo e mockado construido **a
 
 | | Sem `--prototype` | Com `--prototype` |
 |---|---|---|
-| Fases | 12 | 15 |
+| Fases | 13 | 16 |
 | Ordem | backend → frontend | design system → **prototipo** → backend → frontend |
 | Contrato de API | Derivado dos casos de uso | **Extraido de codigo com consumidor real** |
 | Projeto-alvo | So na ultima fase | **Obrigatorio** — o prototipo e codigo |

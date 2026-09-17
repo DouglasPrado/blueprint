@@ -42,26 +42,36 @@ Antes de iniciar qualquer tarefa, leia os docs listados abaixo conforme o tipo d
 - docs/blueprint/08-use_cases.md (atores, pre/pos condicoes)
 - docs/blueprint/06-system-architecture.md (componentes, comunicacao)
 
+> `{{client}}` e o cliente ativo: `web`, `mobile` ou `desktop`. A arvore e
+> `docs/frontend/{shared,web,mobile,desktop}/` — nao existe `docs/frontend/*.md`
+> no nivel de cima.
+
 ### Frontend Components
-- docs/frontend/04-componentes.md (hierarquia de componentes)
-- docs/frontend/05-estado.md (state management)
-- docs/frontend/06-data-layer.md (data fetching, cache)
+- docs/frontend/{{client}}/04-components.md (hierarquia de componentes)
+- docs/frontend/{{client}}/05-state.md (state management)
+- docs/frontend/shared/06-data-layer.md (data fetching, cache)
 
 ### Routing / Navigation
-- docs/frontend/07-rotas.md (rotas, guards, middlewares)
-- docs/frontend/08-fluxos.md (fluxos de interface)
+- docs/frontend/{{client}}/07-routes.md (rotas, guards, middlewares)
+- docs/frontend/{{client}}/08-flows.md (fluxos de interface)
 
 ### Security
 - docs/blueprint/13-security.md (threat model, autenticacao, autorizacao)
-- docs/frontend/11-seguranca.md (XSS, CSRF, CSP)
+- docs/frontend/{{client}}/11-security.md (XSS, CSRF, CSP)
 
 ### Testing
 - docs/blueprint/12-testing_strategy.md (piramide de testes, coverage)
-- docs/frontend/09-testes.md (testes de frontend)
+- docs/frontend/{{client}}/09-tests.md (testes de frontend)
 
 ### Observabilidade
 - docs/blueprint/15-observability.md (logging, metricas, tracing)
-- docs/frontend/12-observabilidade.md (frontend monitoring)
+- docs/frontend/{{client}}/12-observability.md (frontend monitoring)
+
+### Conectores cross-layer
+- docs/shared/glossary.md (linguagem ubiqua — nomes de entidade, campo e acao)
+- docs/shared/event-mapping.md (evento do backend -> estado do frontend)
+- docs/shared/error-ux-mapping.md (erro do backend -> o que o usuario ve)
+- docs/shared/MAPPING.md (rastreabilidade entre os blueprints)
 
 ---
 

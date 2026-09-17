@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# GERADO por tools/build-codex.py a partir de hooks/no-secrets.sh.
+# Nao edite aqui: edite a fonte e rode `python3 tools/build-codex.py`.
 # Blueprint — segredo nao entra no historico
 #
 # PreToolUse(Bash). Antes de um commit ou push, varre o que esta STAGED no
@@ -39,7 +41,7 @@ fi
 # bloquear leitura por causa do stage e o tipo de coisa que faz desligar o
 # plugin. Tolera "cd X && git ...", "git -C X ..." e flags globais.
 printf '%s' "$cmd" \
-  | grep -qE '(^|[;&|][[:space:]]*)[[:space:]]*git([[:space:]]+(-C[[:space:]]+[^[:space:]]+|--[a-z-]+([[:space:]]+[^[:space:]]+)?|-[a-z]))*[[:space:]]+(commit|push)([[:space:]]|$)' 2>/dev/null \
+  | grep -qE '(^|[;&|][[:space:]]*)[[:space:]]*git([[:space:]]+(-C[[:space:]]+("[^"]*"|'"'"'[^'"'"']*'"'"'|[^[:space:]]+)|--[a-z-]+([[:space:]]+[^[:space:]]+)?|-[a-z]))*[[:space:]]+(commit|push)([[:space:]]|$)' 2>/dev/null \
   || exit 0
 
 command -v git >/dev/null 2>&1 || exit 0
@@ -49,13 +51,22 @@ command -v git >/dev/null 2>&1 || exit 0
 # outro (`blueprint-pipeline docs/prd.md web ../my-app/`). Varrer o CWD
 # protegeria o repo errado: falso-positivo no repo de docs e falso-negativo no
 # de codigo, na mesma linha.
+#
+# CAMINHO COM ESPACO: `cd "~/My Projects/app" && git commit`. Cortar no primeiro
+# branco devolvia "~/My" — que nao e diretorio, e a varredura inteira era pulada
+# em silencio. Aspas primeiro, sem aspas depois.
 target=""
-# "git -C <dir>"
-t=$(printf '%s' "$cmd" | sed -n 's/.*git[[:space:]]\{1,\}-C[[:space:]]\{1,\}\([^[:space:]]\{1,\}\).*/\1/p' | head -1)
+# "git -C <dir>" com aspas
+t=$(printf '%s' "$cmd" | sed -n 's/.*git[[:space:]]\{1,\}-C[[:space:]]\{1,\}"\([^"]\{1,\}\)".*/\1/p' | head -1)
+[ -z "$t" ] && t=$(printf '%s' "$cmd" | sed -n "s/.*git[[:space:]]\{1,\}-C[[:space:]]\{1,\}'\([^']\{1,\}\)'.*/\1/p" | head -1)
+# "git -C <dir>" sem aspas
+[ -z "$t" ] && t=$(printf '%s' "$cmd" | sed -n 's/.*git[[:space:]]\{1,\}-C[[:space:]]\{1,\}\([^[:space:]]\{1,\}\).*/\1/p' | head -1)
 [ -n "$t" ] && target="$t"
 # "cd <dir> && git ..."
 if [ -z "$target" ]; then
-  t=$(printf '%s' "$cmd" | sed -n 's/^[[:space:]]*cd[[:space:]]\{1,\}\([^[:space:]&;|]\{1,\}\).*/\1/p' | head -1)
+  t=$(printf '%s' "$cmd" | sed -n 's/^[[:space:]]*cd[[:space:]]\{1,\}"\([^"]\{1,\}\)".*/\1/p' | head -1)
+  [ -z "$t" ] && t=$(printf '%s' "$cmd" | sed -n "s/^[[:space:]]*cd[[:space:]]\{1,\}'\([^']\{1,\}\)'.*/\1/p" | head -1)
+  [ -z "$t" ] && t=$(printf '%s' "$cmd" | sed -n 's/^[[:space:]]*cd[[:space:]]\{1,\}\([^[:space:]&;|]\{1,\}\).*/\1/p' | head -1)
   [ -n "$t" ] && target="$t"
 fi
 [ -z "$target" ] && target="${CODEX_PROJECT_DIR:-.}"
@@ -69,35 +80,48 @@ staged=$(git -C "$target" diff --cached --no-color 2>/dev/null | grep '^+' | gre
 [ -z "$staged" ] && exit 0
 
 # --- 3. Descarta o que e claramente exemplo ------------------------------
-# Vale para TODAS as regras, nao so a generica: AKIAIOSFODNN7EXAMPLE e a chave de
-# exemplo oficial da AWS e aparece em todo .env.example e em toda documentacao de
-# integracao. Bloquear documentacao de exemplo e o caminho mais curto para o
-# usuario desligar o hook.
-NOISE='(EXAMPLE|example|sample|dummy|placeholder|changeme|your[_-]|xxx+|\*\*\*\*|\{\{|\$\{|<[a-zA-Z_]+>|process\.env|os\.environ|getenv|redacted|fake|seed|fixture|mock|demo|test[_-]?only|local[_-]?dev|wJalrXUtnFEMI)'
-clean=$(printf '%s' "$staged" | grep -vE "$NOISE" 2>/dev/null)
-[ -z "$clean" ] && exit 0
+# O filtro atua sobre o VALOR CASADO, nao sobre a linha inteira. Filtrar a linha
+# derruba a varredura com uma palavra comum: `// conta demo` num comentario, ou
+# um `${DB_HOST}` no fim da URL, fazia uma AWS key real e uma senha de producao
+# real passarem inteiras. A assinatura ja e especifica; quem precisa parecer
+# exemplo e a credencial, nao o texto ao redor dela.
+VALUE_NOISE='(EXAMPLE|example|sample|dummy|placeholder|changeme|your[_-]|xxx+|\*\*\*\*|\{\{|\$\{|<[a-zA-Z_]+>|redacted|fake|wJalrXUtnFEMI)'
 
 hits=""
 hit() { hits="$hits  - $1\n"; }
-has() { printf '%s' "$clean" | grep -qE "$1" 2>/dev/null; }
+# Assinatura especifica: casa, depois descarta a propria credencial se ela for
+# obviamente de exemplo (AKIAIOSFODNN7EXAMPLE aparece em toda documentacao AWS).
+sig() {
+  printf '%s' "$staged" | grep -oE "$1" 2>/dev/null | grep -vqE "$VALUE_NOISE" 2>/dev/null && hit "$2"
+}
 
-has 'AKIA[0-9A-Z]{16}'                        && hit "AWS Access Key ID (AKIA...)"
-has 'ASIA[0-9A-Z]{16}'                        && hit "AWS temporary key (ASIA...)"
-has 'gh[pousr]_[A-Za-z0-9]{36,}'              && hit "GitHub token (ghp_/gho_/ghu_/ghs_/ghr_)"
-has 'github_pat_[A-Za-z0-9_]{50,}'            && hit "GitHub fine-grained PAT"
-has '(^|[^A-Za-z0-9_])sk-[A-Za-z0-9_-]{20,}'  && hit "chave de API no formato sk-..."
-has '(^|[^A-Za-z0-9_])(sk|rk)_(live|test)_[A-Za-z0-9]{16,}' && hit "chave Stripe"
-has 'xox[baprs]-[A-Za-z0-9-]{10,}'            && hit "token Slack (xox...)"
-has 'AIza[0-9A-Za-z_-]{35}'                   && hit "chave Google API (AIza...)"
-has 'SG\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}' && hit "chave SendGrid"
-has 'BEGIN [A-Z ]*PRIVATE KEY'                && hit "bloco de chave privada (PEM)"
-has '(postgres|postgresql|mysql|mongodb(\+srv)?|redis|amqp)://[^:/@[:space:]]+:[^@[:space:]]{6,}@' \
-                                              && hit "URL de conexao com senha embutida"
+sig 'AKIA[0-9A-Z]{16}'                        "AWS Access Key ID (AKIA...)"
+sig 'ASIA[0-9A-Z]{16}'                        "AWS temporary key (ASIA...)"
+sig 'gh[pousr]_[A-Za-z0-9]{36,}'              "GitHub token (ghp_/gho_/ghu_/ghs_/ghr_)"
+sig 'github_pat_[A-Za-z0-9_]{50,}'            "GitHub fine-grained PAT"
+sig '(^|[^A-Za-z0-9_])sk-[A-Za-z0-9_-]{20,}'  "chave de API no formato sk-..."
+sig '(^|[^A-Za-z0-9_])(sk|rk)_(live|test)_[A-Za-z0-9]{16,}' "chave Stripe"
+sig 'xox[baprs]-[A-Za-z0-9-]{10,}'            "token Slack (xox...)"
+sig 'AIza[0-9A-Za-z_-]{35}'                   "chave Google API (AIza...)"
+sig 'SG\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}' "chave SendGrid"
+sig 'BEGIN [A-Z ]*PRIVATE KEY'                "bloco de chave privada (PEM)"
+# URL de conexao: o ruido vale so para a SENHA. Olhar o casamento inteiro fazia
+# `postgres://sample_user:Tr0ub4dor3xyz@db.prod/app` passar por causa do usuario.
+printf '%s' "$staged" \
+  | grep -oE '(postgres|postgresql|mysql|mongodb(\+srv)?|redis|amqp)://[^:/@[:space:]]+:[^@[:space:]]{6,}@' 2>/dev/null \
+  | sed 's|.*:||; s|@$||' \
+  | grep -qvE "$VALUE_NOISE" 2>/dev/null && hit "URL de conexao com senha embutida"
 
-# Atribuicao generica: valor longo, sem cara de exemplo (o filtro acima ja passou).
-printf '%s' "$clean" \
-  | grep -iE '(api[_-]?key|secret|password|passwd|token|private[_-]?key|access[_-]?key)["'"'"']?[[:space:]]*[:=][[:space:]]*["'"'"'][^"'"'"']{16,}["'"'"']' 2>/dev/null \
-  | grep -q . 2>/dev/null && hit "atribuicao de segredo com valor literal longo"
+# Atribuicao generica. O ruido atua sobre o VALOR, nao sobre a linha: `// demo`
+# num comentario nao torna a senha ao lado um exemplo. So `process.env` e
+# companhia ficam no nivel da linha, porque ali a linha inteira e uma
+# REFERENCIA a um segredo, nao um segredo.
+VALUE_NOISE_GEN="$VALUE_NOISE"'|(seed|fixture|mock|demo|test[_-]?only|local[_-]?dev|lorem|foobar|s3cr3t)'
+printf '%s' "$staged" \
+  | grep -vE '(process\.env|os\.environ|getenv)' 2>/dev/null \
+  | grep -ioE '(api[_-]?key|secret|password|passwd|token|private[_-]?key|access[_-]?key)["'"'"']?[[:space:]]*[:=][[:space:]]*["'"'"'][^"'"'"']{16,}["'"'"']' 2>/dev/null \
+  | sed 's/^[^:=]*[:=][[:space:]]*//' \
+  | grep -qivE "$VALUE_NOISE_GEN" 2>/dev/null && hit "atribuicao de segredo com valor literal longo"
 
 [ -z "$hits" ] && exit 0
 
@@ -129,6 +153,6 @@ O framework tem lugar para isto:
 Se for falso-positivo: NAO adianta "git commit --no-verify" — essa flag pula os
 hooks do proprio git, nao este portao, e o comando sera bloqueado de novo. Tire o
 arquivo do stage, ou desative este hook removendo a entrada de no-secrets.sh em
-hooks.json da sua copia instalada.
+hooks/hooks/hooks.json da sua copia instalada.
 MSG
 exit 2

@@ -96,6 +96,10 @@ case "$blueprint" in
       next="/blueprint:prototype  (o contrato de API sai da interface, nao o contrario)"
     elif [ "$backend" != "ausente" ] && [ "${backend%%/*}" != "${backend##*/}" ]; then
       next="/blueprint:backend"
+    elif [ "$shared" != "ausente" ] && [ "${shared%%/*}" != "${shared##*/}" ]; then
+      # Antes do scaffold: o codegen-setup congela nomes, e termo corrigido
+      # depois de src/contracts/ existir ja nasceu errado nos tipos.
+      next="/blueprint:shared  (glossario, eventos e erro->UX — antes do scaffold)"
     elif [ -f "$root/docs/specs/TASKS.md" ]; then
       next="/blueprint:build"
     else

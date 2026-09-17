@@ -51,20 +51,44 @@ for d in "$gitdir" "${TMPDIR:-/tmp}"; do
 done
 
 base=""
+raw=""
 [ -n "$state" ] && [ -f "$state/.blueprint-base-$key" ] && \
-  base=$(cat "$state/.blueprint-base-$key" 2>/dev/null | tr -cd '0-9a-f')
+  raw=$(cat "$state/.blueprint-base-$key" 2>/dev/null | tr -d ' \n')
+if [ "$raw" = "EMPTY" ]; then
+  # O repositorio nao tinha commit nenhum quando a sessao comecou: a base e a
+  # arvore vazia, entao TUDO que existe hoje e trabalho desta sessao.
+  base=$(git -C "$root" hash-object -t tree /dev/null 2>/dev/null)
+else
+  base=$(printf '%s' "$raw" | tr -cd '0-9a-f')
+fi
 # Base invalida (branch reescrito, commit removido) nao serve.
-[ -n "$base" ] && ! git -C "$root" cat-file -e "$base^{commit}" 2>/dev/null && base=""
+if [ -n "$base" ] && [ "$raw" != "EMPTY" ] && ! git -C "$root" cat-file -e "$base^{commit}" 2>/dev/null; then
+  base=""
+fi
+# Base que NAO e ancestral do HEAD tambem nao serve: depois de um `git reset
+# --hard` para tras dela, ou de uma troca de branch, `git diff <base>` mostra o
+# INVERSO das mudancas — um marcador que a base tinha e o HEAD atual nao vira
+# "perdeu o marcador", com a arvore limpa e nada para o agente desfazer.
+if [ -n "$base" ] && [ "$raw" != "EMPTY" ] && ! git -C "$root" merge-base --is-ancestor "$base" HEAD 2>/dev/null; then
+  base=""
+  [ -n "$state" ] && rm -f "$state/.blueprint-base-$key"
+fi
 [ -z "$base" ] && base="HEAD"
 
 diff=$(git -C "$root" diff --no-color "$base" 2>/dev/null)
 [ -z "$diff" ] && diff=$(git -C "$root" diff --no-color 2>/dev/null)
+[ -z "$diff" ] && diff=$(git -C "$root" ls-files --others --exclude-standard 2>/dev/null)
 if [ -z "$diff" ]; then
   [ -n "$state" ] && rm -f "$state"/.blueprint-stop-"$key"
   ok
 fi
 
 changed=$(git -C "$root" diff --name-only "$base" 2>/dev/null)
+# `git diff` nunca lista arquivo novo nao rastreado. Um arquivo de teste NOVO
+# cheio de it.skip passava inteiro — e as skills que escrevem no projeto-alvo
+# mandam explicitamente nao commitar, entao arvore com untracked e o estado
+# normal no Stop, nao a excecao.
+untracked=$(git -C "$root" ls-files --others --exclude-standard 2>/dev/null)
 
 problems=""
 W='[^A-Za-z0-9_.]'
@@ -77,15 +101,19 @@ if [ -d "$root/docs/blueprint" ]; then
     [ -z "$f" ] && continue
     case "$f" in docs/*) ;; *) continue ;; esac
     [ -f "$root/$f" ] || continue
-    was=$(git -C "$root" show "$base:$f" 2>/dev/null | grep -o 'APPEND:[a-z0-9-]*' 2>/dev/null | sort -u)
+    # Compara o MARCADOR INTEIRO, nao so o token. Conferir `APPEND:entities`
+    # deixava passar `<!-- APPEND:entities` (comentario sem fecho, que renderiza
+    # como texto) e ate prosa solta com o token no meio: o token sobrevivia, o
+    # ponto de insercao nao. E por marcador inteiro a colisao de prefixo
+    # (APPEND:webhooks vs APPEND:webhooks-enviados) continua coberta.
+    MK='<!--[[:space:]]*APPEND:[a-z0-9-]*[[:space:]]*-->'
+    was=$(git -C "$root" show "$base:$f" 2>/dev/null | grep -oE "$MK" 2>/dev/null | sort -u)
     [ -z "$was" ] && continue
-    # Comparacao por TOKEN: "APPEND:webhooks" e substring de
-    # "APPEND:webhooks-enviados", e docs/backend/13-integrations.md tem os dois.
-    now=$(grep -o 'APPEND:[a-z0-9-]*' "$root/$f" 2>/dev/null | sort -u)
+    now=$(grep -oE "$MK" "$root/$f" 2>/dev/null | sort -u)
     while IFS= read -r m; do
       [ -z "$m" ] && continue
-      printf '%s\n' "$now" | grep -qx "$m" 2>/dev/null \
-        || problems="$problems  - $f perdeu o marcador <!-- $m -->$NL"
+      printf '%s\n' "$now" | grep -qxF "$m" 2>/dev/null \
+        || problems="$problems  - $f perdeu o marcador $m$NL"
     done <<EOF
 $was
 EOF
@@ -108,6 +136,19 @@ while IFS= read -r f; do
   fi
 done <<EOF
 $tests_changed
+EOF
+
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  case "$f" in
+    *.test.*|*.spec.*|*_test.*|*_spec.rb|*test_*.py|*/tests/*|*/test/*|*/__tests__/*|*/e2e/*) ;;
+    *) continue ;;
+  esac
+  if grep -qE "$SKIP" "$root/$f" 2>/dev/null; then
+    problems="$problems  - $f e um arquivo de teste NOVO ja nascendo silenciado$NL"
+  fi
+done <<EOF
+$untracked
 EOF
 
 if [ -z "$problems" ]; then

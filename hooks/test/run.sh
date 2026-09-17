@@ -24,6 +24,12 @@ run() { # descricao, exit esperado, payload json, script
 }
 
 T=$(mktemp -d); trap 'rm -rf "$T"' EXIT
+mkdir -p "$T/pipe/docs/blueprint" "$T/pipe/docs/backend" "$T/pipe/docs/shared"
+for i in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16; do
+  printf '# %s\n\nconteudo real do projeto.\n\n<!-- APPEND:x -->\n' "$i" > "$T/pipe/docs/blueprint/$i-doc.md"
+done
+printf '# B\n\nconteudo real.\n' > "$T/pipe/docs/backend/00-backend-vision.md"
+printf '# Glossario\n\n| {{Termo}} | {{Definicao}} |\n' > "$T/pipe/docs/shared/glossary.md"
 mkdir -p "$T/docs/blueprint" "$T/docs/prototype" "$T/proj/src/__tests__" "$T/proj/tests"
 printf '# Doc\nConteudo real do projeto.\n<!-- APPEND:entities -->\n' > "$T/docs/blueprint/04-domain-model.md"
 printf '# Doc\n{{placeholder}}\n<!-- APPEND:tables -->\n'            > "$T/docs/blueprint/05-data-model.md"
@@ -259,11 +265,90 @@ else
   pass=$((pass+1)); printf '  ok    status.sh do Claude nao cita comando do Codex\n'
 fi
 
+echo "== regressao: achados do ciclo 2 =="
+
+# #7 + #11: o ramo que compara com o TEMPLATE PRISTINO nao tinha teste nenhum —
+# e por isso o bug do ${#*/docs/} passou. Projeto dentro de um .../docs/.
+PR="$T/dd/docs/proj"
+mkdir -p "$PR"
+cp -r "$HOOKS/../docs" "$PR/docs"
+CP="$PR/docs/frontend/web/14-copies.md"
+run "template pristino aceita Write (comparado com o do plugin)" 0 \
+  "{\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"$PR/docs/blueprint/05-data-model.md\",\"content\":\"x\"}}" docs-integrity.sh
+printf '# Copies\n\n| {{auth.login.title}} | Entrar |\n\n<!-- APPEND:copies -->\n' > "$CP"
+outp=$(printf '{"tool_name":"Write","tool_input":{"file_path":"'"$CP"'","content":"x"}}' \
+  | CLAUDE_PLUGIN_ROOT="$HOOKS/.." bash "$HOOKS/docs-integrity.sh" 2>&1); rcp=$?
+if [ "$rcp" = 2 ]; then
+  pass=$((pass+1)); printf '  ok    projeto dentro de .../docs/ ainda resolve o template certo\n'
+else
+  fail=$((fail+1)); printf '  FALHA caminho com /docs/ duplicado comparou com o template errado (exit %s)\n' "$rcp"
+fi
+
+# #8: o token sobrevive, o ponto de insercao nao.
+printf '# D\n\nreal\n\n<!-- APPEND:entities -->\n' > "$T/docs/blueprint/04-domain-model.md"
+run "quebrar o comentario do marcador bloqueia" 2 \
+  "{\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"$T/docs/blueprint/04-domain-model.md\",\"old_string\":\"<!-- APPEND:entities -->\",\"new_string\":\"<!-- APPEND:entities\"}}" docs-integrity.sh
+run "virar o marcador em prosa bloqueia" 2 \
+  "{\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"$T/docs/blueprint/04-domain-model.md\",\"old_string\":\"<!-- APPEND:entities -->\",\"new_string\":\"antes tinha APPEND:entities aqui\"}}" docs-integrity.sh
+
+# #4/#5/#6: o limiar que importa e o global.
+run "global 80->20 com bloco permissivo ja presente bloqueia" 2 \
+  "$(mk Edit "$T/proj/jest.config.js" \
+      'coverageThreshold: { global: { lines: 80 }, "./src/gen/": { lines: 10 } }' \
+      'coverageThreshold: { global: { lines: 20 }, "./src/gen/": { lines: 10 } }')" tests-integrity.sh
+run "acrescentar bloco permissivo para codigo gerado passa" 0 \
+  "$(mk Edit "$T/proj/jest.config.js" \
+      'coverageThreshold: { global: { branches: 80, lines: 80 } }' \
+      'coverageThreshold: { global: { branches: 80, lines: 80 }, "./src/generated/": { branches: 0, lines: 0 } }')" tests-integrity.sh
+run "apertar max-lines no setup.cfg nao e cobertura" 0 \
+  "$(mk Edit "$T/proj/setup.cfg" 'max-lines = 300' 'max-lines = 200')" tests-integrity.sh
+run "apertar max-lines no pyproject.toml nao e cobertura" 0 \
+  "$(mk Edit "$T/proj/pyproject.toml" 'max-lines = 300' 'max-lines = 200')" tests-integrity.sh
+run "fail_under 90->50 bloqueia" 2 \
+  "$(mk Edit "$T/proj/setup.cfg" 'fail_under = 90' 'fail_under = 50')" tests-integrity.sh
+
+# #1: caminho com espaco zerava a varredura de credenciais em silencio.
+if command -v git >/dev/null 2>&1; then
+  SP="$T/my app"; mkdir -p "$SP"
+  ( cd "$SP" && git init -q . && git config user.email t@t && git config user.name t \
+    && printf 'AWS_KEY = "AKIAQQQQWWWWEEEERRRR"\n' > leak.js && git add -A )
+  for form in "cd \"$SP\" && git commit -m x" "git -C \"$SP\" commit -m x"; do
+    run "credencial em caminho com espaco bloqueia: ${form%% *}..." 2 \
+      "$(python3 -c 'import json,sys;print(json.dumps({"tool_name":"Bash","tool_input":{"command":sys.argv[1]}}))' "$form")" no-secrets.sh
+  done
+fi
+
+# #13/#22: o ruido vale para o VALOR, nao para a linha nem para o usuario da URL.
+if command -v git >/dev/null 2>&1; then
+  ORIG4=$PWD; cd "$G" || exit 1
+  stage 'const password = "Tr0ub4dor3-9x7Qmz" // demo account'
+  run "senha real com // demo no comentario bloqueia" 2 "$CMT" no-secrets.sh
+  stage 'const xxx_password = "Tr0ub4dor3-9x7Qmz"'
+  run "senha real com xxx no NOME da variavel bloqueia" 2 "$CMT" no-secrets.sh
+  stage 'DB=postgres://sample_user:Tr0ub4dor3xyz@db.prod:5432/app' env
+  run "URL cujo USUARIO contem sample bloqueia" 2 "$CMT" no-secrets.sh
+  stage 'password: "LocalDevPassword2024" # seed de desenvolvimento'
+  run "senha de seed de desenvolvimento continua passando" 0 "$CMT" no-secrets.sh
+  stage 'const key = process.env.API_KEY'
+  run "referencia a env continua passando" 0 "$CMT" no-secrets.sh
+  git reset -q; rm -f f.*
+  cd "$ORIG4" || exit 1
+fi
+
+# #17: a fase shared some do "proximo passo"?
+outs=$(CLAUDE_PROJECT_DIR="$T/pipe" bash "$HOOKS/status.sh" 2>&1)
+if printf '%s' "$outs" | grep -q 'blueprint:shared'; then
+  pass=$((pass+1)); printf '  ok    status aponta /blueprint:shared antes do scaffold\n'
+else
+  fail=$((fail+1)); printf '  FALHA status pula a fase shared e manda direto para o scaffold\n'
+  printf '%s\n' "$outs" | head -6 | sed 's/^/          /'
+fi
+
 echo "== portabilidade: sem extensoes GNU nos padroes =="
 # Comentario pode citar \b e \s para explicar por que nao se usa; o que importa
 # e o codigo. Por isso tudo a partir do primeiro # e descartado antes do teste.
 for h in docs-integrity tests-integrity no-secrets docs-complete status; do
-  offenders=$(sed 's/#.*//' "$HOOKS/$h.sh" | grep -nE '\\b|\\s|\(\?[!=]' 2>/dev/null)
+  offenders=$(sed 's/#.*//' "$HOOKS/$h.sh" | grep -nE '\\b|\\s|\(\?[!=]|sed[^|]*\\\\\|' 2>/dev/null)
   if [ -n "$offenders" ]; then
     fail=$((fail+1)); printf '  FALHA %s.sh usa \\b, \\s ou lookahead (falha calado no BSD grep)\n' "$h"
     printf '%s\n' "$offenders" | head -3 | sed 's/^/          /'

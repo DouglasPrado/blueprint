@@ -46,7 +46,14 @@ NL='
 '
 TAB=$(printf '\t')
 
-files=$(printf '%s' "$patch" | sed -n 's/^\*\*\* \(Update\|Add\|Delete\) File: //p' | sort -u)
+# Tres expressoes em vez de \( a\|b \): alternancia com \| e extensao GNU. No
+# sed do BSD ela vira um | literal, nenhuma linha casa, `files` sai vazio e o
+# hook inteiro vira no-op silencioso — o modo de falha que esta suite existe
+# para impedir.
+files=$(printf '%s' "$patch" \
+  | sed -n -e 's/^\*\*\* Update File: //p' \
+           -e 's/^\*\*\* Add File: //p' \
+           -e 's/^\*\*\* Delete File: //p' | sort -u)
 [ -z "$files" ] && exit 0
 
 problems=""
@@ -61,7 +68,10 @@ tagged=$(printf '%s' "$patch" | awk -v t="$TAB" '
 
 while IFS= read -r f; do
   [ -z "$f" ] && continue
-  body=$(printf '%s\n' "$tagged" | grep -F "$f$TAB" 2>/dev/null | sed "s|^.*$TAB||")
+  # [^TAB]* e nao .* : `.*` e guloso e cortaria no ULTIMO tab, fazendo a linha
+  # perder o +/- inicial. Go e Makefile indentam com tab; um t.Skip() indentado
+  # sumia de "added" e o hook nao via nada.
+  body=$(printf '%s\n' "$tagged" | grep -F "$f$TAB" 2>/dev/null | sed "s|^[^$TAB]*$TAB||")
   added=$(printf '%s' "$body"   | grep '^+' 2>/dev/null | sed 's/^+//')
   removed=$(printf '%s' "$body" | grep '^-' 2>/dev/null | sed 's/^-//')
 
@@ -71,8 +81,12 @@ while IFS= read -r f; do
       # So atua onde ha marca do framework — "docs/backend/" existe em projetos
       # que nunca ouviram falar deste plugin.
       marked=0
+      # Relativo ao projeto, nao ao CWD: o PreToolUse pode rodar de outro
+      # diretorio, e ai a verificacao se desligava em silencio.
+      pr="${CODEX_PROJECT_DIR:-$PWD}"
+      [ -f "$pr/$f" ] && grep -q '<!-- APPEND:' "$pr/$f" 2>/dev/null && marked=1
       [ -f "$f" ] && grep -q '<!-- APPEND:' "$f" 2>/dev/null && marked=1
-      [ -d "docs/blueprint" ] && marked=1
+      { [ -d "$pr/docs/blueprint" ] || [ -d "docs/blueprint" ]; } && marked=1
       if [ "$marked" = "1" ]; then
         # Comparacao por TOKEN: "APPEND:webhooks" e substring de
         # "APPEND:webhooks-enviados", e os dois convivem em 13-integrations.md.

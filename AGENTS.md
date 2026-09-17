@@ -39,7 +39,14 @@ repositório, então gerado defasado é plugin quebrado para quem instala.
 ## Os hooks do Codex não são derivados dos do Claude
 
 `tools/build-codex.py` traduz skills e templates, mas **copia** `codex/hooks/`
-sem traduzir. Isso é proposital — as duas plataformas divergem no que importa:
+sem traduzir. Isso é proposital — as duas plataformas divergem no que importa.
+
+A exceção é `no-secrets.sh`, que é **derivado** de `hooks/no-secrets.sh`: nada
+nele depende de nome de ferramenta, formato de payload ou evento. Manter duas
+cópias à mão só produziu drift — a do Codex ficou para trás de correções de
+segurança feitas na do Claude, e ninguém percebeu porque as duas suítes passavam.
+Se um hook do Codex passar a ser tradução pura de um do Claude, mova-o para o
+gerador em vez de copiar.
 
 | | Claude Code | Codex |
 | --- | --- | --- |
@@ -67,6 +74,13 @@ como aviso antecipado (sai mais barato desfazer antes), mas não é o portão.
 Se a issue #27833 fechar, o `apply-patch-guard` pode virar bloqueio de verdade —
 o `stop-gate` continua valendo de qualquer forma, por causa do `code_mode_exec`.
 
+**Limite conhecido do `stop-gate`:** a base da sessão é um arquivo em `.git/`.
+Um `rm -f .git/.blueprint-base-*` restabelece o bypass por commit. Isso não tem
+conserto dentro do modelo: o hook roda como o usuário, com as permissões do
+usuário, sobre o repositório do usuário. O portão existe para impedir que um
+agente sob pressão afrouxe a suíte sem querer, não para resistir a alguém que
+queira desligá-lo — para isso serve o CI, que roda onde o agente não escreve.
+
 **Contrato do `Stop`:** o exit code não decide nada; quem decide é o JSON no
 stdout, e stdout inválido vira erro de hook em **todo** turno. Por isso todo
 caminho de `stop-gate.sh` termina imprimindo JSON válido, inclusive os caminhos
@@ -75,8 +89,8 @@ de erro. Se você mexer nesse script, o teste que verifica isso é obrigatório.
 ## Antes de commitar
 
 ```bash
-bash hooks/test/run.sh          # 70 casos — hooks do Claude Code
-bash codex/hooks/test/run.sh    # 49 casos — hooks do Codex + estrutura do gerado
+bash hooks/test/run.sh          # 87 casos — hooks do Claude Code
+bash codex/hooks/test/run.sh    # 55 casos — hooks do Codex + estrutura do gerado
 python3 tools/build-codex.py --check
 ```
 

@@ -23,7 +23,17 @@ docs="$root/docs"
 if command -v git >/dev/null 2>&1 && git -C "$root" rev-parse --git-dir >/dev/null 2>&1; then
   _gd=$(git -C "$root" rev-parse --absolute-git-dir 2>/dev/null)
   _k=$(printf '%s' "$root" | cksum | cut -d' ' -f1)
-  _h=$(git -C "$root" rev-parse HEAD 2>/dev/null)
+  # --verify: num repositorio SEM commit nenhum, `git rev-parse HEAD` imprime a
+  # string literal "HEAD" no stdout. Gravada como base, ela nao e sha nenhum, o
+  # stop-gate degrada para `diff HEAD` e o bypass por commit fica aberto a sessao
+  # inteira — justo na primeira sessao de um projeto novo, que e a do pipeline.
+  _h=$(git -C "$root" rev-parse --verify --quiet HEAD 2>/dev/null)
+  case "$_h" in *[!0-9a-f]*|"") _h="" ;; esac
+  # Repositorio ainda sem commit: a base correta e "nada". Gravar o sentinela em
+  # vez de nao gravar nada — sem ele a sessao inteira degradaria para `diff HEAD`
+  # e o bypass por commit ficaria aberto justo na primeira sessao de um projeto
+  # novo, que e a do pipeline.
+  [ -z "$_h" ] && _h="EMPTY"
   if [ -n "$_h" ]; then
     for _d in "$_gd" "${TMPDIR:-/tmp}"; do
       [ -n "$_d" ] && [ -d "$_d" ] || continue
@@ -122,6 +132,10 @@ case "$blueprint" in
       next="blueprint-prototype  (o contrato de API sai da interface, nao o contrario)"
     elif [ "$backend" != "ausente" ] && [ "${backend%%/*}" != "${backend##*/}" ]; then
       next="blueprint-backend"
+    elif [ "$shared" != "ausente" ] && [ "${shared%%/*}" != "${shared##*/}" ]; then
+      # Antes do scaffold: o codegen-setup congela nomes, e termo corrigido
+      # depois de src/contracts/ existir ja nasceu errado nos tipos.
+      next="blueprint-shared  (glossario, eventos e erro->UX — antes do scaffold)"
     elif [ -f "$root/docs/specs/TASKS.md" ]; then
       next="blueprint-build"
     else

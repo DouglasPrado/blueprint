@@ -1,0 +1,209 @@
+#!/usr/bin/env bash
+# GERADO por tools/build-codex.py a partir de hooks/no-secrets.sh.
+# Nao edite aqui: edite a fonte e rode `python3 tools/build-codex.py`.
+# Blueprint — segredo nao entra no historico
+#
+# PreToolUse(Bash). Antes de um commit ou push, varre o que esta STAGED no
+# repositorio QUE VAI RECEBER o commit. Bloqueia se achar credencial.
+#
+# Regra do checklist de seguranca (blueprint/13-security.md): "Secrets nunca
+# commitados no repositorio."
+#
+# Segredo commitado nao se remove com um novo commit: fica no historico, nos
+# forks e em cada clone ja feito. O unico momento barato de impedir e antes.
+#
+# PORTABILIDADE: \b e \s sao extensoes GNU. No BSD grep do macOS \b nao e
+# fronteira de palavra e \s casa com a letra "s" — um hook escrito com eles vira
+# no-op silencioso justamente na plataforma onde mais se roda. Aqui tudo usa
+# classes POSIX explicitas.
+#
+# Na duvida, deixa passar.
+
+payload=$(cat 2>/dev/null) || exit 0
+[ -z "$payload" ] && exit 0
+
+cmd=""
+if command -v jq >/dev/null 2>&1; then
+  cmd=$(printf '%s' "$payload" | jq -r '.tool_input.command // empty' 2>/dev/null)
+elif command -v python3 >/dev/null 2>&1; then
+  cmd=$(printf '%s' "$payload" | python3 -c '
+import sys, json
+try:
+    sys.stdout.write((json.load(sys.stdin).get("tool_input") or {}).get("command") or "")
+except Exception:
+    pass
+' 2>/dev/null)
+fi
+[ -z "$cmd" ] && exit 0
+
+# --- 1. E mesmo um commit/push? -----------------------------------------
+# Ancorado no SUBCOMANDO. "git log --oneline | grep commit" nao e commit, e
+# bloquear leitura por causa do stage e o tipo de coisa que faz desligar o
+# plugin. Tolera "cd X && git ...", "git -C X ..." e flags globais.
+printf '%s' "$cmd" \
+  | grep -qE '(^|[;&|][[:space:]]*)[[:space:]]*git([[:space:]]+(-C[[:space:]]+("[^"]*"|'"'"'[^'"'"']*'"'"'|[^[:space:]]+)|-c[[:space:]]+[^[:space:]]+=[^[:space:]]*|--[a-z-]+=[^[:space:]]*|--[a-z-]+([[:space:]]+[^[:space:]=-][^[:space:]]*)?|-[a-z]))*[[:space:]]+(commit|push)([[:space:]]|$)' 2>/dev/null \
+  || exit 0
+
+command -v git >/dev/null 2>&1 || exit 0
+
+# --- 2. QUAL repositorio vai receber o commit? ---------------------------
+# O fluxo documentado do framework roda a documentacao num repo e o codigo em
+# outro (`blueprint-pipeline docs/prd.md web ../my-app/`). Varrer o CWD
+# protegeria o repo errado: falso-positivo no repo de docs e falso-negativo no
+# de codigo, na mesma linha.
+#
+# CAMINHO COM ESPACO: `cd "~/My Projects/app" && git commit`. Cortar no primeiro
+# branco devolvia "~/My" — que nao e diretorio, e a varredura inteira era pulada
+# em silencio. Aspas primeiro, sem aspas depois.
+target=""
+# "git -C <dir>" com aspas
+t=$(printf '%s' "$cmd" | sed -n 's/.*git[[:space:]]\{1,\}-C[[:space:]]\{1,\}"\([^"]\{1,\}\)".*/\1/p' | head -1)
+[ -z "$t" ] && t=$(printf '%s' "$cmd" | sed -n "s/.*git[[:space:]]\{1,\}-C[[:space:]]\{1,\}'\([^']\{1,\}\)'.*/\1/p" | head -1)
+# "git -C <dir>" sem aspas
+[ -z "$t" ] && t=$(printf '%s' "$cmd" | sed -n 's/.*git[[:space:]]\{1,\}-C[[:space:]]\{1,\}\([^[:space:]]\{1,\}\).*/\1/p' | head -1)
+[ -n "$t" ] && target="$t"
+# "cd <dir> && git ..." — o ULTIMO cd antes do git, nao o primeiro.
+# `cd /outro && cd /alvo && git commit` varria /outro: falso positivo num
+# repositorio e falso negativo no outro, na mesma linha.
+if [ -z "$target" ]; then
+  pre=${cmd%%git *}
+  t=$(printf '%s' "$pre" | tr ';&|' '\n\n\n' \
+        | sed -n 's/^[[:space:]]*cd[[:space:]]\{1,\}"\([^"]\{1,\}\)".*/\1/p; s/^[[:space:]]*cd[[:space:]]\{1,\}'"'"'\([^'"'"']\{1,\}\)'"'"'.*/\1/p; s/^[[:space:]]*cd[[:space:]]\{1,\}\([^[:space:]]\{1,\}\).*/\1/p' \
+        | tail -1)
+  [ -n "$t" ] && target="$t"
+fi
+
+# Tira aspas simples/duplas do caminho, se houver.
+[ -n "$target" ] && target=$(printf '%s' "$target" | sed "s/^['\"]//; s/['\"]$//")
+# Expande ~ e $HOME — o comando e texto, nao foi pelo shell ainda.
+case "$target" in
+  "~") target="$HOME" ;;
+  "~/"*) target="$HOME/${target#~/}" ;;
+  '$HOME') target="$HOME" ;;
+  '$HOME/'*) target="$HOME/${target#\$HOME/}" ;;
+esac
+# ALVO IRRESOLUVEL NAO PODE CALAR O HOOK. Antes, qualquer forma que nao
+# expandisse (variavel, subshell, caminho de outro container) fazia o
+# `[ -d ]` encerrar tudo em silencio. Agora cai no projeto, que e o palpite
+# certo quando nao da para saber.
+{ [ -n "$target" ] && [ -d "$target" ]; } || target="${CODEX_PROJECT_DIR:-.}"
+
+[ -d "$target" ] || exit 0
+git -C "$target" rev-parse --git-dir >/dev/null 2>&1 || exit 0
+
+# O que vai ser publicado depende do subcomando.
+#
+# commit  -> o indice. Com -a/-am/--all tambem a arvore de trabalho, porque
+#            esses commitam arquivo RASTREADO sem passar pelo indice: `diff
+#            --cached` sai vazio e o hook saia calado na forma de commit mais
+#            comum de um agente.
+# push    -> os COMMITS que ainda nao estao no remoto. Ate aqui o push casava o
+#            gatilho e depois varria `diff --cached`, que esta vazio logo apos
+#            um commit: o ramo push era codigo morto, e a ultima chance barata
+#            de impedir que o segredo va a publico nao fazia nada.
+#
+# A deteccao de `-a` olha o comando SEM as strings entre aspas. Procurar " -a"
+# no texto cru bloqueava `git commit -m "corrige flag -a do parser"` — mensagem
+# perfeitamente plausivel no formato de commit deste proprio repositorio.
+cmdnoq=$(printf '%s' "$cmd" | sed 's/"[^"]*"/""/g; s/'"'"'[^'"'"']*'"'"'/'"''"'/g')
+
+sub=commit
+printf '%s' "$cmdnoq" | grep -qE '(^|[;&|[:space:]])git([[:space:]]+[^[:space:]]+)*[[:space:]]+push([[:space:]]|$)' 2>/dev/null && sub=push
+
+if [ "$sub" = "push" ]; then
+  # O que este push acrescenta ao remoto. Sem upstream configurado, cai para o
+  # ultimo commit — melhor varrer pouco que varrer nada.
+  up=$(git -C "$target" rev-parse --abbrev-ref '@{upstream}' 2>/dev/null)
+  if [ -n "$up" ]; then
+    staged=$(git -C "$target" diff --no-color "$up"...HEAD 2>/dev/null)
+  else
+    staged=$(git -C "$target" diff --no-color 'HEAD~1' HEAD 2>/dev/null)
+  fi
+else
+  staged=$(git -C "$target" diff --cached --no-color 2>/dev/null)
+  case " $cmdnoq " in
+    *" -a "*|*" --all "*|*" -am "*|*" -ma "*|*" -av "*|*" -va "*)
+      staged="$staged
+$(git -C "$target" diff --no-color HEAD 2>/dev/null)" ;;
+  esac
+fi
+staged=$(printf '%s' "$staged" | grep '^+' | grep -v '^+++' 2>/dev/null)
+[ -z "$staged" ] && exit 0
+
+# --- 3. Descarta o que e claramente exemplo ------------------------------
+# O filtro atua sobre o VALOR CASADO, nao sobre a linha inteira. Filtrar a linha
+# derruba a varredura com uma palavra comum: `// conta demo` num comentario, ou
+# um `${DB_HOST}` no fim da URL, fazia uma AWS key real e uma senha de producao
+# real passarem inteiras. A assinatura ja e especifica; quem precisa parecer
+# exemplo e a credencial, nao o texto ao redor dela.
+VALUE_NOISE='(EXAMPLE|example|sample|dummy|placeholder|changeme|your[_-]|xxx+|\*\*\*\*|\{\{|\$\{|<[a-zA-Z_]+>|redacted|fake|wJalrXUtnFEMI)'
+
+hits=""
+hit() { hits="$hits  - $1\n"; }
+# Assinatura especifica: casa, depois descarta a propria credencial se ela for
+# obviamente de exemplo (AKIAIOSFODNN7EXAMPLE aparece em toda documentacao AWS).
+sig() {
+  printf '%s' "$staged" | grep -oE "$1" 2>/dev/null | grep -vqE "$VALUE_NOISE" 2>/dev/null && hit "$2"
+}
+
+sig 'AKIA[0-9A-Z]{16}'                        "AWS Access Key ID (AKIA...)"
+sig 'ASIA[0-9A-Z]{16}'                        "AWS temporary key (ASIA...)"
+sig 'gh[pousr]_[A-Za-z0-9]{36,}'              "GitHub token (ghp_/gho_/ghu_/ghs_/ghr_)"
+sig 'github_pat_[A-Za-z0-9_]{50,}'            "GitHub fine-grained PAT"
+sig '(^|[^A-Za-z0-9_])sk-[A-Za-z0-9_-]{20,}'  "chave de API no formato sk-..."
+sig '(^|[^A-Za-z0-9_])(sk|rk)_(live|test)_[A-Za-z0-9]{16,}' "chave Stripe"
+sig 'xox[baprs]-[A-Za-z0-9-]{10,}'            "token Slack (xox...)"
+sig 'AIza[0-9A-Za-z_-]{35}'                   "chave Google API (AIza...)"
+sig 'SG\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}' "chave SendGrid"
+sig 'BEGIN [A-Z ]*PRIVATE KEY'                "bloco de chave privada (PEM)"
+# URL de conexao: o ruido vale so para a SENHA. Olhar o casamento inteiro fazia
+# `postgres://sample_user:Tr0ub4dor3xyz@db.prod/app` passar por causa do usuario.
+printf '%s' "$staged" \
+  | grep -oE '(postgres|postgresql|mysql|mongodb(\+srv)?|redis|amqp)://[^:/@[:space:]]+:[^@[:space:]]{6,}@' 2>/dev/null \
+  | sed 's|.*:||; s|@$||' \
+  | grep -qvE "$VALUE_NOISE" 2>/dev/null && hit "URL de conexao com senha embutida"
+
+# Atribuicao generica. O ruido atua sobre o VALOR, nao sobre a linha: `// demo`
+# num comentario nao torna a senha ao lado um exemplo. So `process.env` e
+# companhia ficam no nivel da linha, porque ali a linha inteira e uma
+# REFERENCIA a um segredo, nao um segredo.
+VALUE_NOISE_GEN="$VALUE_NOISE"'|(seed|fixture|mock|demo|test[_-]?only|local[_-]?dev|lorem|foobar|s3cr3t)'
+printf '%s' "$staged" \
+  | grep -vE '(process\.env|os\.environ|getenv)' 2>/dev/null \
+  | grep -ioE '(api[_-]?key|secret|password|passwd|token|private[_-]?key|access[_-]?key)["'"'"']?[[:space:]]*[:=][[:space:]]*["'"'"'][^"'"'"']{16,}["'"'"']' 2>/dev/null \
+  | sed 's/^[^:=]*[:=][[:space:]]*//' \
+  | grep -qivE "$VALUE_NOISE_GEN" 2>/dev/null && hit "atribuicao de segredo com valor literal longo"
+
+[ -z "$hits" ] && exit 0
+
+files=$(git -C "$target" diff --cached --name-only 2>/dev/null | head -12 | sed 's/^/  /')
+where=$(cd "$target" 2>/dev/null && pwd)
+
+printf 'BLOQUEADO — ha credencial no que esta staged para commit.\n\n' >&2
+printf "$hits" >&2
+cat >&2 <<MSG
+
+Repositorio: $where
+Arquivos staged:
+$files
+
+Segredo commitado nao se remove com outro commit: ele permanece no historico, nos
+forks e em cada clone ja feito. Reescrever historico publicado e caro e nem sempre
+possivel. O unico momento barato de impedir e agora.
+
+O que fazer:
+  1. git -C "$target" restore --staged <arquivo>
+  2. mova o valor para variavel de ambiente e referencie por nome
+  3. registre a variavel em .env.example — SEM o valor
+  4. se a credencial ja foi exposta em algum lugar, ROTACIONE-A
+
+O framework tem lugar para isto:
+  docs/backend/13-integrations.md  — variaveis por integracao
+  docs/blueprint/13-security.md    — gestao e rotacao de chaves
+
+Se for falso-positivo: NAO adianta "git commit --no-verify" — essa flag pula os
+hooks do proprio git, nao este portao, e o comando sera bloqueado de novo. Tire o
+arquivo do stage, ou desative este hook removendo a entrada de no-secrets.sh em
+hooks/hooks.json da sua copia instalada.
+MSG
+exit 2

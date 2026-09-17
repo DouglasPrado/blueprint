@@ -1,0 +1,31 @@
+{
+  "name": "blueprint",
+  "displayName": "Blueprint",
+  "version": "1.0.0",
+  "description": "Engenharia de software orientada a documentacao: transforma um PRD em blueprint tecnico rastreavel, prototipo mockado, especificacao de backend e frontend, backlog, scaffold tipado e loop de build com portoes.",
+  "author": {
+    "name": "Douglas Prado",
+    "email": "douglas@oialbert.com.br"
+  },
+  "homepage": "https://github.com/DouglasPrado/blueprint",
+  "repository": "https://github.com/DouglasPrado/blueprint.git",
+  "license": "MIT",
+  "keywords": [
+    "documentation-driven",
+    "architecture",
+    "blueprint",
+    "prd",
+    "saas",
+    "prototype",
+    "api-contract",
+    "backend",
+    "frontend",
+    "adr",
+    "c4",
+    "tdd",
+    "codegen",
+    "scaffold"
+  ],
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json"
+}

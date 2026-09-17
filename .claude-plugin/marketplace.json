@@ -1,0 +1,16 @@
+{
+  "name": "blueprint",
+  "description": "Marketplace do Blueprint — engenharia de software orientada a documentacao para Claude Code.",
+  "owner": {
+    "name": "Douglas Prado",
+    "email": "douglas@oialbert.com.br"
+  },
+  "plugins": [
+    {
+      "name": "blueprint",
+      "description": "Transforma um PRD em blueprint tecnico rastreavel, prototipo mockado, especificacao de backend e frontend, backlog, scaffold tipado e loop de build com portoes. 26 skills, 58 documentos, hooks de qualidade.",
+      "source": "./",
+      "version": "1.0.0"
+    }
+  ]
+}

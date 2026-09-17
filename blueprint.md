@@ -505,7 +505,7 @@ Estes blocos vivem no **blueprint master** (`docs/blueprint/README.MD` §0.3, §
 
 **24 arquivos** terminam com uma tabela `Data | Decisão | Motivo`: exatamente os documentos **07 a 14 de cada um dos três clientes frontend** (`07-routes`, `08-flows`, `09-tests`, `10-performance`, `11-security`, `12-observability`, `13-cicd-conventions`, `14-copies` × web, mobile, desktop). **Nenhum documento de `docs/backend/`, de `docs/blueprint/` ou de `docs/frontend/shared/` tem essa seção** — é uma convenção que existe só na metade "de cliente" do frontend.
 
-É o mecanismo de rastreabilidade mais barato do framework: registra **por que aquele documento mudou**, sem exigir um ADR formal. Que ele não exista nos outros **54 documentos do repositório** (78 docs com os três clientes — 84 contando os 6 do protótipo —, menos os 24 que o têm) é, em si, uma assimetria a resolver — e explica por que só o frontend de cliente consegue responder *"por que essa decisão mudou?"* sem abrir um ADR.
+É o mecanismo de rastreabilidade mais barato do framework: registra **por que aquele documento mudou**, sem exigir um ADR formal. Que ele não exista nos outros **54 dos 78 documentos** do repositório (60 dos 84, contando os 6 do protótipo) é, em si, uma assimetria a resolver — e explica por que só o frontend de cliente consegue responder *"por que essa decisão mudou?"* sem abrir um ADR.
 
 | Nível | Artefato | Quando usar |
 | --- | --- | --- |
@@ -758,6 +758,10 @@ Nenhum achado de risco ALTO pode permanecer aberto quando /backend rodar.
 `/backend` lê `05-findings.md` **antes** de gerar qualquer documento e **para** se houver achado alto em aberto. O motivo é assimetria de custo: um contrato construído sobre lacuna conhecida propaga a lacuna para o schema, e schema com dados não se corrige com `/increment`.
 
 Resolver significa: `/increment` (local) ou `/patch` (global) no **blueprint técnico**, depois `/prototype-api` de novo para regenerar o contrato. O protótipo é evidência; o blueprint continua sendo a fonte de verdade.
+
+> **O portão tem uma exceção declarada, e ela é interessante.** No `/pipeline --prototype` não existe quem resolva um achado entre a fase 10 e a 11 — e achado de risco alto é o *produto esperado* da fase, não uma anomalia: um protótipo que não achou nada provavelmente não olhou direito. Se o portão valesse no modo autônomo, o caso **normal** seria o pipeline entregar o protótipo e nenhum documento de backend.
+>
+> A saída não é esconder: o pipeline desarma o portão, manda marcar cada ponto afetado com `<!-- construido sobre lacuna conhecida -->` e reporta no final quantos documentos nasceram assim, com instrução explícita de resolver **antes** de `/build`. É a mesma disciplina de `ASSUMPTIONS.md` aplicada a evidência em vez de inferência — e é o único lugar do framework onde a regra "fase que falha não interrompe a cadeia" precisou ser tensionada, porque aqui o documento incompleto **corrompe** o próximo.
 
 ### 7.5.6 O que sobrevive à fase
 

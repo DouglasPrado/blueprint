@@ -28,6 +28,8 @@ O prototipo e um frontend completo e mockado construido **antes** do backend. Qu
 > "O prototipo registrou {{N}} achados de risco alto ainda abertos. Um contrato construido sobre lacuna conhecida propaga a lacuna para o schema — e schema com dados nao se corrige com `/increment`.
 > Resolva com `/increment` ou `/patch`, rode `/prototype-api` para regenerar o contrato, e volte."
 
+> **Excecao — modo autonomo.** O `/pipeline` desarma este portao explicitamente, porque num run sem usuario nao ha quem resolva o achado entre uma fase e outra, e achado de risco alto e o *resultado esperado* da fase de prototipo, nao uma anomalia. Nesse caso os 15 documentos sao gerados marcando no ponto afetado `<!-- construido sobre lacuna conhecida: {achado} -->`, e o relatorio final do pipeline diz em voz alta quantos documentos nasceram assim. O portao vale integralmente no modo interativo — que e onde ele pode ser cumprido.
+
 **Regras quando o prototipo existe:**
 
 1. **Nao invente endpoint.** Endpoint que nao esta em `03-api-requirements.md` so entra se vier de um fluxo sem interface (webhook, worker, cron, integracao) — e a origem precisa ser citada.

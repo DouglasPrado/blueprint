@@ -53,10 +53,11 @@ Se houver um prototipo construido no projeto-alvo, parte do scaffold **ja existe
 | Artefato do prototipo | O que fazer |
 |---|---|
 | `src/types/` (entidades tipadas) | **Promova para `src/contracts/`**, conferindo contra `blueprint/04-domain-model.md` e o glossario. Nao recrie do zero |
-| `components/ui/` (design system implementado) | **Mantenha.** Foi construido a partir de `03-design-system.md` e e codigo de producao |
+| `src/components/ui/` (design system implementado) | **Mantenha.** Foi construido a partir de `03-design-system.md` e e codigo de producao |
 | `src/mocks/fixtures/` | **Converta em seeds** (`backend/04-data-layer.md`) e fixtures de teste (`backend/14-tests.md`) |
 | `src/mocks/handlers/` | **Descarte** — o backend real os substitui. Mantenha so o que serve a teste |
 | Rotas e telas | **Mantenha como esqueleto**; a integracao troca a origem dos dados, nao o layout |
+| **Configuracao** (`package.json`, `tsconfig.json`, lint, `.env.example`) | **Mescle, nunca reescreva.** Acrescente o que falta ao backend e remova so as dependencias exclusivas do mock (MSW). Reescrever do zero apaga as dependencias que sustentam o app mockado e quebra justamente o artefato que este passo deveria reaproveitar |
 
 > Conflito entre um tipo do prototipo e `04-domain-model.md` significa que `/prototype-api` deixou um achado passar. Registre em `docs/prototype/05-findings.md` e resolva no blueprint — nunca no tipo.
 
@@ -129,7 +130,10 @@ Salve em `{{projeto-alvo}}/CLAUDE.md`.
 A estrutura **deve** seguir `backend/02-project-structure.md` e `frontend/{client}/02-project-structure.md`.
 
 ### 6.1 Configuracao
-`package.json` (ou equivalente) com as dependencias da stack, `tsconfig.json`, `.env.example`, `.gitignore` e config de lint/format conforme o blueprint.
+
+**Se o projeto-alvo ainda nao tem configuracao:** gere `package.json` (ou equivalente) com as dependencias da stack, `tsconfig.json`, `.env.example`, `.gitignore` e config de lint/format conforme o blueprint.
+
+**Se ja tem** — caso do projeto onde o prototipo foi construido: **mescle**. Acrescente dependencias e scripts do backend, preserve os do frontend, e so entao remova as exclusivas do mock. Ver Passo 2.5.
 
 ### 6.2 Tipos Compartilhados (`src/contracts/`)
 

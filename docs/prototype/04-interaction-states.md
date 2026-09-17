@@ -25,10 +25,12 @@ Cataloga os estados que cada tela assume e os erros que a interface ja sabe trat
 
 > Preencha para cada tela de [`01-screens.md`](01-screens.md). Uma celula vazia e uma tela incompleta, nao um detalhe.
 
-| Tela | Carregando | Vazio | Erro | Parcial | Sem permissao |
-| --- | --- | --- | --- | --- | --- |
-| {{OrdersPage}} | {{Skeleton de 5 linhas}} | {{"Nenhum pedido ainda" + CTA}} | {{Banner + retry}} | {{Lista renderiza, total falha}} | {{Redirect}} |
-| {{ProfilePage}} | {{Skeleton de form}} | {{n/a}} | {{Toast + retry}} | {{n/a}} | {{404}} |
+> As quatro primeiras colunas sao **obrigatorias** em toda tela que busca dados. `Parcial` e `Sem permissao` sao condicionais — `n/a` e resposta valida quando a tela nao os admite.
+
+| Tela | Carregando | Vazio | Erro | Sucesso | Parcial | Sem permissao |
+| --- | --- | --- | --- | --- | --- | --- |
+| {{OrdersPage}} | {{Skeleton de 5 linhas}} | {{"Nenhum pedido ainda" + CTA}} | {{Banner + retry}} | {{Tabela paginada, 20 por pagina}} | {{Lista renderiza, total falha}} | {{Redirect}} |
+| {{ProfilePage}} | {{Skeleton de form}} | {{n/a}} | {{Toast + retry}} | {{Form preenchido, botao habilitado}} | {{n/a}} | {{404}} |
 
 <!-- APPEND:matriz-estados -->
 

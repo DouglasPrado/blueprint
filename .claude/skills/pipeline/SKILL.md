@@ -198,7 +198,32 @@ FINDINGS:
 - {achado} | {risco alto|medio|baixo} | {destino}
 ```
 
-### A fase 12 e diferente das outras
+### A fase 11 precisa de um override explicito
+
+A skill `/backend` tem um **portao**: se `docs/prototype/05-findings.md` tiver achado de risco alto em aberto, ela **para**. Esse portao existe para uso interativo, onde alguem resolve o achado com `/increment` antes de seguir.
+
+**Em modo autonomo nao ha quem resolva.** E achado de risco alto e o *produto esperado* da fase de prototipo — se ela nao achou nada, provavelmente nao olhou direito. Sem override, o caso **normal** do `--prototype` seria a fase 11 abortar, e o pipeline entregaria os documentos do prototipo sem backend nenhum.
+
+As regras genericas 1 a 6 nao cobrem portao. Acrescente ao prompt da fase 11:
+
+```
+O portao de docs/prototype/05-findings.md NAO se aplica neste run: nao ha
+usuario para resolver achado entre as fases, e achado de risco alto e o
+resultado esperado da fase de prototipo, nao uma anomalia.
+
+Em vez de parar:
+1. Gere os 15 documentos normalmente.
+2. Para CADA achado de risco alto ainda aberto, marque no documento afetado:
+   <!-- construido sobre lacuna conhecida: {achado} — ver prototype/05-findings.md -->
+3. Devolva todos eles em GAPS.
+
+Isto NAO torna a lacuna aceitavel. Torna-a rastreavel: o contrato foi
+construido em cima dela e o relatorio final vai dizer isso em voz alta.
+```
+
+> **Por que desarmar em vez de parar:** a regra do pipeline e que fase que falha nao interrompe a cadeia, porque documento incompleto nao corrompe o proximo. Aqui a regra e tensionada — contrato sobre lacuna conhecida **corrompe** o schema. A solucao nao e esconder: e construir marcando, e reportar de forma que ninguem implemente sem ler. O portao continua valendo integralmente no modo interativo, que e onde ele pode ser cumprido.
+
+### A fase de `codegen-setup` e diferente das outras
 
 `codegen-setup` escreve **codigo fora deste repositorio** e tem um portao objetivo: type check, lint e validacao de schema. As regras do modo autonomo mudam para ela:
 
@@ -336,6 +361,8 @@ O PRD nao cobre os pontos abaixo. Considere enriquece-lo e rodar `/increment`:
 >
 > **Achados do prototipo — {{n}} de risco alto.** Estes vem de **evidencia de codigo**, nao de inferencia; leia-os antes das suposicoes:
 > 1. {{achado}} → {{destino}}
+>
+> ⚠️ **{{n}} documentos de backend foram construidos sobre lacuna conhecida** (o portao foi desarmado para o run autonomo terminar). Cada um tem o marcador `<!-- construido sobre lacuna conhecida -->` no ponto afetado. Resolva os achados com `/increment`, rode `/prototype-api` para regenerar o contrato e `/increment` no backend — **antes** de `/build`. Implementar direto propaga a lacuna para o schema.
 >
 > **Scaffold ({{projeto-alvo}}):** typecheck {{ok|falhou}} · lint {{ok|falhou}} · schema {{ok|falhou}}
 >

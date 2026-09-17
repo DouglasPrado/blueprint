@@ -1,6 +1,6 @@
 ---
 name: increment
-description: Incrementa ou corrige qualquer blueprint (tecnico, backend, frontend) sem sobrescrever. Usa Edit.
+description: Incrementa ou corrige qualquer blueprint (tecnico, backend, frontend, prototipo) sem sobrescrever. Usa Edit.
 ---
 
 # Increment — Adicionar, Corrigir, Atualizar ou Remover

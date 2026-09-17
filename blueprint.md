@@ -6,7 +6,7 @@
 >
 > **O que este arquivo não é:** um substituto dos documentos individuais. Ele é a visão de conjunto; cada seção aponta para o arquivo-fonte onde o detalhe vive e é preenchido.
 >
-> **Sobre divergências:** onde os arquivos do repositório se contradizem entre si, este documento **registra o conflito e diz qual fonte seguir** em vez de escolher um lado em silêncio. As **seis divergências verificadas** estão em [§17.4](#174-divergências-internas-do-repositório-verificadas) e as **três lacunas estruturais do framework** em [§14.3](#143-marcadores-de-append-pontos-de-inserção-estáveis) — entre elas a mais consequente: **nenhuma skill gera `docs/shared/`**, de modo que o `/pipeline` entrega 48 documentos preenchidos, não 52.
+> **Sobre divergências:** onde os arquivos do repositório se contradizem entre si, este documento **registra o conflito e diz qual fonte seguir** em vez de escolher um lado em silêncio. As **seis divergências verificadas** estão em [§17.4](#174-divergências-internas-do-repositório-verificadas) e as **quatro lacunas estruturais do framework** — três em [§14.3](#143-marcadores-de-append-pontos-de-inserção-estáveis), a quarta no fecho de §17.4. A mais consequente: **nenhuma skill gera `docs/shared/`**, de modo que o `/pipeline` entrega 48 documentos preenchidos, não 52.
 
 | Campo | Valor |
 | --- | --- |
@@ -88,7 +88,8 @@ Três consequências práticas, que aparecem repetidas em todas as skills:
 
 ```
 MODO AUTÔNOMO (PRD detalhado, primeira versão rápida)
-  /pipeline docs/prd.md web ../meu-saas/   → 52 docs + scaffold tipado
+  /pipeline docs/prd.md web ../meu-saas/   → 48 docs preenchidos + scaffold tipado
+                                           (os 4 de docs/shared/ NAO sao gerados — ver §14.3)
   revisar docs/ASSUMPTIONS.md              → corrigir risco alto com /increment
   /build                                   → features em loop com portões
 
@@ -1722,6 +1723,7 @@ O framework cobre a engenharia de um SaaS com profundidade, mas há temas de Saa
 | `glossary.md` | `termos`, `acronimos`, `convencoes` *(linhas 10, 29, 47)* |
 | `error-ux-mapping.md` | `erros` *(linha 26)* |
 | `event-mapping.md` | `eventos`, `impacto` *(linhas 18, 45)* |
+| `MAPPING.md` | **nenhum** — é índice, não acumula entradas |
 
 > ⚠️ **Segunda lacuna do framework:** `docs/shared/` tem marcadores de append, mas **não é alvo de `/increment`**. Atenção à ambiguidade: a skill *oferece* a opção `shared`, mas apenas como **cliente de frontend** (`docs/frontend/shared/` — design system, data layer, api-dependencies). `docs/shared/` (glossário, error-ux-mapping, event-mapping, MAPPING) não é alvo em nenhum nível. Adicionar um termo ao glossário exige edição manual ou `/patch`.
 >
@@ -1748,7 +1750,7 @@ O framework cobre a engenharia de um SaaS com profundidade, mas há temas de Saa
 
 **Retomada:** verifica quais documentos já têm conteúdo real (sem `{{placeholders}}`) e pula as fases concluídas. Rodar `/pipeline` de novo continua de onde parou.
 
-**Isolamento de contexto:** cada fase roda num subagente com contexto limpo, lê só o que precisa, escreve seus documentos e devolve um **resumo compacto**. O orquestrador acumula os resumos — **nunca relê os documentos gerados**. É isso que permite produzir 52 documentos sem estourar a janela de contexto.
+**Isolamento de contexto:** cada fase roda num subagente com contexto limpo, lê só o que precisa, escreve seus documentos e devolve um **resumo compacto**. O orquestrador acumula os resumos — **nunca relê os documentos gerados**. É isso que permite produzir 48 documentos sem estourar a janela de contexto (os 4 de `docs/shared/` ficam de fora das 12 fases — ver §14.3).
 
 **Retorno padronizado de cada subagente:**
 ```
@@ -2071,7 +2073,20 @@ Um framework documentation-driven também sofre de deriva documental. Estas **se
 | 5 | **Prefixo de regra de negócio** | `docs/blueprint/04-domain-model.md`, `08-use_cases.md`, `backend/03-domain.md` e `/specs` usam **`RN-XX`**; `docs/templates/use-case-template.md:54` e `docs/blueprint/README.MD:356,608` usam **`RB-01`** | **`RN-XX`** — é o que os documentos modulares, o backend e o gerador de backlog usam. `RB-` sobrevive só no master e no template de caso de uso |
 | 6 | **Dono do `auth-flow.mmd`** | `docs/diagrams/README.md` §6 atribui todos os `sequences/*.mmd` a `07-critical_flows.md`; `/blueprint-quality` manda atualizá-lo ao gerar `13-security.md` | Ambos, em momentos diferentes: o fluxo nasce em `07` (fase 4) e o detalhe de autenticação é refinado por `13` (fase 5). Detalhado em §3.3 |
 
-> ⚠️ **E aqui está a quarta lacuna estrutural do framework:** `/patch` e `/increment` **não conseguem corrigir metade destas divergências**. A varredura do `/patch` cobre `docs/blueprint/`, `docs/backend/`, `docs/frontend/shared/`, `docs/frontend/*/`, `docs/shared/`, `docs/specs/` e `docs/adr/` — **`docs/templates/` e `docs/diagrams/` ficam de fora**, e `/increment` também não os alcança. Ou seja: a divergência #2 (`docs/diagrams/web/README.md`) e a classe (a) da #4 (as 8 ocorrências no `claudemd-template.md`) exigem **edição manual**. O framework tem ferramenta para corrigir a si mesmo, mas não para corrigir as próprias ferramentas.
+> ⚠️ **E aqui está a quarta lacuna estrutural do framework:** `/patch` e `/increment` **não alcançam cinco destas seis divergências**. A varredura do `/patch` cobre apenas `docs/blueprint/`, `docs/backend/`, `docs/frontend/shared/`, `docs/frontend/*/`, `docs/shared/`, `docs/specs/` e `docs/adr/`. Ficam **inteiramente fora de alcance** três diretórios: **`docs/templates/`**, **`docs/diagrams/`** e — o mais importante — **`.claude/skills/`**, já que a varredura só desce em `docs/**`. `/increment` é ainda mais restrito (só `blueprint`, `backend`, `frontend`).
+>
+> Onde cada divergência mora, e o que isso implica:
+>
+> | # | Ponta fora de alcance | Ponta alcançável | Correção |
+> | --- | --- | --- | --- |
+> | 1 | `.claude/skills/increment/SKILL.md` | — | **manual** |
+> | 2 | `docs/diagrams/web/README.md` + `.claude/skills/frontend-app/SKILL.md` | — | **manual (as duas pontas)** |
+> | 3 | `.claude/skills/blueprint-flows/SKILL.md` + `docs/templates/use-case-template.md` | `docs/blueprint/08-use_cases.md` | **manual** nas fontes; o doc gerado o `/patch` alcança |
+> | 4 | classe (a): `docs/templates/claudemd-template.md` (8 ocorrências) | classes (b)(c)(d): 17 arquivos em `docs/frontend/` e `docs/shared/` | `/patch` resolve a maior parte; o template é manual |
+> | 5 | `docs/templates/use-case-template.md:54` | `docs/blueprint/README.MD:356,608` | parcial |
+> | 6 | `docs/diagrams/README.md` + `.claude/skills/blueprint-quality/SKILL.md` | — | **manual (as duas pontas)** |
+>
+> **Quem usar §17.4 como lista de tarefas precisa saber disto:** rodar `/patch` corrige a maior parte da #4 e metade da #5, e nada mais. As outras quatro exigem edição manual. O framework tem ferramenta para corrigir a si mesmo, mas não para corrigir as próprias ferramentas — as skills, os templates e os diagramas estão fora de todo automatismo que ele oferece.
 >
 > Somem-se a estas as **três lacunas estruturais** registradas em §14.3: marcadores que a skill `/increment` não conhece · `docs/shared/` fora do alvo de `/increment` · `docs/shared/` sem skill que o gere. E a **inconsistência interna do `/specs`** (grupos `CTRL` e `VAL` no mapa, ausentes na saída), em §14.8.
 
@@ -2091,11 +2106,15 @@ docs/
 │   │                                   SEM equivalente modular — quem escolher "modulares"
 │   │                                   perde: §0.3 aprovações · §5 stakeholders · §11 integrações
 │   │                                   e interfaces · §20.1 SLA/SLO/error budget (não há "SLO"
-│   │                                   em nenhum dos 17) · §24 questões em aberto ·
-│   │                                   §9.5/§9.6 retenção, arquivamento, backup e RPO/RTO.
-│   │                                   Com equivalente PARCIAL: §4 escopo, §15 riscos/
+│   │                                   em nenhum dos 17) · §24 questões em aberto · e, de
+│   │                                   §9.6, backup/restauração com RPO, RTO e teste de
+│   │                                   restauração.
+│   │                                   Com equivalente PARCIAL: §4 escopo · §15 riscos/
 │   │                                   restrições/assunções (o master acrescenta IDs, owner,
-│   │                                   "impacto se falsa" e "fonte" — ver §4.5).
+│   │                                   "impacto se falsa" e "fonte" — ver §4.5) · §9.5
+│   │                                   retenção (existe por dado sensível em 13-security e
+│   │                                   por ambiente em 15-observability, mas sem a visão
+│   │                                   única por tipo de dado com justificativa).
 │   │                                   Escolha UM formato: master OU modulares (não sincronize os dois)
 │   ├── 00-context.md                   atores, sistemas externos, limites, restrições
 │   ├── 01-vision.md                    problema, pitch, objetivos, personas, métricas

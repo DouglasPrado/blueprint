@@ -9,14 +9,30 @@
 
 root="${CLAUDE_PROJECT_DIR:-$PWD}"
 docs="$root/docs"
-[ -d "$docs" ] || exit 0
+
+# Projeto sem docs/ e justamente o estado em que o SessionStart tem algo util a
+# dizer: o plugin esta instalado e os templates ainda nao. Sair calado aqui era
+# deixar sem resposta quem mais precisa dela.
+if [ ! -d "$docs" ]; then
+  if [ -n "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}" ]; then
+    echo "== Blueprint =="
+    echo "Plugin instalado, templates ainda nao. Rode blueprint-init na raiz deste projeto para instalar a biblioteca de documentos em docs/."
+  fi
+  exit 0
+fi
 
 # Um documento conta como PREENCHIDO quando nao tem mais {{placeholders}}.
+# README.MD e README.md sao referencia do framework, nao documento a preencher:
+# contados na suite, davam "2/18 preenchidos" num projeto recem-instalado e
+# faziam o ramo de "nada gerado ainda" nunca casar — o hook jamais sugeria o
+# comando de entrada da cadeia.
 suite_state() {
-  local dir="$1" total=0 done_=0 f
+  local dir="$1" total=0 done_=0 f base
   [ -d "$dir" ] || { printf 'ausente'; return; }
   for f in "$dir"/*.md "$dir"/*.MD; do
     [ -f "$f" ] || continue
+    base=$(basename "$f")
+    case "$base" in README.md|README.MD) continue ;; esac
     total=$((total+1))
     grep -q '{{' "$f" 2>/dev/null || done_=$((done_+1))
   done

@@ -44,11 +44,34 @@ file=$(field file_path)
 [ -z "$file" ] && exit 0
 
 # So opina sobre a documentacao do Blueprint.
+#
+# O caminho sozinho NAO basta: "docs/backend/" e "docs/frontend/" sao nomes
+# genericos que existem em projetos que nunca ouviram falar deste framework, e um
+# plugin instalado globalmente que bloqueia Write num docs/backend/README.md
+# alheio e um plugin que sera desinstalado. Por isso exige-se marca do framework:
+# ou o arquivo carrega um marcador <!-- APPEND: -->, ou existe um docs/blueprint/
+# na arvore acima dele.
 case "$file" in
   */docs/blueprint/*|*/docs/backend/*|*/docs/frontend/*|*/docs/prototype/*|*/docs/shared/*|*/docs/adr/*|*/docs/specs/*) ;;
   docs/blueprint/*|docs/backend/*|docs/frontend/*|docs/prototype/*|docs/shared/*|docs/adr/*|docs/specs/*) ;;
   *) exit 0 ;;
 esac
+
+is_blueprint=0
+[ -f "$file" ] && grep -q '<!-- APPEND:' "$file" 2>/dev/null && is_blueprint=1
+if [ "$is_blueprint" = "0" ]; then
+  # Sobe ate encontrar o docs/ do caminho e checa se ha docs/blueprint/ ao lado.
+  probe="$file"
+  while [ "$probe" != "/" ] && [ "$probe" != "." ] && [ -n "$probe" ]; do
+    probe=$(dirname "$probe")
+    case "$probe" in
+      */docs|docs)
+        [ -d "$probe/blueprint" ] && is_blueprint=1
+        break ;;
+    esac
+  done
+fi
+[ "$is_blueprint" = "1" ] || exit 0
 
 # --- 1. Write sobre documento preenchido ---------------------------------
 if [ "$tool" = "Write" ] && [ -f "$file" ]; then

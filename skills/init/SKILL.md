@@ -46,7 +46,7 @@ Se o usuario nao passou argumento:
 >
 > | Suite | Docs | Quando |
 > |---|---|---|
-> | **blueprint** | 17 | Sempre — e a fonte primaria do dominio |
+> | **blueprint** | 17 + o master `README.MD` | Sempre — e a fonte primaria do dominio |
 > | **shared** | 4 | Sempre — glossario e mapeamentos cross-layer |
 > | **prototype** | 6 | Se for descobrir o contrato de API construindo a UI antes do backend |
 > | **backend** | 15 | Se o sistema tem servidor |

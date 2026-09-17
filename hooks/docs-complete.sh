@@ -49,19 +49,24 @@ n=$(grep -o '{{[^}]*}}' "$file" 2>/dev/null | wc -l | tr -d ' ')
 
 sample=$(grep -o '{{[^}]*}}' "$file" 2>/dev/null | sort -u | head -5 | tr '\n' ' ')
 
-cat <<MSG
-Blueprint: $file foi escrito com $n {{placeholder}}(s) ainda no texto.
+# PostToolUse com exit 0 manda stdout para o transcript, nao para o modelo. Para
+# que o aviso chegue ao Claude, ele precisa vir como JSON em additionalContext —
+# caso contrario o hook carrega, roda, gasta timeout e nao muda nada.
+msg="Blueprint: $file foi escrito com $n {{placeholder}}(s) ainda no texto. Amostra: $sample
 
-Amostra: $sample
+A regra do framework e que nenhum placeholder sobre no arquivo final — um documento meio preenchido parece pronto e engana a fase seguinte, que vai consumi-lo como se fosse fato.
 
-A regra do framework e que nenhum placeholder sobre no arquivo final — um
-documento meio preenchido parece pronto e engana a fase seguinte, que vai
-consumi-lo como se fosse fato.
+Se a informacao nao existe no PRD nem nos documentos anteriores, o caminho e inferir e MARCAR a inferencia com <!-- assumido: {o que} — base: {de onde} --> e classificar o risco. Deixar {{placeholder}} nao e admitir a lacuna: e esconde-la atras de algo que parece template esquecido."
 
-Se a informacao nao existe no PRD nem nos documentos anteriores, o caminho e
-inferir e MARCAR a inferencia:
-  <!-- assumido: {o que foi assumido} — base: {de onde inferiu} -->
-e classificar o risco. Deixar {{placeholder}} nao e o mesmo que admitir a
-lacuna: e esconde-la atras de algo que parece template esquecido.
-MSG
+if command -v python3 >/dev/null 2>&1; then
+  MSG="$msg" python3 -c '
+import json, os
+print(json.dumps({"hookSpecificOutput": {
+    "hookEventName": "PostToolUse",
+    "additionalContext": os.environ["MSG"],
+}}))
+'
+else
+  printf '%s\n' "$msg"
+fi
 exit 0

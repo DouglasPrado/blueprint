@@ -1,20 +1,26 @@
 #!/usr/bin/env bash
 # Blueprint — integridade da suite de testes
 #
-# PreToolUse(Write|Edit). Bloqueia as tres formas de deixar a suite verde sem
-# fazer o codigo funcionar:
-#   1. pular teste (.skip / .only / xit / xdescribe / todo / @pytest.mark.skip / t.Skip)
-#   2. baixar limiar de cobertura
-#   3. desabilitar regra de lint com comentario de supressao
+# PreToolUse(Write|Edit). Bloqueia deixar a suite verde sem fazer o codigo
+# funcionar: teste silenciado ou limiar de cobertura rebaixado.
 #
-# Regra do /blueprint:build, literal:
-#   "PROIBIDO — estas acoes invalidam o resultado: apagar, pular ou afrouxar
-#    QUALQUER teste, novo ou existente, para deixar a suite verde."
+# Regra do blueprint-build, literal: "PROIBIDO — apagar, pular ou afrouxar
+# QUALQUER teste, novo ou existente, para deixar a suite verde."
 #
-# O portao de contagem do /blueprint:build pega teste apagado. Este hook pega
-# teste silenciado, que a contagem nao ve.
+# DOIS CUIDADOS QUE DEFINEM ESTE SCRIPT:
 #
-# Na duvida, deixa passar.
+# 1. Os padroes sao ancorados a IDENTIFICADOR DE TESTE. `fit(` solto casa com
+#    `model.fit(X_train, y_train)`; `.todo(` casa com `repo.todo(1)`; `pending(`
+#    casa com `order.pending()`. Bloquear ML e os dois dominios mais comuns de
+#    SaaS, dentro do loop autonomo do build, e o caminho curto para o usuario
+#    desligar tudo.
+#
+# 2. Em Write, a comparacao e contra o ARQUIVO EM DISCO, nao contra string
+#    vazia. Senao reescrever um teste que ja tinha um skip legitimo e
+#    documentado seria sempre bloqueado.
+#
+# PORTABILIDADE: sem \b, sem \s, sem lookahead — sao extensoes GNU e falham
+# calado no BSD grep do macOS.
 
 payload=$(cat 2>/dev/null) || exit 0
 [ -z "$payload" ] && exit 0
@@ -39,36 +45,32 @@ file=$(field file_path)
 [ -z "$file" ] && exit 0
 
 added=$(field new_string)
-[ -z "$added" ] && added=$(field content)
+if [ -z "$added" ]; then
+  added=$(field content)
+  # Write: o "antes" e o arquivo como esta no disco.
+  previous=""
+  [ -f "$file" ] && previous=$(cat "$file" 2>/dev/null)
+else
+  previous=$(field old_string)
+fi
 [ -z "$added" ] && exit 0
-previous=$(field old_string)
 
-# Conta ocorrencias de um padrao no texto novo e no antigo. So reclama do que
-# AUMENTOU — assim editar um arquivo que ja tinha um skip legitimo nao trava.
-# grep -c imprime "0" E sai com status 1 quando nao acha. Um "|| printf 0" aqui
-# concatena um segundo zero e quebra a comparacao numerica — por isso a contagem
-# passa por wc -l, que nao tem esse comportamento.
-count_matches() {
-  printf '%s' "$2" | grep -oE "$1" 2>/dev/null | wc -l | tr -d ' \n'
-}
+W='[^A-Za-z0-9_.]'   # nao-identificador, usado no lugar de \b
 
-grew() {
-  local pattern="$1" n_new n_old
-  n_new=$(count_matches "$pattern" "$added")
-  n_old=$(count_matches "$pattern" "$previous")
-  [ "${n_new:-0}" -gt "${n_old:-0}" ] 2>/dev/null
-}
+count() { printf '%s' "$2" | grep -oE "$1" 2>/dev/null | wc -l | tr -d ' \n'; }
+grew()  { local n o; n=$(count "$1" "$added"); o=$(count "$1" "$previous"); [ "${n:-0}" -gt "${o:-0}" ] 2>/dev/null; }
 
-is_test_file=0
+is_test=0
 case "$file" in
-  *.test.*|*.spec.*|*_test.*|*test_*.py|*/tests/*|*/test/*|*/__tests__/*|*/e2e/*|*.feature|*maestro/*) is_test_file=1 ;;
+  *.test.*|*.spec.*|*_test.*|*test_*.py|*/tests/*|*/test/*|*/__tests__/*|*/e2e/*|*.feature) is_test=1 ;;
 esac
 
 # --- 1. Teste silenciado -------------------------------------------------
-if [ "$is_test_file" = "1" ]; then
-  SKIP='(\.skip\(|\.only\(|\bxit\(|\bxdescribe\(|\bfit\(|\bfdescribe\(|\.todo\(|@pytest\.mark\.skip|@unittest\.skip|\bt\.Skip\(|\bt\.SkipNow\(|#\[ignore\]|\bpending\()'
+if [ "$is_test" = "1" ]; then
+  # Cada padrao exige o identificador do runner: it/test/describe/context/suite.
+  SKIP="((^|$W)(it|test|describe|context|suite)\.(skip|only|todo)\()|((^|$W)(xit|xtest|xdescribe|fit|fdescribe)\()|(@pytest\.mark\.skip)|(@unittest\.skip)|((^|$W)t\.Skip(Now)?\()|(#\[ignore\])|(\.skip\(\)[[:space:]]*$)"
   if grew "$SKIP"; then
-    found=$(printf '%s' "$added" | grep -oE "$SKIP" 2>/dev/null | sort -u | tr '\n' ' ')
+    found=$(printf '%s' "$added" | grep -oE "$SKIP" 2>/dev/null | sed "s/^[^A-Za-z@#.]//" | sort -u | tr '\n' ' ')
     cat >&2 <<MSG
 BLOQUEADO — a edicao silencia teste.
 
@@ -82,9 +84,9 @@ O que fazer em vez disso:
   - o teste esta certo e o codigo nao passa   -> corrija o CODIGO
   - o teste esta errado                        -> corrija o TESTE, nao o silencie
   - o blueprint mudou e o teste ficou obsoleto -> atualize o blueprint com
-      /blueprint:increment, depois reescreva o teste a partir dele
+      blueprint-increment, depois reescreva o teste a partir dele
   - o teste nao consegue satisfazer o blueprint -> pare e reporte o conflito;
-      e exatamente o caso que o /blueprint:build manda devolver como BLOCKED
+      e o caso que o blueprint-build manda devolver como BLOCKED
 
 Se este skip e temporario e deliberado, deixe o motivo e a condicao de remocao
 no proprio codigo, num commit separado — assim ele aparece na revisao em vez de
@@ -95,33 +97,44 @@ MSG
 fi
 
 # --- 2. Limiar de cobertura rebaixado ------------------------------------
+# So chaves que sao MESMO de cobertura, comparadas uma a uma. A versao ingenua
+# (menor numero de qualquer chave chamada "lines") trata apertar a regra de lint
+# `max-lines: 300 -> 200` como afrouxar cobertura.
 case "$file" in
-  *jest.config*|*vitest.config*|*package.json|*.nycrc*|*setup.cfg|*pyproject.toml|*.coveragerc|*sonar-project.properties|*codecov.yml|*.codecov.yml)
-    lower_new=$(printf '%s' "$added"    | grep -oE '(branches|functions|lines|statements|fail_under|minimum_coverage|coverage)["'"'"']?\s*[:=]\s*[0-9]+' 2>/dev/null | grep -oE '[0-9]+$' | sort -n | head -1)
-    lower_old=$(printf '%s' "$previous" | grep -oE '(branches|functions|lines|statements|fail_under|minimum_coverage|coverage)["'"'"']?\s*[:=]\s*[0-9]+' 2>/dev/null | grep -oE '[0-9]+$' | sort -n | head -1)
-    if [ -n "$lower_new" ] && [ -n "$lower_old" ] && [ "$lower_new" -lt "$lower_old" ]; then
-      cat >&2 <<MSG
+  *jest.config*|*vitest.config*|*.nycrc*|*setup.cfg|*pyproject.toml|*.coveragerc|*codecov.yml|*.codecov.yml|*package.json)
+    KEYS='(coverageThreshold|fail_under|minimum_coverage|min_coverage|branches|functions|statements|lines)'
+    # Em package.json/config so olha se ha bloco de cobertura por perto.
+    case "$file" in
+      *package.json)
+        printf '%s' "$added$previous" | grep -qE 'coverageThreshold' 2>/dev/null || exit 0 ;;
+    esac
+    for key in branches functions statements lines fail_under minimum_coverage min_coverage; do
+      vn=$(printf '%s' "$added"    | grep -oE "\"?$key\"?[[:space:]]*[:=][[:space:]]*[0-9]+" 2>/dev/null | grep -oE '[0-9]+$' | head -1)
+      vo=$(printf '%s' "$previous" | grep -oE "\"?$key\"?[[:space:]]*[:=][[:space:]]*[0-9]+" 2>/dev/null | grep -oE '[0-9]+$' | head -1)
+      if [ -n "$vn" ] && [ -n "$vo" ] && [ "$vn" -lt "$vo" ] 2>/dev/null; then
+        cat >&2 <<MSG
 BLOQUEADO — a edicao rebaixa o limiar de cobertura.
 
   $file
-  de $lower_old% para $lower_new%
+  $key: de $vo para $vn
 
 O limiar existe para falhar quando a cobertura cai. Baixa-lo transforma o portao
 em enfeite: ele passa a medir o que ja existe em vez do que foi combinado.
 
 Os limiares do Blueprint vivem em docs/blueprint/12-testing_strategy.md e
 docs/backend/14-tests.md (dominio 95%, services 90%, fluxos criticos 100%).
-Se a meta mudou de verdade, mude-a LA primeiro, com /blueprint:increment, e traga
+Se a meta mudou de verdade, mude-a LA primeiro, com blueprint-increment, e traga
 a configuracao atras da decisao — nao a decisao atras da configuracao.
 MSG
-      exit 2
-    fi
+        exit 2
+      fi
+    done
     ;;
 esac
 
-# --- 3. Supressao de lint nova em codigo de teste ------------------------
-if [ "$is_test_file" = "1" ]; then
-  SUPPRESS='(eslint-disable(-next-line)?\s|@ts-nocheck|@ts-ignore|# *type: *ignore|# *noqa(?![-:])|//nolint)'
+# --- 3. Supressao de lint nova em codigo de teste (aviso) ----------------
+if [ "$is_test" = "1" ]; then
+  SUPPRESS='(eslint-disable(-next-line)?[[:space:]])|(@ts-nocheck)|(@ts-ignore)|(#[[:space:]]*type:[[:space:]]*ignore)|(#[[:space:]]*noqa([^-:]|$))|(//nolint)'
   if grew "$SUPPRESS"; then
     cat >&2 <<MSG
 AVISO — a edicao acrescenta supressao de lint ou de tipo em arquivo de teste.

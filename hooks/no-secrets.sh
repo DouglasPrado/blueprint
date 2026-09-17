@@ -1,17 +1,21 @@
 #!/usr/bin/env bash
 # Blueprint — segredo nao entra no historico
 #
-# PreToolUse(Bash). Antes de um commit ou push, varre o que esta STAGED em busca
-# de credencial. Bloqueia se achar.
+# PreToolUse(Bash). Antes de um commit ou push, varre o que esta STAGED no
+# repositorio QUE VAI RECEBER o commit. Bloqueia se achar credencial.
 #
-# Regra do checklist de seguranca do framework (blueprint/13-security.md e os
-# tres 11-security.md de frontend): "Secrets nunca commitados no repositorio."
+# Regra do checklist de seguranca (blueprint/13-security.md): "Secrets nunca
+# commitados no repositorio."
 #
-# Segredo commitado nao se remove com um novo commit — ele fica no historico,
-# nos forks e nos clones de quem ja puxou. O unico momento barato de impedir e
-# antes do commit. Dai o portao estar aqui.
+# Segredo commitado nao se remove com um novo commit: fica no historico, nos
+# forks e em cada clone ja feito. O unico momento barato de impedir e antes.
 #
-# Padroes deliberadamente estreitos: falso-positivo aqui trava o trabalho.
+# PORTABILIDADE: \b e \s sao extensoes GNU. No BSD grep do macOS \b nao e
+# fronteira de palavra e \s casa com a letra "s" — um hook escrito com eles vira
+# no-op silencioso justamente na plataforma onde mais se roda. Aqui tudo usa
+# classes POSIX explicitas.
+#
+# Na duvida, deixa passar.
 
 payload=$(cat 2>/dev/null) || exit 0
 [ -z "$payload" ] && exit 0
@@ -30,43 +34,81 @@ except Exception:
 fi
 [ -z "$cmd" ] && exit 0
 
-printf '%s' "$cmd" | grep -qE '\bgit\b.*\b(commit|push)\b' 2>/dev/null || exit 0
-command -v git >/dev/null 2>&1 || exit 0
-git rev-parse --git-dir >/dev/null 2>&1 || exit 0
+# --- 1. E mesmo um commit/push? -----------------------------------------
+# Ancorado no SUBCOMANDO. "git log --oneline | grep commit" nao e commit, e
+# bloquear leitura por causa do stage e o tipo de coisa que faz desligar o
+# plugin. Tolera "cd X && git ...", "git -C X ..." e flags globais.
+printf '%s' "$cmd" \
+  | grep -qE '(^|[;&|][[:space:]]*)[[:space:]]*git([[:space:]]+(-C[[:space:]]+[^[:space:]]+|--[a-z-]+([[:space:]]+[^[:space:]]+)?|-[a-z]))*[[:space:]]+(commit|push)([[:space:]]|$)' 2>/dev/null \
+  || exit 0
 
-staged=$(git diff --cached --no-color 2>/dev/null | grep '^+' | grep -v '^+++' 2>/dev/null)
+command -v git >/dev/null 2>&1 || exit 0
+
+# --- 2. QUAL repositorio vai receber o commit? ---------------------------
+# O fluxo documentado do framework roda a documentacao num repo e o codigo em
+# outro (`/blueprint:pipeline docs/prd.md web ../my-app/`). Varrer o CWD
+# protegeria o repo errado: falso-positivo no repo de docs e falso-negativo no
+# de codigo, na mesma linha.
+target=""
+# "git -C <dir>"
+t=$(printf '%s' "$cmd" | sed -n 's/.*git[[:space:]]\{1,\}-C[[:space:]]\{1,\}\([^[:space:]]\{1,\}\).*/\1/p' | head -1)
+[ -n "$t" ] && target="$t"
+# "cd <dir> && git ..."
+if [ -z "$target" ]; then
+  t=$(printf '%s' "$cmd" | sed -n 's/^[[:space:]]*cd[[:space:]]\{1,\}\([^[:space:]&;|]\{1,\}\).*/\1/p' | head -1)
+  [ -n "$t" ] && target="$t"
+fi
+[ -z "$target" ] && target="${CLAUDE_PROJECT_DIR:-.}"
+
+# Tira aspas simples/duplas do caminho, se houver.
+target=$(printf '%s' "$target" | sed "s/^['\"]//; s/['\"]$//")
+[ -d "$target" ] || exit 0
+git -C "$target" rev-parse --git-dir >/dev/null 2>&1 || exit 0
+
+staged=$(git -C "$target" diff --cached --no-color 2>/dev/null | grep '^+' | grep -v '^+++' 2>/dev/null)
 [ -z "$staged" ] && exit 0
 
+# --- 3. Descarta o que e claramente exemplo ------------------------------
+# Vale para TODAS as regras, nao so a generica: AKIAIOSFODNN7EXAMPLE e a chave de
+# exemplo oficial da AWS e aparece em todo .env.example e em toda documentacao de
+# integracao. Bloquear documentacao de exemplo e o caminho mais curto para o
+# usuario desligar o hook.
+NOISE='(EXAMPLE|example|sample|dummy|placeholder|changeme|your[_-]|xxx+|\*\*\*\*|\{\{|\$\{|<[a-zA-Z_]+>|process\.env|os\.environ|getenv|redacted|fake|seed|fixture|mock|demo|test[_-]?only|local[_-]?dev|wJalrXUtnFEMI)'
+clean=$(printf '%s' "$staged" | grep -vE "$NOISE" 2>/dev/null)
+[ -z "$clean" ] && exit 0
+
 hits=""
-add_hit() { hits="$hits  - $1\n"; }
+hit() { hits="$hits  - $1\n"; }
+has() { printf '%s' "$clean" | grep -qE "$1" 2>/dev/null; }
 
-# Prefixos de provedor: praticamente nao dao falso-positivo.
-printf '%s' "$staged" | grep -qE 'AKIA[0-9A-Z]{16}'                 2>/dev/null && add_hit "AWS Access Key ID (AKIA...)"
-printf '%s' "$staged" | grep -qE 'ASIA[0-9A-Z]{16}'                 2>/dev/null && add_hit "AWS temporary key (ASIA...)"
-printf '%s' "$staged" | grep -qE 'gh[pousr]_[A-Za-z0-9]{36,}'        2>/dev/null && add_hit "GitHub token (ghp_/gho_/ghu_/ghs_/ghr_)"
-printf '%s' "$staged" | grep -qE 'github_pat_[A-Za-z0-9_]{50,}'      2>/dev/null && add_hit "GitHub fine-grained PAT"
-printf '%s' "$staged" | grep -qE '\bsk-[A-Za-z0-9_-]{20,}'           2>/dev/null && add_hit "chave de API no formato sk-..."
-printf '%s' "$staged" | grep -qE '\b(sk|rk)_(live|test)_[A-Za-z0-9]{16,}' 2>/dev/null && add_hit "chave Stripe (sk_live/sk_test)"
-printf '%s' "$staged" | grep -qE 'xox[baprs]-[A-Za-z0-9-]{10,}'      2>/dev/null && add_hit "token Slack (xox...)"
-printf '%s' "$staged" | grep -qE 'AIza[0-9A-Za-z_-]{35}'             2>/dev/null && add_hit "chave Google API (AIza...)"
-printf '%s' "$staged" | grep -qE 'SG\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}' 2>/dev/null && add_hit "chave SendGrid"
-printf '%s' "$staged" | grep -qE 'BEGIN [A-Z ]*PRIVATE KEY'          2>/dev/null && add_hit "bloco de chave privada (PEM)"
-printf '%s' "$staged" | grep -qE '(postgres|postgresql|mysql|mongodb(\+srv)?|redis|amqp)://[^:/@[:space:]]+:[^@[:space:]]{6,}@' 2>/dev/null && add_hit "URL de conexao com senha embutida"
+has 'AKIA[0-9A-Z]{16}'                        && hit "AWS Access Key ID (AKIA...)"
+has 'ASIA[0-9A-Z]{16}'                        && hit "AWS temporary key (ASIA...)"
+has 'gh[pousr]_[A-Za-z0-9]{36,}'              && hit "GitHub token (ghp_/gho_/ghu_/ghs_/ghr_)"
+has 'github_pat_[A-Za-z0-9_]{50,}'            && hit "GitHub fine-grained PAT"
+has '(^|[^A-Za-z0-9_])sk-[A-Za-z0-9_-]{20,}'  && hit "chave de API no formato sk-..."
+has '(^|[^A-Za-z0-9_])(sk|rk)_(live|test)_[A-Za-z0-9]{16,}' && hit "chave Stripe"
+has 'xox[baprs]-[A-Za-z0-9-]{10,}'            && hit "token Slack (xox...)"
+has 'AIza[0-9A-Za-z_-]{35}'                   && hit "chave Google API (AIza...)"
+has 'SG\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}' && hit "chave SendGrid"
+has 'BEGIN [A-Z ]*PRIVATE KEY'                && hit "bloco de chave privada (PEM)"
+has '(postgres|postgresql|mysql|mongodb(\+srv)?|redis|amqp)://[^:/@[:space:]]+:[^@[:space:]]{6,}@' \
+                                              && hit "URL de conexao com senha embutida"
 
-# Atribuicao generica: exige valor longo e sem cara de placeholder.
-printf '%s' "$staged" \
-  | grep -iE '(api[_-]?key|secret|password|passwd|token|private[_-]?key|access[_-]?key)["'"'"']?\s*[:=]\s*["'"'"'][^"'"'"']{16,}["'"'"']' 2>/dev/null \
-  | grep -ivE '(example|sample|dummy|placeholder|changeme|your[_-]|xxx+|\*{4,}|\{\{|\$\{|<[a-z_]+>|process\.env|os\.environ|getenv|redacted|fake|test[_-]?only)' 2>/dev/null \
-  | grep -q . 2>/dev/null && add_hit "atribuicao de segredo com valor literal longo"
+# Atribuicao generica: valor longo, sem cara de exemplo (o filtro acima ja passou).
+printf '%s' "$clean" \
+  | grep -iE '(api[_-]?key|secret|password|passwd|token|private[_-]?key|access[_-]?key)["'"'"']?[[:space:]]*[:=][[:space:]]*["'"'"'][^"'"'"']{16,}["'"'"']' 2>/dev/null \
+  | grep -q . 2>/dev/null && hit "atribuicao de segredo com valor literal longo"
 
 [ -z "$hits" ] && exit 0
 
-files=$(git diff --cached --name-only 2>/dev/null | head -12 | sed 's/^/  /')
+files=$(git -C "$target" diff --cached --name-only 2>/dev/null | head -12 | sed 's/^/  /')
+where=$(cd "$target" 2>/dev/null && pwd)
 
 printf 'BLOQUEADO — ha credencial no que esta staged para commit.\n\n' >&2
 printf "$hits" >&2
 cat >&2 <<MSG
 
+Repositorio: $where
 Arquivos staged:
 $files
 
@@ -75,18 +117,18 @@ forks e em cada clone ja feito. Reescrever historico publicado e caro e nem semp
 possivel. O unico momento barato de impedir e agora.
 
 O que fazer:
-  1. git restore --staged <arquivo>   para tirar do commit
+  1. git -C "$target" restore --staged <arquivo>
   2. mova o valor para variavel de ambiente e referencie por nome
   3. registre a variavel em .env.example — SEM o valor
-  4. se a credencial ja foi exposta em algum lugar, ROTACIONE-A; um segredo que
-     passou por um arquivo nao versionado com backup ja e um segredo gasto
+  4. se a credencial ja foi exposta em algum lugar, ROTACIONE-A
 
 O framework tem lugar para isto:
   docs/backend/13-integrations.md  — variaveis por integracao
   docs/blueprint/13-security.md    — gestao e rotacao de chaves
 
-Falso-positivo? Comite com --no-verify se o seu fluxo permitir, ou ajuste o
-padrao em hooks/no-secrets.sh. Prefira conferir duas vezes: o custo dos dois
-caminhos nao e simetrico.
+Se for falso-positivo: NAO adianta "git commit --no-verify" — essa flag pula os
+hooks do proprio git, nao este portao, e o comando sera bloqueado de novo. Tire o
+arquivo do stage, ou desative este hook removendo a entrada de no-secrets.sh em
+hooks/hooks.json da sua copia instalada.
 MSG
 exit 2

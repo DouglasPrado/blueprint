@@ -78,4 +78,58 @@ Escolhemos **PostgreSQL** por oferecer o melhor equilíbrio entre funcionalidade
 - Configurar ferramenta de migração de schema (ex.: Flyway ou migrate)
 - Definir política de backup e retenção
 
+---
+
+## Seus ADRs
+
+> Registre aqui as decisoes significativas ja tomadas. Cada uma tambem ganha um arquivo proprio em [docs/adr/](../adr/), a partir de [adr-template.md](../adr/adr-template.md).
+
+### Indice
+
+| ADR | Titulo | Status | Data | Impacto |
+|-----|--------|--------|------|---------|
+| ADR-001 | {{titulo_da_decisao}} | {{Proposta / Aceita / Deprecada / Substituida}} | {{AAAA-MM-DD}} | {{o que esta decisao restringe}} |
+| ADR-002 | {{titulo_da_decisao}} | {{status}} | {{AAAA-MM-DD}} | {{impacto}} |
+
+### ADR-001: {{Titulo}}
+
+**Data:** {{AAAA-MM-DD}} · **Status:** {{Aceita}}
+
+#### Contexto
+
+{{Qual problema existia, qual o cenario e quais restricoes pesaram (prazo, equipe, orcamento, legado).}}
+
+#### Drivers de decisao
+
+- {{fator decisivo 1 — amarre a um principio de 02-architecture_principles.md}}
+- {{fator decisivo 2}}
+
+#### Opcoes consideradas
+
+| Opcao | Pros | Contras | Esforco | Risco |
+|-------|------|---------|---------|-------|
+| {{opcao_A}} | {{vantagens}} | {{desvantagens}} | {{baixo/medio/alto}} | {{baixo/medio/alto}} |
+| {{opcao_B}} | {{vantagens}} | {{desvantagens}} | {{esforco}} | {{risco}} |
+
+#### Decisao
+
+Escolhemos **{{opcao_escolhida}}** porque {{justificativa ligada aos drivers acima}}.
+
+#### Consequencias
+
+**Positivas:**
+- {{beneficio_1}}
+
+**Negativas:**
+- {{trade-off aceito — transporte para 16-evolution.md como debito tecnico}}
+
+**Riscos:**
+- {{risco}} — **Mitigacao:** {{como reduzir}}
+
+#### Acoes necessarias
+
+- [ ] {{tarefa para implementar esta decisao}}
+
+> Duplique o bloco acima para cada ADR.
+
 <!-- APPEND:adrs -->

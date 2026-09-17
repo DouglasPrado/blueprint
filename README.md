@@ -13,6 +13,8 @@ Turn a product requirements document into a traceable technical blueprint, backe
 /plugin install blueprint@blueprint
 ```
 
+Then, from the root of your project: **`/blueprint:init`** — it installs the template library the skills fill in. Without it the other commands have nothing to write into.
+
 </div>
 
 ---

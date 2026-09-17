@@ -34,19 +34,36 @@ except Exception:
 fi
 [ -z "$patch" ] && exit 0
 
-# Arquivos tocados pelo patch: "*** Update File: x", "*** Add File: x", "*** Delete File: x"
-files=$(printf '%s' "$patch" | sed -n 's/^\*\*\* \(Update\|Add\|Delete\) File: //p')
-[ -z "$files" ] && exit 0
+# O patch e analisado POR ARQUIVO. Coletar as linhas +/- do patch inteiro e
+# depois compara-las dentro do laco por arquivo produz os dois erros de uma vez:
+# um `it.skip(` citado na PROSA de um documento acusava o arquivo de teste vizinho
+# (falso positivo), e remover um skip de um arquivo pagava pelo skip acrescentado
+# noutro (falso negativo).
+#
+# awk prefixa cada linha do corpo com o arquivo a que ela pertence, separados por
+# TAB. O shell corta no PRIMEIRO tab, entao tab dentro do codigo nao atrapalha.
+NL='
+'
+TAB=$(printf '\t')
 
-# Linhas acrescentadas pelo patch.
-added=$(printf '%s' "$patch" | grep '^+' 2>/dev/null | sed 's/^+//')
-removed=$(printf '%s' "$patch" | grep '^-' 2>/dev/null | sed 's/^-//')
+files=$(printf '%s' "$patch" | sed -n 's/^\*\*\* \(Update\|Add\|Delete\) File: //p' | sort -u)
+[ -z "$files" ] && exit 0
 
 problems=""
 W='[^A-Za-z0-9_.]'
+SKIP="((^|$W)(it|test|describe|context|suite)\.(skip|only|todo)\()|((^|$W)(xit|xtest|xdescribe|xcontext|xspecify|fit|fdescribe)[[:space:]]*[('\"])|(@pytest\.mark\.skip)|(@unittest\.skip)|((^|$W)t\.Skip(Now)?\()|(#\[ignore\])"
+
+tagged=$(printf '%s' "$patch" | awk -v t="$TAB" '
+  /^\*\*\* (Update|Add|Delete) File: /{ f=substr($0, index($0,": ")+2); next }
+  /^\*\*\* /{ f=""; next }
+  f != "" { print f t $0 }
+')
 
 while IFS= read -r f; do
   [ -z "$f" ] && continue
+  body=$(printf '%s\n' "$tagged" | grep -F "$f$TAB" 2>/dev/null | sed "s|^.*$TAB||")
+  added=$(printf '%s' "$body"   | grep '^+' 2>/dev/null | sed 's/^+//')
+  removed=$(printf '%s' "$body" | grep '^-' 2>/dev/null | sed 's/^-//')
 
   # --- documentacao do Blueprint ---
   case "$f" in
@@ -57,27 +74,27 @@ while IFS= read -r f; do
       [ -f "$f" ] && grep -q '<!-- APPEND:' "$f" 2>/dev/null && marked=1
       [ -d "docs/blueprint" ] && marked=1
       if [ "$marked" = "1" ]; then
-        # Marcador de append removido e nao reposto?
-        lost=$(printf '%s' "$removed" | grep -o 'APPEND:[a-z0-9-]*' 2>/dev/null | sort -u)
+        # Comparacao por TOKEN: "APPEND:webhooks" e substring de
+        # "APPEND:webhooks-enviados", e os dois convivem em 13-integrations.md.
+        kept=$(printf '%s' "$added" | grep -o 'APPEND:[a-z0-9-]*' 2>/dev/null | sort -u)
         while IFS= read -r m; do
           [ -z "$m" ] && continue
-          printf '%s' "$added" | grep -qF "$m" 2>/dev/null \
-            || problems="$problems  - $f remove o marcador <!-- $m --> sem repo-lo\n"
-        done <<EOF
-$lost
-EOF
+          printf '%s\n' "$kept" | grep -qx "$m" 2>/dev/null \
+            || problems="$problems  - $f remove o marcador <!-- $m --> sem repo-lo$NL"
+        done <<INNER
+$(printf '%s' "$removed" | grep -o 'APPEND:[a-z0-9-]*' 2>/dev/null | sort -u)
+INNER
       fi
       ;;
   esac
 
   # --- testes ---
   case "$f" in
-    *.test.*|*.spec.*|*_test.*|*test_*.py|*/tests/*|*/test/*|*/__tests__/*|*/e2e/*)
-      SKIP="((^|$W)(it|test|describe|context|suite)\.(skip|only|todo)\()|((^|$W)(xit|xtest|xdescribe|fit|fdescribe)\()|(@pytest\.mark\.skip)|(@unittest\.skip)|((^|$W)t\.Skip(Now)?\()|(#\[ignore\])"
+    *.test.*|*.spec.*|*_test.*|*_spec.rb|*test_*.py|*/tests/*|*/test/*|*/__tests__/*|*/e2e/*)
       n_add=$(printf '%s' "$added"   | grep -cE "$SKIP" 2>/dev/null | tr -d ' \n')
       n_rem=$(printf '%s' "$removed" | grep -cE "$SKIP" 2>/dev/null | tr -d ' \n')
       if [ "${n_add:-0}" -gt "${n_rem:-0}" ] 2>/dev/null; then
-        problems="$problems  - $f silencia teste (skip/only/xit novo)\n"
+        problems="$problems  - $f silencia teste (skip/only/xit novo)$NL"
       fi
       ;;
   esac
@@ -88,7 +105,7 @@ EOF
 [ -z "$problems" ] && exit 0
 
 printf 'Blueprint — este patch viola uma regra do framework:\n\n' >&2
-printf "$problems" >&2
+printf '%s' "$problems" >&2
 cat >&2 <<'MSG'
 
   Documento preenchido perde marcador de append -> blueprint-increment nao sabe

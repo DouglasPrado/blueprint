@@ -10,11 +10,37 @@
 root="${CODEX_PROJECT_DIR:-$PWD}"
 docs="$root/docs"
 
+# Grava a BASE DA SESSAO para o stop-gate.sh.
+#
+# Sem ela o portao so consegue olhar `git diff HEAD`, e ai commitar o contorna:
+# silencia o teste, commita, a arvore fica limpa, o Stop nao ve nada. E o loop do
+# blueprint-build commita por feature justamente assim. Com a base gravada aqui,
+# antes de o agente tocar em qualquer coisa, o que foi commitado no meio do
+# caminho continua visivel no Stop.
+#
+# Falha de escrita e silenciosa de proposito: o SessionStart nao pode quebrar a
+# sessao. O stop-gate degrada para `diff HEAD` quando a base nao existe.
+if command -v git >/dev/null 2>&1 && git -C "$root" rev-parse --git-dir >/dev/null 2>&1; then
+  _gd=$(git -C "$root" rev-parse --absolute-git-dir 2>/dev/null)
+  _k=$(printf '%s' "$root" | cksum | cut -d' ' -f1)
+  _h=$(git -C "$root" rev-parse HEAD 2>/dev/null)
+  if [ -n "$_h" ]; then
+    for _d in "$_gd" "${TMPDIR:-/tmp}"; do
+      [ -n "$_d" ] && [ -d "$_d" ] || continue
+      printf '%s\n' "$_h" > "$_d/.blueprint-base-$_k" 2>/dev/null && break
+    done
+  fi
+  # Base nova, contador de bloqueios zerado.
+  for _d in "$_gd" "${TMPDIR:-/tmp}"; do
+    [ -n "$_d" ] && rm -f "$_d/.blueprint-stop-$_k" 2>/dev/null
+  done
+fi
+
 # Projeto sem docs/ e justamente o estado em que o SessionStart tem algo util a
 # dizer: o plugin esta instalado e os templates ainda nao. Sair calado aqui era
 # deixar sem resposta quem mais precisa dela.
 if [ ! -d "$docs" ]; then
-  if [ -n "${PLUGIN_ROOT:-${PLUGIN_ROOT:-}}" ]; then
+  if [ -n "${PLUGIN_ROOT:-}" ]; then
     echo "== Blueprint =="
     echo "Plugin instalado, templates ainda nao. Rode blueprint-init na raiz deste projeto para instalar a biblioteca de documentos em docs/."
   fi

@@ -62,13 +62,14 @@ grew()  { local n o; n=$(count "$1" "$added"); o=$(count "$1" "$previous"); [ "$
 
 is_test=0
 case "$file" in
-  *.test.*|*.spec.*|*_test.*|*test_*.py|*/tests/*|*/test/*|*/__tests__/*|*/e2e/*|*.feature) is_test=1 ;;
+  *.test.*|*.spec.*|*_test.*|*_spec.rb|*test_*.py|*/tests/*|*/test/*|*/__tests__/*|*/e2e/*|*.feature) is_test=1 ;;
+  tests/*|test/*|__tests__/*|e2e/*) is_test=1 ;;   # caminho relativo a raiz
 esac
 
 # --- 1. Teste silenciado -------------------------------------------------
 if [ "$is_test" = "1" ]; then
   # Cada padrao exige o identificador do runner: it/test/describe/context/suite.
-  SKIP="((^|$W)(it|test|describe|context|suite)\.(skip|only|todo)\()|((^|$W)(xit|xtest|xdescribe|fit|fdescribe)\()|(@pytest\.mark\.skip)|(@unittest\.skip)|((^|$W)t\.Skip(Now)?\()|(#\[ignore\])|(\.skip\(\)[[:space:]]*$)"
+  SKIP="((^|$W)(it|test|describe|context|suite)\.(skip|only|todo)\()|((^|$W)(xit|xtest|xdescribe|xcontext|xspecify|fit|fdescribe)[[:space:]]*[('\"])|(@pytest\.mark\.skip)|(@unittest\.skip)|((^|$W)t\.Skip(Now)?\()|(#\[ignore\])|(\.skip\(\)[[:space:]]*$)"
   if grew "$SKIP"; then
     found=$(printf '%s' "$added" | grep -oE "$SKIP" 2>/dev/null | sed "s/^[^A-Za-z@#.]//" | sort -u | tr '\n' ' ')
     cat >&2 <<MSG
@@ -108,9 +109,14 @@ case "$file" in
       *package.json)
         printf '%s' "$added$previous" | grep -qE 'coverageThreshold' 2>/dev/null || exit 0 ;;
     esac
+    # MINIMO, nao primeira ocorrencia. Com head -1 bastava acrescentar um bloco
+    # por diretorio com valor alto ANTES do global para o portao ler so o novo
+    # bloco e nunca ver o global caindo de 80 para 20.
+    lowest() { printf '%s' "$2" | grep -oE "\"?$1\"?[[:space:]]*[:=][[:space:]]*[0-9]+" 2>/dev/null \
+                 | grep -oE '[0-9]+$' | sort -n | head -1; }
     for key in branches functions statements lines fail_under minimum_coverage min_coverage; do
-      vn=$(printf '%s' "$added"    | grep -oE "\"?$key\"?[[:space:]]*[:=][[:space:]]*[0-9]+" 2>/dev/null | grep -oE '[0-9]+$' | head -1)
-      vo=$(printf '%s' "$previous" | grep -oE "\"?$key\"?[[:space:]]*[:=][[:space:]]*[0-9]+" 2>/dev/null | grep -oE '[0-9]+$' | head -1)
+      vn=$(lowest "$key" "$added")
+      vo=$(lowest "$key" "$previous")
       if [ -n "$vn" ] && [ -n "$vo" ] && [ "$vn" -lt "$vo" ] 2>/dev/null; then
         cat >&2 <<MSG
 BLOQUEADO — a edicao rebaixa o limiar de cobertura.

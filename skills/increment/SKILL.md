@@ -1,6 +1,6 @@
 ---
 name: increment
-description: Incrementa ou corrige qualquer blueprint (tecnico, backend, frontend, prototipo) sem sobrescrever. Usa Edit.
+description: Incrementa ou corrige qualquer blueprint (tecnico, backend, frontend, prototipo, shared) sem sobrescrever. Usa Edit.
 ---
 
 # Increment — Adicionar, Corrigir, Atualizar ou Remover
@@ -20,7 +20,10 @@ Se o usuario nao passou o alvo como argumento, pergunte:
 > - **backend** — implementacao (`docs/backend/`, 15 docs)
 > - **frontend** — interface (`docs/frontend/`, multi-client)
 > - **prototype** — frontend mockado (`docs/prototype/`, 6 docs)
-> - **all** — os quatro"
+> - **connectors** — conectores cross-layer (`docs/shared/`, 3 docs geraveis)
+> - **all** — os cinco"
+
+> **`connectors` nao e `frontend shared`.** `docs/shared/` liga backend a frontend (glossario, eventos, erros); `docs/frontend/shared/` e a parte do frontend comum aos clientes (design system, data layer). Alvos diferentes, diretorios diferentes.
 
 Se o alvo incluir **frontend**, pergunte tambem o cliente:
 
@@ -42,6 +45,7 @@ Leia apenas o escopo selecionado:
 | frontend `{client}` | `docs/frontend/shared/` + `docs/frontend/{client}/` (00 a 14) |
 | frontend `all` | shared + todos os clientes existentes |
 | prototype | `docs/prototype/` (00 a 05) + `docs/blueprint/04-domain-model.md`, `08-use_cases.md`, `09-state-models.md` para contexto |
+| connectors | `docs/shared/` (glossary, event-mapping, error-ux-mapping) + a camada que originou o termo, evento ou erro em questao |
 
 Leia `docs/prd.md` se existir. Se o alvo for backend ou frontend, o blueprint tecnico e a referencia de verdade — nao contradiga.
 
@@ -67,15 +71,27 @@ Confirme com o usuario antes de aplicar.
 
 **ADICAO** — localize `<!-- APPEND:section-id -->`, insira o conteudo novo **antes** do marcador e marque com `<!-- adicionado: nome -->`.
 
-Marcadores do blueprint tecnico:
+Marcadores do blueprint tecnico — **os 17 documentos tem marcador**, nenhum e excecao:
 - `00`: `actors`, `external-systems`, `constraints`
 - `01`: `objectives`, `personas`, `success-metrics`
+- `02`: `principles`
 - `03`: `functional-requirements`, `nonfunctional-requirements`
-- `04`: `glossary`, `entities`
-- `09`: `state-models` · `10`: `adrs`
-- `11`: `technical-risks`, `deliverables`
+- `04`: `glossary`, `entities`, `relationships`
+- `05`: `tables`, `critical-queries`
+- `06`: `components`, `communication`
+- `07`: `flows` · `08`: `use-cases` · `09`: `state-models` · `10`: `adrs`
+- `11`: `technical-risks`, `external-dependencies`, `deliverables`
 - `12`: `coverage`, `ci-pipeline`
-- `13`: `threats`, `roles`
+- `13`: `threats`, `roles`, `security-checklist`
+- `14`: `capacity-limits`, `cache-strategies`, `rate-limits`
+- `15`: `metrics`, `alerts`, `dashboards`
+- `16`: `technical-roadmap`, `technical-debt`, `deprecations`, `revision-history`
+
+Marcadores dos conectores (`docs/shared/`):
+- `glossary`: `termos`, `acronimos`, `convencoes`
+- `event-mapping`: `eventos`, `impacto`
+- `error-ux-mapping`: `erros`
+- `MAPPING.md` **nao tem marcador e nao e alvo**: descreve o framework, nao o projeto.
 
 Marcadores do prototipo (`docs/prototype/`):
 - `00`: `camadas`, `stack`, `nao-objetivos`
@@ -87,7 +103,7 @@ Marcadores do prototipo (`docs/prototype/`):
 
 > **Atencao ao editar `docs/prototype/`:** `03-api-requirements.md` e **extraido de codigo** por `/blueprint:prototype-api`. Edita-lo a mao cria uma terceira fonte de verdade — prefira corrigir o prototipo e regerar. A excecao e `05-findings.md`, cuja coluna de status existe para ser atualizada conforme os achados sao encaminhados.
 
-Docs sem APPEND (02, 05, 06, 07, 08, 14, 15, 16) → insira na secao apropriada, apos a ultima entrada.
+**Se o marcador esperado nao estiver no arquivo**, nao invente posicao: insira na secao apropriada apos a ultima entrada e **avise** que o marcador sumiu — documento que perde o marcador faz toda adicao seguinte cair no lugar errado, e o hook `docs-integrity` existe para impedir exatamente isso.
 
 **CORRECAO** — Edit com `old_string` = valor antigo, `new_string` = correto. Marque `<!-- corrigido: descricao -->`. Nao toque em outras linhas.
 

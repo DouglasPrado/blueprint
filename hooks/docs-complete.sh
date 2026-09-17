@@ -39,10 +39,28 @@ file=$(read_json '.tool_input.file_path' 'tool_input.file_path')
 [ -n "$file" ] && [ -f "$file" ] || exit 0
 
 case "$file" in
-  */docs/blueprint/*|*/docs/backend/*|*/docs/frontend/*|*/docs/prototype/*|*/docs/shared/*) ;;
-  docs/blueprint/*|docs/backend/*|docs/frontend/*|docs/prototype/*|docs/shared/*) ;;
+  */docs/blueprint/*|*/docs/backend/*|*/docs/frontend/*|*/docs/prototype/*|*/docs/shared/*|*/docs/adr/*|*/docs/specs/*) ;;
+  docs/blueprint/*|docs/backend/*|docs/frontend/*|docs/prototype/*|docs/shared/*|docs/adr/*|docs/specs/*) ;;
   *) exit 0 ;;
 esac
+
+# Mesmo guarda do docs-integrity: o caminho sozinho nao basta. "docs/backend/"
+# existe em projeto que nunca ouviu falar deste plugin, e {{...}} e a sintaxe do
+# Handlebars, do Jinja, do Vue e do Angular. Sem esta checagem, documentar um
+# template Handlebars fazia o hook injetar a regra do Blueprint no contexto de
+# quem nao usa Blueprint.
+is_blueprint=0
+grep -q '<!-- APPEND:' "$file" 2>/dev/null && is_blueprint=1
+if [ "$is_blueprint" = "0" ]; then
+  probe="$file"
+  while [ "$probe" != "/" ] && [ "$probe" != "." ] && [ -n "$probe" ]; do
+    probe=$(dirname "$probe")
+    case "$probe" in
+      */docs|docs) [ -d "$probe/blueprint" ] && is_blueprint=1; break ;;
+    esac
+  done
+fi
+[ "$is_blueprint" = "1" ] || exit 0
 
 n=$(grep -o '{{[^}]*}}' "$file" 2>/dev/null | wc -l | tr -d ' ')
 [ "${n:-0}" -eq 0 ] && exit 0

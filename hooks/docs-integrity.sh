@@ -74,14 +74,47 @@ fi
 [ "$is_blueprint" = "1" ] || exit 0
 
 # --- 1. Write sobre documento preenchido ---------------------------------
+#
+# "Preenchido" NAO pode ser definido por "nao tem {{". Documento legitimamente
+# pronto pode conter chaves: docs/frontend/*/14-copies.md e o documento de copies
+# e i18n, e o proprio template ensina chaves como {{auth.login.title}}. Pela
+# regra antiga esse documento ficava marcado como template para sempre — Write
+# sobrescrevia o trabalho inteiro sem bloquear.
+#
+# Quando o plugin esta instalado, existe resposta exata em vez de heuristica: o
+# template pristino esta em ${CLAUDE_PLUGIN_ROOT}/docs/. Igual ao template =
+# intocado. Diferente = alguem mexeu.
+#
+# Sem PLUGIN_ROOT (hook rodando fora da instalacao), ainda ha um sinal melhor que
+# "tem {{": as marcas de procedencia que TODA skill escreve ao preencher —
+# <!-- do blueprint: ... -->, <!-- assumido: ... -->, <!-- adicionado: ... -->.
+# Arquivo que carrega uma delas foi preenchido, tenha chaves ou nao.
+pristine() { # 0 = e o template intocado
+  [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] || return 1
+  rel=${1#*/docs/}; [ "$rel" = "$1" ] && rel=${1#docs/}
+  [ "$rel" = "$1" ] && return 1
+  tpl="$CLAUDE_PLUGIN_ROOT/docs/$rel"
+  [ -f "$tpl" ] || return 1
+  cmp -s "$1" "$tpl" 2>/dev/null
+}
+
 if [ "$tool" = "Write" ] && [ -f "$file" ]; then
-  # Template intocado tem {{placeholders}}. Sem eles, alguem ja preencheu.
-  if ! grep -q '{{' "$file" 2>/dev/null; then
+  filled=1
+  if pristine "$file"; then
+    filled=0
+  elif [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -f "$CLAUDE_PLUGIN_ROOT/docs/${file#*/docs/}" ]; then
+    filled=1   # existe template correspondente e o arquivo difere dele
+  elif grep -qE '<!-- (do blueprint|do backend|do frontend|assumido|adicionado|corrigido|atualizado|construido sobre lacuna):?' "$file" 2>/dev/null; then
+    filled=1   # marca de procedencia: alguma skill ja escreveu aqui
+  elif grep -q '{{' "$file" 2>/dev/null; then
+    filled=0   # heuristica de fallback: ainda tem placeholder
+  fi
+  if [ "$filled" = "1" ]; then
     lines=$(wc -l < "$file" 2>/dev/null | tr -d ' ')
     cat >&2 <<MSG
 BLOQUEADO — Write sobre documento ja preenchido.
 
-  $file ($lines linhas, nenhum {{placeholder}} restante)
+  $file ($lines linhas, diferente do template original)
 
 Este documento carrega conteudo real do projeto. Write o substitui inteiro e o
 conteudo anterior nao volta.
@@ -104,10 +137,15 @@ if [ "$tool" = "Edit" ]; then
   old=$(field old_string)
   new=$(field new_string)
   if printf '%s' "$old" | grep -q 'APPEND:' 2>/dev/null; then
+    # Comparacao por TOKEN, nao por substring: "APPEND:webhooks" e substring de
+    # "APPEND:webhooks-enviados", e docs/backend/13-integrations.md tem os dois.
+    # Com grep -F, apagar o primeiro passava despercebido porque o segundo
+    # continuava no texto.
+    new_markers=$(printf '%s' "$new" | grep -o 'APPEND:[a-z0-9-]*' 2>/dev/null | sort -u)
     lost=""
     while IFS= read -r marker; do
       [ -z "$marker" ] && continue
-      printf '%s' "$new" | grep -qF "$marker" 2>/dev/null || lost="$lost  $marker\n"
+      printf '%s\n' "$new_markers" | grep -qx "$marker" 2>/dev/null || lost="$lost  $marker\n"
     done <<EOF
 $(printf '%s' "$old" | grep -o 'APPEND:[a-z0-9-]*' 2>/dev/null | sort -u)
 EOF

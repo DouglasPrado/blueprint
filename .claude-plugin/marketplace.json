@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "blueprint",
-      "description": "Transforma um PRD em blueprint tecnico rastreavel, prototipo mockado, especificacao de backend e frontend, backlog, scaffold tipado e loop de build com portoes. 25 skills, 58 documentos, hooks de qualidade.",
+      "description": "Transforma um PRD em blueprint tecnico rastreavel, prototipo mockado, especificacao de backend e frontend, backlog, scaffold tipado e loop de build com portoes. 26 skills, 58 documentos, hooks de qualidade.",
       "source": "./",
       "version": "1.0.0"
     }

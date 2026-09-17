@@ -69,33 +69,39 @@ staged=$(git -C "$target" diff --cached --no-color 2>/dev/null | grep '^+' | gre
 [ -z "$staged" ] && exit 0
 
 # --- 3. Descarta o que e claramente exemplo ------------------------------
-# Vale para TODAS as regras, nao so a generica: AKIAIOSFODNN7EXAMPLE e a chave de
-# exemplo oficial da AWS e aparece em todo .env.example e em toda documentacao de
-# integracao. Bloquear documentacao de exemplo e o caminho mais curto para o
-# usuario desligar o hook.
-NOISE='(EXAMPLE|example|sample|dummy|placeholder|changeme|your[_-]|xxx+|\*\*\*\*|\{\{|\$\{|<[a-zA-Z_]+>|process\.env|os\.environ|getenv|redacted|fake|seed|fixture|mock|demo|test[_-]?only|local[_-]?dev|wJalrXUtnFEMI)'
-clean=$(printf '%s' "$staged" | grep -vE "$NOISE" 2>/dev/null)
-[ -z "$clean" ] && exit 0
+# O filtro atua sobre o VALOR CASADO, nao sobre a linha inteira. Filtrar a linha
+# derruba a varredura com uma palavra comum: `// conta demo` num comentario, ou
+# um `${DB_HOST}` no fim da URL, fazia uma AWS key real e uma senha de producao
+# real passarem inteiras. A assinatura ja e especifica; quem precisa parecer
+# exemplo e a credencial, nao o texto ao redor dela.
+VALUE_NOISE='(EXAMPLE|example|sample|dummy|placeholder|changeme|your[_-]|xxx+|\*\*\*\*|\{\{|\$\{|<[a-zA-Z_]+>|redacted|fake|wJalrXUtnFEMI)'
 
 hits=""
 hit() { hits="$hits  - $1\n"; }
-has() { printf '%s' "$clean" | grep -qE "$1" 2>/dev/null; }
+# Assinatura especifica: casa, depois descarta a propria credencial se ela for
+# obviamente de exemplo (AKIAIOSFODNN7EXAMPLE aparece em toda documentacao AWS).
+sig() {
+  printf '%s' "$staged" | grep -oE "$1" 2>/dev/null | grep -vqE "$VALUE_NOISE" 2>/dev/null && hit "$2"
+}
 
-has 'AKIA[0-9A-Z]{16}'                        && hit "AWS Access Key ID (AKIA...)"
-has 'ASIA[0-9A-Z]{16}'                        && hit "AWS temporary key (ASIA...)"
-has 'gh[pousr]_[A-Za-z0-9]{36,}'              && hit "GitHub token (ghp_/gho_/ghu_/ghs_/ghr_)"
-has 'github_pat_[A-Za-z0-9_]{50,}'            && hit "GitHub fine-grained PAT"
-has '(^|[^A-Za-z0-9_])sk-[A-Za-z0-9_-]{20,}'  && hit "chave de API no formato sk-..."
-has '(^|[^A-Za-z0-9_])(sk|rk)_(live|test)_[A-Za-z0-9]{16,}' && hit "chave Stripe"
-has 'xox[baprs]-[A-Za-z0-9-]{10,}'            && hit "token Slack (xox...)"
-has 'AIza[0-9A-Za-z_-]{35}'                   && hit "chave Google API (AIza...)"
-has 'SG\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}' && hit "chave SendGrid"
-has 'BEGIN [A-Z ]*PRIVATE KEY'                && hit "bloco de chave privada (PEM)"
-has '(postgres|postgresql|mysql|mongodb(\+srv)?|redis|amqp)://[^:/@[:space:]]+:[^@[:space:]]{6,}@' \
-                                              && hit "URL de conexao com senha embutida"
+sig 'AKIA[0-9A-Z]{16}'                        "AWS Access Key ID (AKIA...)"
+sig 'ASIA[0-9A-Z]{16}'                        "AWS temporary key (ASIA...)"
+sig 'gh[pousr]_[A-Za-z0-9]{36,}'              "GitHub token (ghp_/gho_/ghu_/ghs_/ghr_)"
+sig 'github_pat_[A-Za-z0-9_]{50,}'            "GitHub fine-grained PAT"
+sig '(^|[^A-Za-z0-9_])sk-[A-Za-z0-9_-]{20,}'  "chave de API no formato sk-..."
+sig '(^|[^A-Za-z0-9_])(sk|rk)_(live|test)_[A-Za-z0-9]{16,}' "chave Stripe"
+sig 'xox[baprs]-[A-Za-z0-9-]{10,}'            "token Slack (xox...)"
+sig 'AIza[0-9A-Za-z_-]{35}'                   "chave Google API (AIza...)"
+sig 'SG\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}' "chave SendGrid"
+sig 'BEGIN [A-Z ]*PRIVATE KEY'                "bloco de chave privada (PEM)"
+sig '(postgres|postgresql|mysql|mongodb(\+srv)?|redis|amqp)://[^:/@[:space:]]+:[^@[:space:]]{6,}@' \
+                                              "URL de conexao com senha embutida"
 
-# Atribuicao generica: valor longo, sem cara de exemplo (o filtro acima ja passou).
-printf '%s' "$clean" \
+# Atribuicao generica: aqui sim o contexto da LINHA decide, porque "valor longo
+# entre aspas" sozinho nao e assinatura de nada — process.env.X, {{chave}} e
+# seed de desenvolvimento casariam todos.
+LINE_NOISE="$VALUE_NOISE"'|(process\.env|os\.environ|getenv|seed|fixture|mock|demo|test[_-]?only|local[_-]?dev)'
+printf '%s' "$staged" | grep -vE "$LINE_NOISE" 2>/dev/null \
   | grep -iE '(api[_-]?key|secret|password|passwd|token|private[_-]?key|access[_-]?key)["'"'"']?[[:space:]]*[:=][[:space:]]*["'"'"'][^"'"'"']{16,}["'"'"']' 2>/dev/null \
   | grep -q . 2>/dev/null && hit "atribuicao de segredo com valor literal longo"
 

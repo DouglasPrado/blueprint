@@ -49,12 +49,12 @@ Se o usuario nao passou argumento:
 > | Suite | Docs | Quando |
 > |---|---|---|
 > | **blueprint** | 17 + o master `README.MD` | Sempre — e a fonte primaria do dominio |
-> | **shared** | 4 | Sempre — glossario e mapeamentos cross-layer |
+> | **shared** | 4 | Sempre — glossario e mapeamentos cross-layer (`blueprint-shared` preenche 3; `MAPPING.md` ja vem pronto) |
 > | **prototype** | 6 | Se for descobrir o contrato de API construindo a UI antes do backend |
 > | **backend** | 15 | Se o sistema tem servidor |
 > | **frontend:web** \| **:mobile** \| **:desktop** | 3 shared + 13 por cliente | Um por cliente |
 > | **diagrams** | 10 `.mmd` + 4 READMEs | Diagramas C4, sequencia, dominio, deploy |
-> | **templates** | 6 | PRD, epic, story, task, use case, AGENTS.md router |
+> | **templates** | 2 | PRD (a entrada de tudo) e o router AGENTS.md |
 > | **adr** | 1 | Template de decisao arquitetural |
 >
 > Recomendado para um SaaS web: `blueprint,shared,prototype,backend,frontend:web,diagrams,templates,adr`

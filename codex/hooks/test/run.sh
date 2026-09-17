@@ -28,9 +28,10 @@ run() { # descricao, exit esperado, payload, script
 }
 
 # O Stop responde por JSON, nao por exit code.
+clearstate() { rm -f "${TMPDIR:-/tmp}"/.blueprint-stop-* "$1"/.git/.blueprint-stop-* 2>/dev/null; }
 gate() { # descricao, block|ok, cwd
   local out dec
-  rm -f "${TMPDIR:-/tmp}"/.blueprint-stop-*
+  clearstate "$3"
   out=$(cd "$3" && CODEX_PROJECT_DIR="$3" bash "$HOOKS/stop-gate.sh" 2>/dev/null)
   dec=$(printf '%s' "$out" | python3 -c '
 import sys, json
@@ -46,7 +47,7 @@ print(d.get("decision") or "ok")
 command -v python3 >/dev/null 2>&1 || { echo "python3 e necessario para esta suite"; exit 1; }
 command -v git     >/dev/null 2>&1 || { echo "git e necessario para esta suite"; exit 1; }
 
-T=$(mktemp -d); trap 'rm -rf "$T"; rm -f "${TMPDIR:-/tmp}"/.blueprint-stop-*' EXIT
+T=$(mktemp -d); trap 'rm -rf "$T"; rm -f "${TMPDIR:-/tmp}"/.blueprint-stop-* "${TMPDIR:-/tmp}"/.blueprint-base-*' EXIT
 
 G="$T/proj"
 mkdir -p "$G/docs/blueprint" "$G/src/__tests__"
@@ -106,7 +107,7 @@ gate "projeto alheio sem docs/blueprint nao e assunto do hook" ok "$AL"
 
 echo "== stop-gate: laco de bloqueio tem fim =="
 printf '# Dominio\n\nSem marcador.\n' > "$G/docs/blueprint/04-domain-model.md"
-rm -f "${TMPDIR:-/tmp}"/.blueprint-stop-*
+clearstate "$G"
 for i in 1 2 3; do ( cd "$G" && CODEX_PROJECT_DIR="$G" bash "$HOOKS/stop-gate.sh" >/dev/null 2>&1 ); done
 out=$(cd "$G" && CODEX_PROJECT_DIR="$G" bash "$HOOKS/stop-gate.sh" 2>/dev/null)
 if printf '%s' "$out" | python3 -c 'import sys,json; d=json.load(sys.stdin); raise SystemExit(0 if not d.get("decision") else 1)' 2>/dev/null; then
@@ -115,7 +116,60 @@ else
   bad "o laco de bloqueio nao tem saida" "$out"
 fi
 reset
-rm -f "${TMPDIR:-/tmp}"/.blueprint-stop-*
+clearstate "$G"
+
+echo "== regressao: achados da auditoria =="
+# Cada caso abaixo PASSAVA antes da correcao.
+
+# --- o commit contornava o portao inteiro ---
+CG="$T/commitado"
+mkdir -p "$CG/docs/blueprint" "$CG/src/__tests__"
+printf '# D\n\nreal.\n\n<!-- APPEND:entities -->\n' > "$CG/docs/blueprint/04-domain-model.md"
+printf "it('soma', () => {})\n"                        > "$CG/src/__tests__/u.test.ts"
+( cd "$CG" && git init -q . && git config user.email t@t && git config user.name t \
+  && git add -A && git commit -qm base )
+( cd "$CG" && CODEX_PROJECT_DIR="$CG" bash "$HOOKS/status.sh" >/dev/null 2>&1 )   # SessionStart grava a base
+printf "it.skip('soma', () => {})\n" > "$CG/src/__tests__/u.test.ts"
+gate "teste silenciado na arvore suja bloqueia" block "$CG"
+( cd "$CG" && git add -A && git commit -qm "silencia" )
+gate "teste silenciado e COMMITADO continua bloqueando" block "$CG"
+
+# --- contador por violacao, nao por projeto ---
+( cd "$CG" && git reset -q --hard HEAD~1 && CODEX_PROJECT_DIR="$CG" bash "$HOOKS/status.sh" >/dev/null 2>&1 )
+clearstate "$CG"
+blk() { ( cd "$CG" && CODEX_PROJECT_DIR="$CG" bash "$HOOKS/stop-gate.sh" 2>/dev/null ) \
+          | python3 -c 'import sys,json;print(json.load(sys.stdin).get("decision") or "ok")'; }
+printf "it.skip('a',()=>{})\n" > "$CG/src/__tests__/u.test.ts"; a1=$(blk); a2=$(blk)
+printf "it('a',()=>{})\n"      > "$CG/src/__tests__/u.test.ts"; fix=$(blk)
+printf "it.skip('b',()=>{})\n" > "$CG/src/__tests__/u.test.ts"; b1=$(blk); b2=$(blk); b3=$(blk)
+if [ "$a1$a2$fix$b1$b2$b3" = "blockblockokblockblockblock" ]; then
+  okc "violacao corrigida zera o contador — a proxima ganha os 3 bloqueios inteiros"
+else
+  bad "contador nao zera ao corrigir" "$a1 $a2 $fix / $b1 $b2 $b3"
+fi
+( cd "$CG" && git checkout -q -- . ); clearstate "$CG"
+
+# --- TMPDIR nao gravavel prendia o agente para sempre ---
+printf "it.skip('x',()=>{})\n" > "$CG/src/__tests__/u.test.ts"
+seq=""
+for i in 1 2 3 4; do
+  seq="$seq$( ( cd "$CG" && TMPDIR=/nao/existe CODEX_PROJECT_DIR="$CG" bash "$HOOKS/stop-gate.sh" 2>/dev/null ) \
+    | python3 -c 'import sys,json;print(json.load(sys.stdin).get("decision") or "ok")')"
+done
+if [ "$seq" = "blockblockblockok" ]; then
+  okc "TMPDIR nao gravavel cai no .git e o laco continua tendo fim"
+else
+  bad "portao travou ou abriu cedo com TMPDIR nao gravavel" "$seq"
+fi
+( cd "$CG" && git checkout -q -- . ); clearstate "$CG"
+
+# --- colisao de prefixo entre marcadores ---
+mkdir -p "$CG/docs/backend"
+printf '# I\n\n<!-- APPEND:webhooks -->\n\n<!-- APPEND:webhooks-enviados -->\n' > "$CG/docs/backend/13-integrations.md"
+( cd "$CG" && git add -A && git commit -qm int && CODEX_PROJECT_DIR="$CG" bash "$HOOKS/status.sh" >/dev/null 2>&1 )
+printf '# I\n\n<!-- APPEND:webhooks-enviados -->\n' > "$CG/docs/backend/13-integrations.md"
+gate "perder APPEND:webhooks mantendo o -enviados bloqueia" block "$CG"
+( cd "$CG" && git checkout -q -- . ); clearstate "$CG"
 
 echo "== apply-patch-guard: le o patch, nao um file_path =="
 P() { printf '{"tool_name":"apply_patch","tool_input":{"command":%s}}' "$(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$1")"; }
@@ -174,6 +228,37 @@ run "patch em codigo de producao passa" 0 \
 *** Update File: src/app.ts
 +export const port = 4000
 *** End Patch')" apply-patch-guard.sh
+
+run "prosa de doc com it.skip( nao acusa o teste vizinho" 0 \
+  "$(P '*** Begin Patch
+*** Update File: docs/blueprint/12-testing_strategy.md
++Proibido usar it.skip( para deixar a suite verde.
+*** Update File: src/__tests__/a.test.ts
++  expect(soma(1,2)).toBe(3)
+*** End Patch')" apply-patch-guard.sh
+
+run "remover skip de um arquivo nao paga pelo skip acrescentado noutro" 2 \
+  "$(P '*** Begin Patch
+*** Update File: src/__tests__/a.test.ts
+-it.skip("a", () => {})
++it("a", () => {})
+*** Update File: src/__tests__/b.test.ts
++it.skip("b", () => {})
+*** End Patch')" apply-patch-guard.sh
+
+run "remover APPEND:webhooks mantendo APPEND:webhooks-enviados avisa" 2 \
+  "$(P '*** Begin Patch
+*** Update File: docs/backend/13-integrations.md
+-<!-- APPEND:webhooks -->
++<!-- APPEND:webhooks-enviados -->
+*** End Patch')" apply-patch-guard.sh
+
+run "xit do RSpec, sem parenteses, avisa" 2 \
+  "$(P "*** Begin Patch
+*** Update File: spec/user_spec.rb
+-it 'soma' do
++xit 'soma' do
+*** End Patch")" apply-patch-guard.sh
 
 echo "== degradacao: payload ruim nao pode matar a sessao =="
 run "payload vazio no apply-patch-guard" 0 ""          apply-patch-guard.sh

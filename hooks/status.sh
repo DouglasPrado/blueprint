@@ -16,7 +16,7 @@ docs="$root/docs"
 if [ ! -d "$docs" ]; then
   if [ -n "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}" ]; then
     echo "== Blueprint =="
-    echo "Plugin instalado, templates ainda nao. Rode blueprint-init na raiz deste projeto para instalar a biblioteca de documentos em docs/."
+    echo "Plugin instalado, templates ainda nao. Rode /blueprint:init na raiz deste projeto para instalar a biblioteca de documentos em docs/."
   fi
   exit 0
 fi

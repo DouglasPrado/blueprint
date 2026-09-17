@@ -124,7 +124,7 @@ def build(check: bool):
                 "tecnico de 17 documentos, prototipo mockado que descobre o contrato de API "
                 "construindo a interface, especificacao de backend e frontend, backlog "
                 "rastreavel, scaffold tipado e um loop de implementacao com portoes de teste "
-                "e de aderencia. 25 skills e 58 documentos, com hooks que impedem "
+                "e de aderencia. 26 skills e 58 documentos, com hooks que impedem "
                 "documentacao preenchida de ser sobrescrita, teste de ser silenciado e "
                 "segredo de entrar no historico."),
             "developerName": "Douglas Prado",

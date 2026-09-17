@@ -176,6 +176,89 @@ else
   fail=$((fail+1)); printf '  FALHA aviso nao e JSON valido com additionalContext\n'
 fi
 
+echo "== regressao: achados da auditoria =="
+# Cada caso abaixo PASSAVA antes da correcao. Sao bypasses reais, nao hipoteses.
+
+mkdir -p "$T/docs/backend"
+printf '# Integracoes\n\n<!-- APPEND:webhooks -->\n\n<!-- APPEND:webhooks-enviados -->\n' > "$T/docs/backend/13-integrations.md"
+run "remover APPEND:webhooks mantendo APPEND:webhooks-enviados bloqueia" 2 \
+  "{\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"$T/docs/backend/13-integrations.md\",\"old_string\":\"<!-- APPEND:webhooks -->\",\"new_string\":\"fim\\n<!-- APPEND:webhooks-enviados -->\"}}" docs-integrity.sh
+
+printf '# Copies\n\n<!-- do blueprint: 01-vision.md -->\n\n| welcome | Ola, {{nome}}! |\n\n<!-- APPEND:copies -->\n' > "$T/docs/blueprint/14-copies.md"
+run "Write sobre doc preenchido que usa {{chave}} de i18n bloqueia" 2 \
+  "{\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"$T/docs/blueprint/14-copies.md\",\"content\":\"x\"}}" docs-integrity.sh
+
+# Payloads com aspas por dentro: montados com python para nao depender de escape.
+mk() { python3 -c 'import json,sys; print(json.dumps({"tool_name":sys.argv[1],"tool_input":{"file_path":sys.argv[2],"old_string":sys.argv[3],"new_string":sys.argv[4]}}))' "$@"; }
+
+run "rebaixar o global escondido atras de outro bloco bloqueia" 2 \
+  "$(mk Edit "$T/proj/jest.config.js" \
+      'coverageThreshold: { global: { lines: 80, branches: 80 } },' \
+      'coverageThreshold: {
+  "./src/novo/": { lines: 100, branches: 100 },
+  global: { lines: 20, branches: 20 },
+},')" tests-integrity.sh
+
+run "xit do RSpec (sem parenteses) bloqueia" 2 \
+  "$(mk Edit "$T/proj/spec/user_spec.rb" "it 'soma' do" "xit 'soma' do")" tests-integrity.sh
+
+run "metodo do dominio chamado xitem nao e skip" 0 \
+  "$(mk Edit "$T/proj/spec/user_spec.rb" 'x' 'expect(cart.xitems).to eq 2')" tests-integrity.sh
+
+if command -v git >/dev/null 2>&1; then
+  ORIG3=$PWD; cd "$G" || exit 1
+  stage 'DATABASE_URL=postgres://admin:Pr0dP4ssw0rd2024@${DB_HOST}/app' env
+  run "senha de producao com \${VAR} na mesma linha bloqueia" 2 "$CMT" no-secrets.sh
+  stage 'const awsKey = "AKIAZZZZYYYYXXXXWWWW"; // conta demo'
+  run "AWS key com a palavra demo no comentario bloqueia" 2 "$CMT" no-secrets.sh
+  stage 'AWS_KEY=AKIAIOSFODNN7EXAMPLE' env
+  run "chave de exemplo oficial da AWS continua passando" 0 "$CMT" no-secrets.sh
+  stage 'const key = process.env.API_KEY'
+  run "leitura de env continua passando" 0 "$CMT" no-secrets.sh
+  git reset -q; rm -f f.*
+  cd "$ORIG3" || exit 1
+fi
+
+mkdir -p "$T/handlebars/docs/backend"
+printf '# Handlebars\n\nTemplate: {{user.name}}\n' > "$T/handlebars/docs/backend/README.md"
+out=$(printf '{"tool_name":"Write","tool_input":{"file_path":"'"$T"'/handlebars/docs/backend/README.md"}}' | bash "$HOOKS/docs-complete.sh" 2>/dev/null)
+if [ -z "$out" ]; then
+  pass=$((pass+1)); printf '  ok    docs-complete fica calado em projeto alheio com {{handlebars}}\n'
+else
+  fail=$((fail+1)); printf '  FALHA docs-complete injetou contexto em projeto alheio\n'
+fi
+
+echo "== docs-complete: os testes olham o CONTEUDO, nao so o exit code =="
+# docs-complete NUNCA sai diferente de 0. Testar so o exit code aprova um hook
+# que avisa em tudo — inclusive em documento completo e em Edit.
+dc() { printf '%s' "$1" | bash "$HOOKS/docs-complete.sh" 2>/dev/null; }
+said() { printf '%s' "$1" | grep -q 'additionalContext' 2>/dev/null; }
+o1=$(dc "{\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"$T/docs/blueprint/05-data-model.md\"}}")
+o2=$(dc "{\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"$T/docs/blueprint/04-domain-model.md\"}}")
+o3=$(dc "{\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"$T/docs/blueprint/05-data-model.md\"}}")
+if said "$o1"; then pass=$((pass+1)); printf '  ok    avisa no documento com placeholder\n'
+else fail=$((fail+1)); printf '  FALHA nao avisou onde havia placeholder\n'; fi
+if said "$o2"; then fail=$((fail+1)); printf '  FALHA avisou em documento ja completo\n'
+else pass=$((pass+1)); printf '  ok    fica calado no documento completo\n'; fi
+if said "$o3"; then fail=$((fail+1)); printf '  FALHA disparou em Edit, que nao e o gatilho\n'
+else pass=$((pass+1)); printf '  ok    nao dispara em Edit\n'; fi
+
+echo "== tests-integrity: o ramo de AVISO de supressao existe e nao bloqueia =="
+out=$(printf '%s' "{\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"$T/proj/src/__tests__/u.test.ts\",\"old_string\":\"x\",\"new_string\":\"// @ts-nocheck\"}}" | bash "$HOOKS/tests-integrity.sh" 2>&1); rc=$?
+if [ "$rc" = 0 ] && printf '%s' "$out" | grep -q 'AVISO'; then
+  pass=$((pass+1)); printf '  ok    supressao de tipo em teste avisa sem bloquear\n'
+else
+  fail=$((fail+1)); printf '  FALHA ramo de aviso nao disparou (exit %s)\n' "$rc"
+fi
+
+echo "== status: o hook do Claude fala a linguagem do Claude =="
+out=$(CLAUDE_PROJECT_DIR="$T/vazio-sem-docs" CLAUDE_PLUGIN_ROOT="$HOOKS/.." bash "$HOOKS/status.sh" 2>&1)
+if printf '%s' "$out" | grep -q 'blueprint-init'; then
+  fail=$((fail+1)); printf '  FALHA status.sh do Claude manda rodar blueprint-init (comando do Codex)\n'
+else
+  pass=$((pass+1)); printf '  ok    status.sh do Claude nao cita comando do Codex\n'
+fi
+
 echo "== portabilidade: sem extensoes GNU nos padroes =="
 # Comentario pode citar \b e \s para explicar por que nao se usa; o que importa
 # e o codigo. Por isso tudo a partir do primeiro # e descartado antes do teste.

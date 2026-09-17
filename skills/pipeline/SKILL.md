@@ -5,7 +5,7 @@ description: Executa o pipeline completo de documentacao automaticamente — blu
 
 # Pipeline — Execucao Automatica de Toda a Documentacao
 
-Roda as fases de documentacao em sequencia — 12 no fluxo padrao, 15 com `--prototype`, **sem parar para perguntar**. Cada fase executa num subagente com contexto limpo, escreve seus documentos e devolve um resumo. Ao final, consolida todas as inferencias em `docs/ASSUMPTIONS.md` para revisao.
+Roda as fases de documentacao em sequencia — 13 no fluxo padrao, 16 com `--prototype`, **sem parar para perguntar**. Cada fase executa num subagente com contexto limpo, escreve seus documentos e devolve um resumo. Ao final, consolida todas as inferencias em `docs/ASSUMPTIONS.md` para revisao.
 
 ```
 /blueprint:pipeline [caminho-do-prd] [clientes] [projeto-alvo] [--prototype]
@@ -112,7 +112,7 @@ Nao aguarde confirmacao — o usuario ja optou pelo modo automatico ao rodar `/b
 
 Para cada fase, use a ferramenta **Agent** com `subagent_type: general-purpose` e `run_in_background: false` (aguarde cada uma terminar antes da proxima).
 
-### Ordem das fases — padrao (12 fases)
+### Ordem das fases — padrao (13 fases)
 
 | # | Skill | Argumento | Docs gerados |
 |---|-------|-----------|--------------|
@@ -127,11 +127,14 @@ Para cada fase, use a ferramenta **Agent** com `subagent_type: general-purpose` 
 | 9 | `frontend` | clientes | frontend shared/06, shared/15 |
 | 10 | `frontend-app` | `{client}` | frontend {client} 00,01,02,04,05,07,08,14 |
 | 11 | `frontend-quality` | `{client}` | frontend {client} 09,10,11,12,13 |
-| 12 | `codegen-setup` | `{projeto-alvo}` | CLAUDE.md, `src/contracts/`, schema, scaffold |
+| 12 | `shared` | — | shared glossary, event-mapping, error-ux-mapping |
+| 13 | `codegen-setup` | `{projeto-alvo}` | CLAUDE.md, `src/contracts/`, schema, scaffold |
 
 > A fase 9 roda depois da 7 de proposito: `shared/15-api-dependencies.md` usa `docs/backend/05-api-contracts.md` como fonte autoritativa dos endpoints.
+>
+> A fase 12 roda depois de backend **e** frontend porque os tres documentos que ela gera sao projecoes das duas camadas — e e exatamente por cruza-las que ela revela divergencia (evento sem consumidor, erro sem UX, termo que muda de nome). Roda antes da 13 porque o scaffold congela nomes: um termo corrigido depois do `codegen-setup` ja nasceu errado no `src/contracts/`.
 
-### Ordem das fases — com `--prototype` (15 fases)
+### Ordem das fases — com `--prototype` (16 fases)
 
 A ordem **inverte a relacao entre frontend e backend**: a interface vem primeiro, mockada, e o contrato de API nasce dela.
 
@@ -146,11 +149,12 @@ A ordem **inverte a relacao entre frontend e backend**: a interface vem primeiro
 | 12 | `frontend` | clientes | frontend shared/06, shared/15 |
 | 13 | `frontend-app` | `{client}` | frontend {client} 00,01,02,04,05,07,08,14 |
 | 14 | `frontend-quality` | `{client}` | frontend {client} 09,10,11,12,13 |
-| 15 | `codegen-setup` | `{projeto-alvo}` | CLAUDE.md, `src/contracts/`, schema, scaffold |
+| 15 | `shared` | — | shared glossary, event-mapping, error-ux-mapping |
+| 16 | `codegen-setup` | `{projeto-alvo}` | CLAUDE.md, `src/contracts/`, schema, scaffold |
 
 As fases 13 e 14 repetem para **cada** cliente, sempre `app` antes de `quality`. O **prototipo e de um cliente so** — o primeiro da lista.
 
-**Total (um cliente frontend):** 48 docs + 6 do prototipo = **54 documentos preenchidos**, mais o app mockado. Cada cliente adicional soma 13.
+**Total (um cliente frontend):** 51 docs + 6 do prototipo = **57 documentos preenchidos**, mais o app mockado. Cada cliente adicional soma 13.
 
 ### As fases 9 e 10 sao diferentes das outras
 

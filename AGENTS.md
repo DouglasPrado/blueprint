@@ -75,8 +75,8 @@ de erro. Se você mexer nesse script, o teste que verifica isso é obrigatório.
 ## Antes de commitar
 
 ```bash
-bash hooks/test/run.sh          # 55 casos — hooks do Claude Code
-bash codex/hooks/test/run.sh    # 40 casos — hooks do Codex + estrutura do gerado
+bash hooks/test/run.sh          # 70 casos — hooks do Claude Code
+bash codex/hooks/test/run.sh    # 49 casos — hooks do Codex + estrutura do gerado
 python3 tools/build-codex.py --check
 ```
 

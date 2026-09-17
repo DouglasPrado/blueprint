@@ -1,18 +1,18 @@
 # Blueprint — O Que É Fundamental Para Criar um SaaS
 
-> **Documento mestre.** Consolidação completa do repositório `DouglasPrado/blueprint`: os 3 blueprints (técnico, backend, frontend), os 4 documentos cross-layer, os templates, os diagramas C4 e as 24 skills do Claude Code — correlacionados num único arquivo.
+> **Documento mestre.** Consolidação completa do repositório `DouglasPrado/blueprint`: os 3 blueprints (técnico, backend, frontend), os 4 documentos cross-layer, os templates, os diagramas C4 e as 26 skills — correlacionadas num único arquivo.
 >
 > **O que este arquivo é:** o mapa integral do que precisa existir, estar decidido e estar escrito para construir um SaaS de forma rastreável — e como cada peça se conecta às outras.
 >
 > **O que este arquivo não é:** um substituto dos documentos individuais. Ele é a visão de conjunto; cada seção aponta para o arquivo-fonte onde o detalhe vive e é preenchido.
 >
-> **Sobre divergências:** onde os arquivos do repositório se contradizem entre si, este documento **registra o conflito e diz qual fonte seguir** em vez de escolher um lado em silêncio. As **sete divergências verificadas** estão em [§17.4](#174-divergências-internas-do-repositório-verificadas) e as **quatro lacunas estruturais do framework** — três em [§14.3](#143-marcadores-de-append-pontos-de-inserção-estáveis), a quarta no fecho de §17.4. A mais consequente: **nenhuma skill gera `docs/shared/`**, de modo que o `/blueprint:pipeline` entrega 48 documentos preenchidos, não 52.
+> **Sobre divergências:** onde os arquivos do repositório se contradizem entre si, este documento **registra o conflito e diz qual fonte seguir** em vez de escolher um lado em silêncio. As **sete divergências verificadas** estão em [§17.4](#174-divergências-internas-do-repositório-verificadas) e as **quatro lacunas estruturais do framework** — três em [§14.3](#143-marcadores-de-append-pontos-de-inserção-estáveis), a quarta no fecho de §17.4. Das quatro lacunas estruturais registradas, **duas foram fechadas** (ver §14.3): `docs/shared/` agora tem skill geradora e alvo próprio no `/blueprint:increment`.
 
 | Campo | Valor |
 | --- | --- |
 | Versão | v1.0.0 |
 | Fonte | Repositório Blueprint — `README.md`, `docs/**`, `skills/**` |
-| Cobertura | 52 documentos padrão (1 cliente frontend), 58 com a fase de protótipo · 24 skills · 10 diagramas `.mmd` + 4 READMEs de diagramas |
+| Cobertura | 52 documentos padrão (1 cliente frontend), 58 com a fase de protótipo · 26 skills · 10 diagramas `.mmd` + 4 READMEs de diagramas |
 | Idioma | Descrições em português; identificadores técnicos em inglês |
 
 ---
@@ -91,7 +91,7 @@ Três consequências práticas, que aparecem repetidas em todas as skills:
 
 ```
 MODO AUTÔNOMO (PRD detalhado, primeira versão rápida)
-  /blueprint:pipeline docs/prd.md web ../meu-saas/   → 48 docs preenchidos + scaffold tipado
+  /blueprint:pipeline docs/prd.md web ../meu-saas/   → 51 docs preenchidos + scaffold tipado
                                            (os 4 de docs/shared/ NAO sao gerados — ver §14.3)
   revisar docs/ASSUMPTIONS.md              → corrigir risco alto com /blueprint:increment
   /blueprint:build                                   → features em loop com portões
@@ -1653,17 +1653,17 @@ O framework tem **duas** granularidades de backlog que convivem, e confundi-las 
 ENT-XXX   Entrega          blueprint/11-build_plan.md · unidade de VALOR e de dependência
    │                        prioridade MoSCoW, estimativa T-shirt (S/M/L/XL), critérios de aceite
    │
-   ├── EP-XXX   Epic        docs/templates/epic-template.md · agrupamento de valor
+   ├── EP-XXX   Epic        README.MD §17.3 · agrupamento de valor
    │      │                  contexto, escopo dentro/fora, critérios de aceite do epic,
    │      │                  dependências (bloqueia/depende), riscos
    │      │
-   │      └── ST-XXX  Story  docs/templates/story-template.md
+   │      └── ST-XXX  Story  README.MD §17.4
    │             │            "Como {persona}, quero {ação}, para {benefício}"
    │             │            critérios de aceite em Gherkin (Dado/Quando/Então),
    │             │            CENÁRIOS DE ERRO obrigatórios, estimativa P/M/G/GG,
    │             │            Definição de Pronto própria
    │             │
-   │             └── TSK-XXX  Task  docs/templates/task-template.md
+   │             └── TSK-XXX  Task  README.MD §17.5
    │                           tipo (backend/frontend/infra/banco/teste/doc),
    │                           checklist de implementação, critérios técnicos
    │
@@ -1683,7 +1683,7 @@ ENT-XXX   Entrega          blueprint/11-build_plan.md · unidade de VALOR e de d
 
 **Como usar os dois sem duplicar:** a entrega (`ENT-XXX`) é a fonte comum. Para o time, ela vira epics e stories com linguagem de produto. Para o agente, `/blueprint:specs` a decompõe em tasks técnicas rastreáveis até o arquivo de origem. O `/blueprint:build` quebra cada entrega em **features verticais** (banco + API + frontend + testes) e usa `TASKS.md`, quando existe, para detalhar o escopo de cada uma.
 
-O blueprint master (`README.MD` §17.3-17.5) traz as três tabelas — Epics, Stories e Tasks técnicas — no mesmo documento, para quem prefere um arquivo único a templates separados.
+O blueprint master (`README.MD` §17.3-17.5) traz as três tabelas — Epics, Stories e Tasks técnicas — e é **a única fonte da forma** delas. O framework não instala templates soltos por item: o ramo `EP → ST → TSK` é escrito por pessoas, no board ou no master, e nenhuma skill o gera. O que a máquina gera é o outro ramo, `TASK-{GRP}-{NNN}`.
 
 ### 12.5 Migração (README mestre §23)
 
@@ -1818,7 +1818,7 @@ O framework cobre a engenharia de um SaaS com profundidade, mas há temas de Saa
 
 ## 14. Contrato das skills e automação
 
-### 14.1 As 24 skills
+### 14.1 As 26 skills
 
 | Grupo | Skill | Produz |
 | --- | --- | --- |
@@ -1865,7 +1865,7 @@ O plugin embarca cinco hooks. Eles existem porque três regras do framework são
 
 **Por que dois bloqueiam em vez de avisar:** custo assimétrico. Documento sobrescrito por `Write` não volta. Segredo que entra no histórico fica no histórico, nos forks e em cada clone já feito — commit posterior não remove, e reescrever histórico publicado é caro e nem sempre possível. Nos dois casos o único momento barato é antes.
 
-`bash hooks/test/run.sh` — 35 casos, cobrindo o que cada hook deve bloquear, o que deve deixar passar e a degradação. Hook malformado falha **em silêncio**: não bloqueia, não avisa, e o plugin parece instalado sem fazer nada.
+`bash hooks/test/run.sh` — 70 casos (e `bash codex/hooks/test/run.sh` — 49 para o Codex), cobrindo o que cada hook deve bloquear, o que deve deixar passar e a degradação. Hook malformado falha **em silêncio**: não bloqueia, não avisa, e o plugin parece instalado sem fazer nada.
 
 ### 14.2 O contrato comum a todas as skills
 
@@ -1924,15 +1924,17 @@ O plugin embarca cinco hooks. Eles existem porque três regras do framework são
 | `event-mapping.md` | `eventos`, `impacto` *(linhas 18, 45)* |
 | `MAPPING.md` | **nenhum** — é índice, não acumula entradas |
 
-> ⚠️ **Segunda lacuna do framework:** `docs/shared/` tem marcadores de append, mas **não é alvo de `/blueprint:increment`**. Atenção à ambiguidade: a skill *oferece* a opção `shared`, mas apenas como **cliente de frontend** (`docs/frontend/shared/` — design system, data layer, api-dependencies). `docs/shared/` (glossário, error-ux-mapping, event-mapping, MAPPING) não é alvo em nenhum nível. Adicionar um termo ao glossário exige edição manual ou `/blueprint:patch`.
+> ✅ **Segunda lacuna — RESOLVIDA.** `docs/shared/` não era alvo de `/blueprint:increment`: a skill oferecia `shared`, mas apenas como **cliente de frontend** (`docs/frontend/shared/`). Hoje o alvo existe com nome próprio — **`connectors`** — justamente para não colidir com `frontend shared`, e a skill explicita a diferença entre os dois diretórios.
 >
-> ⚠️ **Terceira lacuna, e a mais consequente: nenhuma skill gera `docs/shared/`.** Verificado nas 24 skills: as 12 fases do `/blueprint:pipeline` vão de `blueprint-foundation` a `codegen-setup` e **não incluem** os quatro documentos cross-layer; `/blueprint:specs`, `/codegen-*` e `/blueprint:patch` apenas os **leem**. Na prática, `glossary.md`, `error-ux-mapping.md` e `event-mapping.md` permanecem com `{{placeholders}}` depois de um `/blueprint:pipeline` completo — e são justamente os documentos que impedem os três blueprints de divergirem. Consequências diretas:
+> ✅ **Terceira lacuna, a mais consequente — RESOLVIDA.** Era a maior do framework: **nenhuma skill gerava `docs/shared/`**. Nove skills liam esses arquivos e zero escreviam. `glossary.md` permanecia com `{{placeholders}}` depois de um `/blueprint:pipeline` completo — e ele abre declarando *"fonte única de termos do domínio, não crie glossários separados"*, enquanto o glossário que o pipeline de fato preenchia era o de `04-domain-model.md`. O documento que se dizia fonte única era o que ninguém preenchia.
 >
-> - O `/blueprint:pipeline` entrega **48 documentos preenchidos**, não 52. Os 4 de `docs/shared/` continuam template.
-> - A regra *"fonte única de termos"* de `glossary.md` não tem quem a execute: cada blueprint acaba com seu próprio glossário local, exatamente o que o arquivo existe para evitar.
-> - `/blueprint:specs` valida cobertura **contra** `shared/glossary.md` (linguagem ubíqua) e `/blueprint:codegen-feature` lê `error-ux-mapping.md` — ambos leem um arquivo que ninguém preencheu.
+> A lacuna foi fechada com a skill **`/blueprint:shared`**, fase 12 do fluxo padrão (15 com `--prototype`), rodando **depois** de backend e frontend e **antes** do `codegen-setup`:
 >
-> **O que fazer:** preencher os quatro manualmente após o `/blueprint:pipeline`, ou com `/blueprint:increment` mirando `blueprint` e propagando à mão. `04-domain-model.md` já instrui: *"Fonte única de termos: `docs/shared/glossary.md`. Ao preencher esta seção, atualize também o glossário compartilhado."* — a instrução existe; o automatismo não.
+> - **Depois das duas camadas** porque os três documentos são projeções delas — e cruzá-las é o objetivo. Evento emitido pelo backend que nenhuma fatia de estado do frontend consome, erro sem UX, termo que muda de nome entre camadas: nada disso é visível dentro de um blueprint isolado.
+> - **Antes do scaffold** porque `codegen-setup` congela nomes: termo corrigido depois de `src/contracts/` existir já nasceu errado nos tipos.
+> - `MAPPING.md` **não** é gerado, e isso é correto: ele descreve a estrutura do framework, não o projeto, e já vem completo (zero `{{placeholders}}`). Os documentos geráveis são três, não quatro.
+>
+> Com isso o `/blueprint:pipeline` entrega **51 documentos preenchidos** (54 com protótipo), e o critério **V8: Cross-Layer** do `/blueprint:codegen-verify` passa a ser avaliável contra conteúdo real em vez de template vazio.
 
 ### 14.4 `/blueprint:pipeline` — modo autônomo
 
@@ -1947,11 +1949,11 @@ O plugin embarca cinco hooks. Eles existem porque três regras do framework são
 | "web", "SaaS", "dashboard", "painel", "SEO", "navegador" | `web` |
 | Nenhum sinal claro | `web` (padrão, registrado como suposição de risco médio) |
 
-**A flag `--prototype`** insere três fases e move o backend para depois delas: **15 fases** em vez de 12, **54 documentos preenchidos** em vez de 48, mais o app mockado. Exige projeto-alvo — o protótipo *é* código, não existe versão só-documentação dele. As fases 9 (`prototype-build`) e 10 (`prototype-api`) seguem o mesmo regime da `codegen-setup`: escrevem fora do repositório, têm **portão objetivo** (telas, fluxos percorríveis, estados, typecheck, lint) e reportam falha em vez de declarar sucesso. Os achados de risco alto de `05-findings.md` entram no relatório final **acima** das suposições — são evidência de código, não inferência.
+**A flag `--prototype`** insere três fases e move o backend para depois delas: **16 fases** em vez de 13, **57 documentos preenchidos** em vez de 51, mais o app mockado. Exige projeto-alvo — o protótipo *é* código, não existe versão só-documentação dele. As fases 9 (`prototype-build`) e 10 (`prototype-api`) seguem o mesmo regime da `codegen-setup`: escrevem fora do repositório, têm **portão objetivo** (telas, fluxos percorríveis, estados, typecheck, lint) e reportam falha em vez de declarar sucesso. Os achados de risco alto de `05-findings.md` entram no relatório final **acima** das suposições — são evidência de código, não inferência.
 
 **Retomada:** verifica quais documentos já têm conteúdo real (sem `{{placeholders}}`) e pula as fases concluídas. Rodar `/blueprint:pipeline` de novo continua de onde parou.
 
-**Isolamento de contexto:** cada fase roda num subagente com contexto limpo, lê só o que precisa, escreve seus documentos e devolve um **resumo compacto**. O orquestrador acumula os resumos — **nunca relê os documentos gerados**. É isso que permite produzir 48 documentos sem estourar a janela de contexto (os 4 de `docs/shared/` ficam de fora das 12 fases — ver §14.3).
+**Isolamento de contexto:** cada fase roda num subagente com contexto limpo, lê só o que precisa, escreve seus documentos e devolve um **resumo compacto**. O orquestrador acumula os resumos — **nunca relê os documentos gerados**. É isso que permite produzir 51 documentos sem estourar a janela de contexto.
 
 **Retorno padronizado de cada subagente:**
 ```
@@ -2265,18 +2267,20 @@ Do próprio README e das seções "Limites conhecidos" das skills:
 
 ### 17.4 Divergências internas do repositório (verificadas)
 
-Um framework documentation-driven também sofre de deriva documental. Estas **sete** divergências foram confirmadas arquivo a arquivo e estão registradas aqui em vez de resolvidas em silêncio — porque um agente que segue a fonte errada produz um erro difícil de rastrear:
+Um framework documentation-driven também sofre de deriva documental. Estas **sete** divergências foram confirmadas arquivo a arquivo. Três já foram fechadas (marcadas ✅); as demais seguem registradas aqui em vez de resolvidas em silêncio — porque um agente que segue a fonte errada produz um erro difícil de rastrear:
 
 | # | Divergência | Fontes em conflito | Qual seguir |
 | --- | --- | --- | --- |
-| 1 | **Marcadores `APPEND` do blueprint técnico** | `skills/increment/SKILL.md` diz que `02, 05, 06, 07, 08, 14, 15, 16` não têm marcador; **os oito arquivos têm** | Os arquivos. Inventário real em §14.3 |
+| 1 ✅ | **Marcadores `APPEND` do blueprint técnico** | `skills/increment/SKILL.md` afirmava que `02, 05, 06, 07, 08, 14, 15, 16` não tinham marcador — **os dezessete têm**, e a lista dos demais omitia `relationships` (04), `external-dependencies` (11) e `security-checklist` (13). Era a divergência mais cara: em metade dos documentos o `increment` inseria conteúdo **depois** do ponto de inserção, e nenhum hook pegava (eles detectam *remoção* de marcador, não inserção no lugar errado) | **Corrigida na skill.** Inventário completo dos 17 + os de `docs/shared/` |
 | 2 | **Nome do diagrama de arquitetura do cliente web** | `/blueprint:frontend-app` gera `{client}-architecture.mmd`; `docs/diagrams/web/README.md` declara `frontend-architecture.mmd` | O README do diagrama, que é o que `frontend/web/01-architecture.md` referencia |
-| 3 | **Numeração de fluxos alternativos e exceções em casos de uso** | `/blueprint:blueprint-flows` diz `1a, 2a…` e `E1, E2…`; `docs/blueprint/08-use_cases.md` e `docs/templates/use-case-template.md` usam `2a` (alternativo) e `2b` (exceção) | Os templates, que são o que o documento gerado precisa espelhar |
+| 3 ✅ | **Numeração de fluxos alternativos e exceções em casos de uso** | `/blueprint:blueprint-flows` diz `1a, 2a…` e `E1, E2…`; `docs/blueprint/08-use_cases.md` usa `2a` (alternativo) e `2b` (exceção). O conflito tinha **três** pontas porque `docs/templates/use-case-template.md` trazia uma terceira forma de caso de uso, concorrente com a seção `## Template` que já vive dentro do próprio `08-use_cases.md` | **`08-use_cases.md`**, que é o documento gerado. O template solto foi removido — ver a nota abaixo |
 | 4 | **Referências cruzadas em português e em caminho flat, apontando para arquivos inexistentes** | Não é um template isolado: **37 ocorrências em 25 arquivos**, em quatro classes — (a) o template do router `docs/templates/claudemd-template.md` (`04-componentes.md`, `05-estado.md`, `07-rotas.md`, `08-fluxos.md`, `09-testes.md`, `11-seguranca.md`, `12-observabilidade.md` e o flat `docs/frontend/06-data-layer.md`); (b) **`01-arquitetura.md`, referenciado em 6 documentos de cliente** (`{web,desktop}/00-frontend-vision.md`, `.../02-project-structure.md`, `.../05-state.md`); (c) o resto dos docs de cliente (`07-rotas.md`, `11-seguranca.md`, `09-testes.md`, `13-cicd-convencoes.md`, `12-observabilidade.md`, `00-visao-frontend.md`); (d) os **compartilhados e cross-layer** — `frontend/shared/03-design-system.md:122`, `frontend/shared/06-data-layer.md:149`, `frontend/shared/15-api-dependencies.md:90`, `docs/shared/event-mapping.md:49-51` e `docs/shared/error-ux-mapping.md:60-61`, estes últimos com o caminho **flat** `docs/frontend/06-data-layer.md`, `docs/frontend/11-security.md`, `docs/frontend/12-observability.md` | A estrutura real (`docs/frontend/{shared,web,mobile,desktop}/`, nomes em inglês). **Deriva sistêmica** da migração flat → multi-client: atingiu o template do router, os documentos gerados *e* os conectores cross-layer |
-| 5 | **Prefixo de regra de negócio** | `docs/blueprint/04-domain-model.md`, `08-use_cases.md`, `backend/03-domain.md` e `/blueprint:specs` usam **`RN-XX`**; `docs/templates/use-case-template.md:54` e `docs/blueprint/README.MD:356,608` usam **`RB-01`** | **`RN-XX`** — é o que os documentos modulares, o backend e o gerador de backlog usam. `RB-` sobrevive só no master e no template de caso de uso |
+| 5 ✅ | **Prefixo de regra de negócio** | `docs/blueprint/04-domain-model.md`, `08-use_cases.md`, `backend/03-domain.md` e `/blueprint:specs` usam **`RN-XX`**; `docs/templates/use-case-template.md:54` e `docs/blueprint/README.MD:356,608` usavam **`RB-01`** | **`RN-XX`**. Com a remoção do template de caso de uso, `RB-` sobrevive apenas no blueprint master |
 | 6 | **Dono do `auth-flow.mmd`** | `docs/diagrams/README.md` §6 atribui todos os `sequences/*.mmd` a `07-critical_flows.md`; `/blueprint:blueprint-quality` manda atualizá-lo ao gerar `13-security.md` | Ambos, em momentos diferentes: o fluxo nasce em `07` (fase 4) e o detalhe de autenticação é refinado por `13` (fase 5). Detalhado em §3.3 |
 | 7 | **Seletor do tema escuro** | `docs/frontend/shared/03-design-system.md:80` usa `[data-theme="dark"]`; `skills/frontend-design-system/SKILL.md:149` usa `.dark` | Qualquer um — mas **um só**, e o mesmo em todo o projeto. Detalhado em §9.1 |
 
+> ✅ **Quatro templates órfãos removidos.** `docs/templates/` trazia `epic-`, `story-`, `task-` e `use-case-template.md`: instalados por `/blueprint:init` no projeto do usuário e lidos por **nenhuma skill**. `/blueprint:specs` gera `TASKS.md` com formato próprio; `/blueprint:blueprint-flows` gera os casos de uso a partir da seção `## Template` que vive dentro de `08-use_cases.md`. Eram resto de um modelo arquivo-por-item, estilo Jira, incompatível com o modelo real do framework — *o documento é o template*, com `{{placeholders}}` e marcador `APPEND`. Pior: o de caso de uso **contradizia** o template inline do documento que dizia espelhar (ator principal/secundário vs. ator, prioridade e objetivo ausentes no inline, regras de negócio ausentes no solto), originando as divergências 3 e 5 desta mesma tabela. A hierarquia `EP → ST → TSK` descrita em §12.4 permanece válida como modelo conceitual de backlog para o time — ela só não tem mais templates soltos que competem com os documentos gerados.
+>
 > ⚠️ **E aqui está a quarta lacuna estrutural do framework:** `/blueprint:patch` e `/blueprint:increment` **não alcançam seis destas sete divergências**. A varredura do `/blueprint:patch` cobre apenas `docs/blueprint/`, `docs/backend/`, `docs/frontend/shared/`, `docs/frontend/*/`, `docs/prototype/`, `docs/shared/`, `docs/specs/` e `docs/adr/`. Ficam **inteiramente fora de alcance** três diretórios: **`docs/templates/`**, **`docs/diagrams/`** e — o mais importante — **`skills/`**, já que a varredura só desce em `docs/**`. `/blueprint:increment` é mais restrito ainda (`blueprint`, `backend`, `frontend`, `prototype`).
 >
 > Onde cada divergência mora, e o que isso implica:
@@ -2369,8 +2373,7 @@ docs/
 ├── backend-answers.md                  respostas de implementação coletadas por /blueprint:backend (14 perguntas)
 ├── specs/TASKS.md                      backlog integral (gerado por /blueprint:specs)
 │
-├── templates/                          prd (468 linhas, ENTRADA) · claudemd (router) ·
-│                                       epic · story · task · use-case
+├── templates/                          prd (468 linhas, ENTRADA) · claudemd (router)
 ├── adr/adr-template.md                 template de decisão arquitetural
 └── diagrams/                           C4 (contexto, containers, componentes) +
                                         sequences · deployment · domain · por cliente
@@ -2388,6 +2391,7 @@ skills/
 ├── backend/                                                     backend
 ├── frontend/          frontend-design-system/
 │                      frontend-app/          frontend-quality/  frontend
+├── shared/                                                      conectores cross-layer
 ├── increment/         patch/                 specs/             evolução e backlog
 └── codegen-setup/     codegen/               codegen-feature/
                        codegen-verify/                            código
@@ -2414,6 +2418,9 @@ skills/
 /blueprint:prototype {client}                     plano: telas, navegação, dados mock
 /blueprint:prototype-build {client} {alvo}        código: o app mockado
 /blueprint:prototype-api {client} {alvo}          o contrato descoberto, extraído do código
+
+# Conectores cross-layer
+/blueprint:shared                          glossário, mapa de eventos, mapa de erro→UX
 
 # Automação
 /blueprint:pipeline [prd] [clientes] [alvo] [--prototype]   tudo, em fases isoladas, sem perguntas

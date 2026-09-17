@@ -46,7 +46,7 @@ Se algum doc passar de 50k tokens, use **Context Excerpting**: grep pelos header
 
 > **Versoes:** tecnologias com versao → `mcp__context7__resolve-library-id` → `mcp__context7__query-docs`.
 
-## Passo 2.5: Reaproveitar o Prototipo (se existir)
+## Passo 2.5: Reaproveitar o Prototipo (se foi construido no projeto-alvo)
 
 Se houver um prototipo construido no projeto-alvo, parte do scaffold **ja existe** — e reescreve-lo do zero desperdicaria a unica parte nao descartavel da fase de prototipo.
 

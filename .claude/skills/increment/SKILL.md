@@ -77,6 +77,16 @@ Marcadores do blueprint tecnico:
 - `12`: `coverage`, `ci-pipeline`
 - `13`: `threats`, `roles`
 
+Marcadores do prototipo (`docs/prototype/`):
+- `00`: `camadas`, `stack`, `nao-objetivos`
+- `01`: `mapa-uc`, `uc-sem-tela`, `telas`, `navegacao`, `fluxos`
+- `02`: `estrategia`, `personas`, `fixtures`, `cenarios`
+- `03`: `convencoes`, `endpoints`, `detalhamento`, `atomicas`, `agregacoes`, `tempo-real`, `divergencias`
+- `04`: `matriz-estados`, `erros`, `otimistas`, `transicoes`, `feedback`
+- `05`: `lacunas-dominio`, `use-cases`, `estados`, `regras`, `api`, `contradicoes`, `suposicoes`, `encaminhamento`
+
+> **Atencao ao editar `docs/prototype/`:** `03-api-requirements.md` e **extraido de codigo** por `/prototype-api`. Edita-lo a mao cria uma terceira fonte de verdade — prefira corrigir o prototipo e regerar. A excecao e `05-findings.md`, cuja coluna de status existe para ser atualizada conforme os achados sao encaminhados.
+
 Docs sem APPEND (02, 05, 06, 07, 08, 14, 15, 16) → insira na secao apropriada, apos a ultima entrada.
 
 **CORRECAO** — Edit com `old_string` = valor antigo, `new_string` = correto. Marque `<!-- corrigido: descricao -->`. Nao toque em outras linhas.

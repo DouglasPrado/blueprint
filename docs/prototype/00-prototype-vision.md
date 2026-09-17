@@ -71,7 +71,7 @@ Um contrato de API escrito antes da interface e uma previsao. Um contrato extrai
 - [ ] Todo caso de uso `UC-XXX` de `blueprint/08-use_cases.md` tem tela correspondente em `01-screens.md`
 - [ ] Todo fluxo critico de `blueprint/07-critical_flows.md` e percorrivel ponta a ponta no app
 - [ ] Toda tela tem os quatro estados implementados: carregando, vazio, erro, sucesso
-- [ ] Toda transicao de `blueprint/09-state-models.md` e disparavel pela interface
+- [ ] Toda transicao de `blueprint/09-state-models.md` ou tem gatilho na interface, ou tem causa registrada em `04-interaction-states.md` (acao de sistema, backoffice fora de escopo, ou lacuna)
 - [ ] Cada persona de `02-mock-data.md` consegue navegar e ve apenas o que sua role permite
 - [ ] Todo formulario valida na borda e exibe erro por campo
 - [ ] `03-api-requirements.md` foi extraido do codigo, nao escrito a mao

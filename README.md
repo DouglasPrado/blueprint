@@ -141,6 +141,8 @@ Blueprint is composed of three primary specification layers plus shared cross-la
 
 With one frontend client, the standard flow produces **52 documents**; with the prototype phase, **58**.
 
+> Those are the templates the repository ships. What `/pipeline` actually *fills* is 48 (54 with the prototype): no skill generates the four cross-layer documents under `docs/shared/`, so the glossary and the two mapping files stay as templates until someone fills them by hand.
+
 ---
 
 # Workflow

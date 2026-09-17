@@ -60,6 +60,8 @@ Se houver um prototipo construido no projeto-alvo, parte do scaffold **ja existe
 
 > Conflito entre um tipo do prototipo e `04-domain-model.md` significa que `/prototype-api` deixou um achado passar. Registre em `docs/prototype/05-findings.md` e resolva no blueprint — nunca no tipo.
 
+## Passo 3: Identificar Clientes Frontend
+
 Verifique quais existem **com docs preenchidos** (nao apenas templates):
 
 ```

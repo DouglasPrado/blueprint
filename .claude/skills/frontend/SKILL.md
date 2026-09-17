@@ -20,7 +20,7 @@ Leia `docs/blueprint/` como fonte primaria. Para esta skill importam especialmen
 - `06-system-architecture.md` — API, comunicacao e deploy
 - `07-critical_flows.md`, `08-use_cases.md` — jornadas que viram telas
 
-Se `docs/prototype/` existir (frontend completo mockado construido antes do backend), leia tambem `01-screens.md`, `03-api-requirements.md` e `04-interaction-states.md` — eles ja responderam, com evidencia de codigo, boa parte do que estas skills perguntariam.
+Se `docs/prototype/` estiver **preenchido** — a pasta e versionada com templates, entao verifique ausencia de `{{placeholders}}`, nao existencia —, leia tambem `01-screens.md`, `03-api-requirements.md` e `04-interaction-states.md`: eles ja responderam, com evidencia de codigo, boa parte do que estas skills perguntariam.
 
 Se o blueprint estiver vazio, use `docs/prd.md` como fallback. Se nenhum existir:
 
@@ -100,7 +100,7 @@ Mapa de endpoints que o frontend consome. Ordem de autoridade das fontes:
 
 | Prioridade | Fonte | Por que |
 |---|---|---|
-| 1 | **`docs/prototype/03-api-requirements.md`** | Ja traz endpoint, campos consumidos e tela consumidora — extraidos de codigo que funciona. Copie o mapa de campos criticos praticamente pronto |
+| 1 | **`docs/prototype/03-api-requirements.md`**, se preenchido | Ja traz endpoint, campos consumidos e tela consumidora — extraidos de codigo que funciona. Copie o mapa de campos criticos praticamente pronto |
 | 2 | `docs/backend/05-api-contracts.md` | Contrato implementado. Se divergir do prototipo, registre a divergencia em vez de escolher em silencio |
 | 3 | `08-use_cases.md` + `06-system-architecture.md` | Derivacao, quando nao ha nem prototipo nem backend |
 

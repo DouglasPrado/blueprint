@@ -67,7 +67,7 @@ Blueprint Tecnico (docs/blueprint/)     ← FONTE PRIMARIA do DOMINIO
 
 | Prototipo | Frontend | O que flui |
 | --- | --- | --- |
-| 03-api-requirements.md | shared/15-api-dependencies.md | Endpoints e campos criticos — praticamente prontos |
+| 03-api-requirements.md | shared/15-api-dependencies.md | Endpoints e campos criticos — praticamente prontos. **Prioridade 1**: quando o prototipo esta preenchido, ele precede `backend/05-api-contracts` como fonte de `shared/15` |
 | 01-screens.md | {client}/07-routes.md | Rotas, guards, layouts, deep links |
 | 01-screens.md | {client}/04-components.md | Componentes por tela |
 | 04-interaction-states.md | {client}/08-flows.md | Estados por fluxo |

@@ -47,6 +47,8 @@ src/
 ├── app/ (ou routes/)     rotas conforme o mapa de navegacao de 01-screens
 ├── components/ui/        primitivos do design system
 ├── features/{dominio}/   por feature, conforme os dominios do blueprint
+├── api/                  CAMADA DE DADOS — toda chamada HTTP passa por aqui
+│   └── {recurso}.ts      um arquivo por recurso, com os tipos de src/types/
 ├── mocks/
 │   ├── handlers/         um arquivo por recurso
 │   ├── fixtures/         um arquivo por entidade, TIPADO
@@ -57,11 +59,12 @@ src/
 └── styles/               tokens do design system
 ```
 
-**Tres regras inegociaveis:**
+**Quatro regras inegociaveis:**
 
-1. **Os tipos das entidades saem de `04-domain-model.md`, com os nomes do glossario.** Eles viram `src/contracts/` no `/codegen-setup` — divergir aqui custa um rename depois.
-2. **O mock vive na camada de rede.** A aplicacao faz `fetch` real; o worker intercepta. Mock dentro do componente transforma a integracao numa reescrita.
-3. **Fixtures sao tipadas.** Fixture com `any` nao acusa divergencia de contrato, e acusar divergencia e metade do valor da fase.
+1. **Nenhum componente chama `fetch` direto.** Toda chamada HTTP vive em `src/api/{recurso}.ts` e chega ao componente por hook. Esta e a regra que torna a fase seguinte possivel: `/prototype-api` monta o inventario "chamadas feitas" lendo **este diretorio**. Chamada espalhada por componente nao e inventariavel, e sem o inventario o cruzamento que da valor a fase nao acontece.
+2. **Os tipos das entidades saem de `04-domain-model.md`, com os nomes do glossario.** Eles viram `src/contracts/` no `/codegen-setup` — divergir aqui custa um rename depois.
+3. **O mock vive na camada de rede.** A aplicacao faz `fetch` real; o worker intercepta. Mock dentro do componente transforma a integracao numa reescrita.
+4. **Fixtures sao tipadas.** Fixture com `any` nao acusa divergencia de contrato, e acusar divergencia e metade do valor da fase.
 
 ## Passo 2: Design System
 
@@ -76,7 +79,7 @@ Os componentes construidos aqui **sao reaproveitados** na implementacao final �
 - **Seletor de persona** visivel em desenvolvimento, trocando a sessao mockada
 - **Cenarios** acionaveis por query param (`?scenario=offline`, `?scenario=slow`, `?scenario=expired`, `?scenario=bulk`)
 
-> **O mock responde, ele nao decide.** Toda regra de negocio pertence ao backend. Quando um handler precisar calcular para responder, pare e registre em `05-findings.md` — voce achou uma regra que ninguem tinha escrito.
+> **O mock responde, ele nao decide.** Toda regra de negocio pertence ao backend. Quando um handler precisar calcular para responder, pare e registre em `docs/prototype/05-findings.md` (§regras de negocio descobertas, com **Edit** — o arquivo tem tres autores) — voce achou uma regra que ninguem tinha escrito.
 
 ## Passo 4: Loop de Telas
 
@@ -86,6 +89,7 @@ Para cada tela de `01-screens.md`, em ordem de dependencia (autenticacao e layou
 1. Rota e guard        conforme o mapa de navegacao
 2. Layout              conforme a coluna Layout
 3. Estados PRIMEIRO    carregando → vazio → erro → sucesso, nessa ordem
+                       + parcial e sem-permissao quando a tela os admitir
 4. Dados               campo a campo, so o que 01-screens lista
 5. Acoes               cada acao dispara a transicao de 09-state-models
 6. Validacao           na borda, erro por campo
@@ -112,7 +116,7 @@ Antes de declarar o prototipo pronto, verifique **contra o codigo**, nao contra 
 | **Casos de uso** | Todo `UC` com tela e executavel ponta a ponta | `UC` nao executavel |
 | **Fluxos criticos** | Cada fluxo de `blueprint/07` percorrivel do inicio ao fim | Fluxo interrompido |
 | **Estados** | Toda tela tem os quatro estados alcancaveis por cenario | Estado faltando |
-| **Transicoes** | Toda transicao de `09-state-models` marcada como disparavel tem gatilho | Transicao sem gatilho |
+| **Transicoes** | Toda transicao de `09-state-models` ou tem gatilho na UI, ou tem causa registrada (acao de sistema / backoffice fora de escopo / lacuna) | Transicao sem gatilho **e** sem causa |
 | **Personas** | Cada persona navega e ve apenas o permitido | Persona travada ou vendo demais |
 | **Build** | Type check e lint passam | Qualquer erro |
 
@@ -133,7 +137,7 @@ Falha em portao: **corrija, nao documente como limitacao**. Prototipo incompleto
 >
 > **Achados registrados durante a construcao:** {{N}} — {{n}} de risco alto.
 >
-> Rode `/prototype-api {client}` para extrair o contrato que o backend precisa implementar."
+> Rode `/prototype-api {client} {projeto-alvo}` para extrair o contrato que o backend precisa implementar."
 
 ## Limites conhecidos
 

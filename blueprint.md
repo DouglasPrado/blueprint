@@ -1,6 +1,6 @@
 # Blueprint — O Que É Fundamental Para Criar um SaaS
 
-> **Documento mestre.** Consolidação completa do repositório `DouglasPrado/blueprint`: os 3 blueprints (técnico, backend, frontend), os 4 documentos cross-layer, os templates, os diagramas C4 e as 21 skills do Claude Code — correlacionados num único arquivo.
+> **Documento mestre.** Consolidação completa do repositório `DouglasPrado/blueprint`: os 3 blueprints (técnico, backend, frontend), os 4 documentos cross-layer, os templates, os diagramas C4 e as 24 skills do Claude Code — correlacionados num único arquivo.
 >
 > **O que este arquivo é:** o mapa integral do que precisa existir, estar decidido e estar escrito para construir um SaaS de forma rastreável — e como cada peça se conecta às outras.
 >
@@ -207,17 +207,19 @@ Cada fase consome o que a anterior produziu. Pular gera documento genérico — 
 | --- | --- | --- | --- |
 | 1-6 | `/blueprint-*` | os 17 docs do blueprint técnico | `prd.md` |
 | **7** | `/frontend-design-system` | `frontend/shared/03` | `01-vision` — **antecipada: o protótipo precisa dos tokens** |
-| **7.5a** | `/prototype {client}` | `prototype/00`, `01`, `02` | `00`, `04`, `07`, `08`, `09`, `13`, `shared/03` |
-| **7.5b** | `/prototype-build` | **código** — o app mockado | `prototype/00`, `01`, `02`, `shared/03`, `glossary` |
-| **7.5c** | `/prototype-api` | `prototype/03`, `04`, `05` | **o código do protótipo** |
-| 8 | `/backend` | `backend/00-14` | os 17 docs **+ `prototype/03` como fonte do contrato** |
-| 9 | `/frontend` | `shared/06`, `15` | blueprint + `prototype/03` (prioridade) ou `backend/05` |
-| 10-11 | `/frontend-app`, `/frontend-quality` | docs do cliente | blueprint + shared + `prototype/01`, `04` |
-| 12 | `/codegen-setup` | scaffold | idem, **reaproveitando tipos e design system do protótipo** |
+| **8** | `/prototype {client}` | `prototype/00`, `01`, `02` | `00`, `04`, `07`, `08`, `09`, `13`, `shared/03` |
+| **9** | `/prototype-build` | **código** — o app mockado | `prototype/00`, `01`, `02`, `shared/03`, `glossary` |
+| **10** | `/prototype-api` | `prototype/03`, `04`, `05` | **o código do protótipo** |
+| 11 | `/backend` | `backend/00-14` | os 17 docs **+ `prototype/03` como fonte do contrato** |
+| 12 | `/frontend` | `shared/06`, `15` | blueprint + `prototype/03` (prioridade) ou `backend/05` |
+| 13-14 | `/frontend-app`, `/frontend-quality` | docs do cliente | blueprint + shared + `prototype/01`, `04` |
+| 15 | `/codegen-setup` | scaffold | idem, **reaproveitando tipos e design system do protótipo** |
+
+> A numeração acima é a do `/pipeline --prototype` (15 fases). A parte deste documento que descreve a fase é a **[7.5](#75-a-fase-de-protótipo-opcional)** — o `.5` marca que ela é opcional e intercalada, não que seja meia fase.
 
 > **A inversão é o ponto.** Sem protótipo, a fase 9 roda depois da 7 porque `backend/05-api-contracts` é a fonte autoritativa dos endpoints. Com protótipo, quem passa a ser autoritativo é `prototype/03-api-requirements` — e o backend vira o **consumidor** do contrato, não o autor.
 
-> **Detalhe crítico da ordem:** a fase 9 (`/frontend`, que gera `shared/15-api-dependencies.md`) roda **depois** da fase 7 (`/backend`), porque `backend/05-api-contracts.md` é a fonte autoritativa dos endpoints. Inverter a ordem produz um frontend que consome endpoints que não existem.
+> **Detalhe crítico da ordem — no fluxo padrão, sem protótipo:** a fase 9 (`/frontend`, que gera `shared/15-api-dependencies.md`) roda **depois** da fase 7 (`/backend`), porque aí `backend/05-api-contracts.md` é a fonte autoritativa dos endpoints. Inverter produz um frontend que consome endpoints que não existem. **Com protótipo, a autoridade muda de mãos** — `prototype/03-api-requirements` passa a ser a fonte, e é o backend que a consome.
 
 ### 2.3 As três direções de propagação
 
@@ -503,7 +505,7 @@ Estes blocos vivem no **blueprint master** (`docs/blueprint/README.MD` §0.3, §
 
 **24 arquivos** terminam com uma tabela `Data | Decisão | Motivo`: exatamente os documentos **07 a 14 de cada um dos três clientes frontend** (`07-routes`, `08-flows`, `09-tests`, `10-performance`, `11-security`, `12-observability`, `13-cicd-conventions`, `14-copies` × web, mobile, desktop). **Nenhum documento de `docs/backend/`, de `docs/blueprint/` ou de `docs/frontend/shared/` tem essa seção** — é uma convenção que existe só na metade "de cliente" do frontend.
 
-É o mecanismo de rastreabilidade mais barato do framework: registra **por que aquele documento mudou**, sem exigir um ADR formal. Que ele não exista nos outros **54 documentos do repositório** (78 docs com os três clientes, menos os 24 que o têm) é, em si, uma assimetria a resolver — e explica por que só o frontend de cliente consegue responder *"por que essa decisão mudou?"* sem abrir um ADR.
+É o mecanismo de rastreabilidade mais barato do framework: registra **por que aquele documento mudou**, sem exigir um ADR formal. Que ele não exista nos outros **54 documentos do repositório** (78 docs com os três clientes — 84 contando os 6 do protótipo —, menos os 24 que o têm) é, em si, uma assimetria a resolver — e explica por que só o frontend de cliente consegue responder *"por que essa decisão mudou?"* sem abrir um ADR.
 
 | Nível | Artefato | Quando usar |
 | --- | --- | --- |
@@ -1849,7 +1851,7 @@ O framework cobre a engenharia de um SaaS com profundidade, mas há temas de Saa
 | **Rastreabilidade** | Conteúdo derivado é marcado: `<!-- do PRD -->`, `<!-- inferido do PRD -->`, `<!-- do blueprint: XX-arquivo.md -->` |
 | **Versões de tecnologia** | Consultadas via Context7 (`resolve-library-id` → `query-docs`), nunca assumidas do treino do modelo |
 | **Números são sensíveis a evidência** | Nunca inventar SLAs, metas de performance, métricas de negócio, nomes próprios ou constraints numéricos |
-| **Perguntas são limitadas** | Nas skills de fase (as 6 do blueprint técnico, `/frontend`, `/frontend-app`, `/frontend-quality`): máximo **3 por skill inteira** (não por documento), agrupadas e feitas **antes** de gerar. **Exceções declaradas:** `/backend` faz até **14 perguntas** de implementação em grupos temáticos, aguardando resposta entre grupos; `/frontend-design-system` não tem teto — as escolhas de tipografia e paleta *são* as perguntas da skill |
+| **Perguntas são limitadas** | Nas skills de fase (as 6 do blueprint técnico, `/frontend`, `/frontend-app`, `/frontend-quality`, `/prototype`, `/prototype-api`): máximo **3 por skill inteira** (não por documento), agrupadas e feitas **antes** de gerar. **Exceções declaradas:** `/backend` faz até **14 perguntas** de implementação em grupos temáticos, aguardando resposta entre grupos; `/frontend-design-system` não tem teto — as escolhas de tipografia e paleta *são* as perguntas da skill |
 | **Idioma** | Identificadores técnicos em inglês; descrições em português |
 
 ### 14.3 Marcadores de append (pontos de inserção estáveis)
@@ -1900,7 +1902,7 @@ O framework cobre a engenharia de um SaaS com profundidade, mas há temas de Saa
 
 > ⚠️ **Segunda lacuna do framework:** `docs/shared/` tem marcadores de append, mas **não é alvo de `/increment`**. Atenção à ambiguidade: a skill *oferece* a opção `shared`, mas apenas como **cliente de frontend** (`docs/frontend/shared/` — design system, data layer, api-dependencies). `docs/shared/` (glossário, error-ux-mapping, event-mapping, MAPPING) não é alvo em nenhum nível. Adicionar um termo ao glossário exige edição manual ou `/patch`.
 >
-> ⚠️ **Terceira lacuna, e a mais consequente: nenhuma skill gera `docs/shared/`.** Verificado nas 21 skills: as 12 fases do `/pipeline` vão de `blueprint-foundation` a `codegen-setup` e **não incluem** os quatro documentos cross-layer; `/specs`, `/codegen-*` e `/patch` apenas os **leem**. Na prática, `glossary.md`, `error-ux-mapping.md` e `event-mapping.md` permanecem com `{{placeholders}}` depois de um `/pipeline` completo — e são justamente os documentos que impedem os três blueprints de divergirem. Consequências diretas:
+> ⚠️ **Terceira lacuna, e a mais consequente: nenhuma skill gera `docs/shared/`.** Verificado nas 24 skills: as 12 fases do `/pipeline` vão de `blueprint-foundation` a `codegen-setup` e **não incluem** os quatro documentos cross-layer; `/specs`, `/codegen-*` e `/patch` apenas os **leem**. Na prática, `glossary.md`, `error-ux-mapping.md` e `event-mapping.md` permanecem com `{{placeholders}}` depois de um `/pipeline` completo — e são justamente os documentos que impedem os três blueprints de divergirem. Consequências diretas:
 >
 > - O `/pipeline` entrega **48 documentos preenchidos**, não 52. Os 4 de `docs/shared/` continuam template.
 > - A regra *"fonte única de termos"* de `glossary.md` não tem quem a execute: cada blueprint acaba com seu próprio glossário local, exatamente o que o arquivo existe para evitar.
@@ -2251,7 +2253,7 @@ Um framework documentation-driven também sofre de deriva documental. Estas **se
 | 6 | **Dono do `auth-flow.mmd`** | `docs/diagrams/README.md` §6 atribui todos os `sequences/*.mmd` a `07-critical_flows.md`; `/blueprint-quality` manda atualizá-lo ao gerar `13-security.md` | Ambos, em momentos diferentes: o fluxo nasce em `07` (fase 4) e o detalhe de autenticação é refinado por `13` (fase 5). Detalhado em §3.3 |
 | 7 | **Seletor do tema escuro** | `docs/frontend/shared/03-design-system.md:80` usa `[data-theme="dark"]`; `.claude/skills/frontend-design-system/SKILL.md:149` usa `.dark` | Qualquer um — mas **um só**, e o mesmo em todo o projeto. Detalhado em §9.1 |
 
-> ⚠️ **E aqui está a quarta lacuna estrutural do framework:** `/patch` e `/increment` **não alcançam seis destas sete divergências**. A varredura do `/patch` cobre apenas `docs/blueprint/`, `docs/backend/`, `docs/frontend/shared/`, `docs/frontend/*/`, `docs/shared/`, `docs/specs/` e `docs/adr/`. Ficam **inteiramente fora de alcance** três diretórios: **`docs/templates/`**, **`docs/diagrams/`** e — o mais importante — **`.claude/skills/`**, já que a varredura só desce em `docs/**`. `/increment` é ainda mais restrito (só `blueprint`, `backend`, `frontend`).
+> ⚠️ **E aqui está a quarta lacuna estrutural do framework:** `/patch` e `/increment` **não alcançam seis destas sete divergências**. A varredura do `/patch` cobre apenas `docs/blueprint/`, `docs/backend/`, `docs/frontend/shared/`, `docs/frontend/*/`, `docs/prototype/`, `docs/shared/`, `docs/specs/` e `docs/adr/`. Ficam **inteiramente fora de alcance** três diretórios: **`docs/templates/`**, **`docs/diagrams/`** e — o mais importante — **`.claude/skills/`**, já que a varredura só desce em `docs/**`. `/increment` é mais restrito ainda (`blueprint`, `backend`, `frontend`, `prototype`).
 >
 > Onde cada divergência mora, e o que isso implica:
 >

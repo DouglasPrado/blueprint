@@ -101,6 +101,8 @@ Preencha `00-prototype-vision.md`: o que e real e o que e mockado, a stack (**a 
 
 > **A regra que mais protege esta fase:** o mock responde, ele nao decide. Se o mock precisar calcular para responder, a regra pertence ao backend — registre em `05-findings.md`.
 
+> **`05-findings.md` ja comeca a ser preenchido aqui.** Caso de uso ambiguo, transicao sem tela, entidade sem atributo suficiente para a interface — tudo isso aparece ao planejar, antes de escrever uma linha de codigo. Use **Edit** (o arquivo tera outros dois autores: `/prototype-build` e `/prototype-api`).
+
 ## Passo 5: Revisao
 
 Apresente os 3 documentos. Aplique ajustes. Feche com a cobertura:

@@ -9,9 +9,9 @@ Le `docs/backend/` (fonte primaria), valida contra `docs/frontend/` e `docs/blue
 
 ## Fonte de Dados
 
-`docs/backend/` → LEITURA (primaria) | `docs/frontend/` → LEITURA (consistencia) | `docs/blueprint/` → LEITURA (validacao) | `docs/shared/` → LEITURA (glossario, mappings) | `docs/prototype/` → LEITURA (se existir: cobertura de telas e contrato) | `docs/specs/TASKS.md` → ESCRITA
+`docs/backend/` → LEITURA (primaria) | `docs/frontend/` → LEITURA (consistencia) | `docs/blueprint/` → LEITURA (validacao) | `docs/shared/` → LEITURA (glossario, mappings) | `docs/prototype/` → LEITURA (se preenchido: cobertura de telas e contrato) | `docs/specs/TASKS.md` → ESCRITA
 
-> **Se `docs/prototype/` existir**, use `01-screens.md` para validar a cobertura de frontend (tela sem task e lacuna) e `03-api-requirements.md` para conferir que toda task de API tem consumidor nomeado. As fixtures de `02-mock-data.md` viram tasks de seed no grupo `SETUP`.
+> **Se `docs/prototype/` estiver preenchido** (sem `{{placeholders}}` — a pasta e versionada com templates), use `01-screens.md` para validar a cobertura de frontend (tela sem task e lacuna) e `03-api-requirements.md` para conferir que toda task de API tem consumidor nomeado. As fixtures de `02-mock-data.md` viram tasks de seed no grupo `SETUP`.
 
 ## Passo 1: Verificar Pre-requisitos
 

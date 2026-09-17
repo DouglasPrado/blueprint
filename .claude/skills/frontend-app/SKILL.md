@@ -24,7 +24,7 @@ Do blueprint tecnico:
 
 Dos compartilhados: `docs/frontend/shared/03-design-system.md`, `06-data-layer.md`, `15-api-dependencies.md`
 
-**Do prototipo, se existir** — sao a mesma informacao ja validada contra codigo que roda:
+**Do prototipo, se estiver preenchido** (a pasta e versionada com templates — verifique ausencia de `{{placeholders}}`) — e a mesma informacao, ja validada contra codigo que roda:
 
 | Doc do prototipo | Responde antecipadamente |
 |---|---|

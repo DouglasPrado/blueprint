@@ -5,7 +5,7 @@ description: Executa o pipeline completo de documentacao automaticamente — blu
 
 # Pipeline — Execucao Automatica de Toda a Documentacao
 
-Roda as 11+ fases de documentacao em sequencia, **sem parar para perguntar**. Cada fase executa num subagente com contexto limpo, escreve seus documentos e devolve um resumo. Ao final, consolida todas as inferencias em `docs/ASSUMPTIONS.md` para revisao.
+Roda as fases de documentacao em sequencia — 12 no fluxo padrao, 15 com `--prototype`, **sem parar para perguntar**. Cada fase executa num subagente com contexto limpo, escreve seus documentos e devolve um resumo. Ao final, consolida todas as inferencias em `docs/ASSUMPTIONS.md` para revisao.
 
 ```
 /pipeline [caminho-do-prd] [clientes] [projeto-alvo] [--prototype]
@@ -157,7 +157,9 @@ As fases 13 e 14 repetem para **cada** cliente, sempre `app` antes de `quality`.
 Como a `codegen-setup`, a fase 9 escreve **codigo fora deste repositorio** e tem portao objetivo. A fase 10 le esse codigo.
 
 - **Fase 9 (`prototype-build`)** — portao de cobertura: toda tela existe, todo fluxo critico e percorrivel, toda tela tem os quatro estados, toda persona navega, type check e lint passam. Falha no portao → corrigir e repetir; se persistir, **reportar falha**, nunca declarar sucesso.
+  > **Honestidade sobre este portao:** so **type check e lint** sao mecanicamente verificaveis. Telas, fluxos, estados e personas sao autoavaliacao do subagente, sem artefato que prove. Exija a contagem explicita no retorno (`telas: {n}/{N}`) e trate o resto como declaracao — nao como prova. E o mesmo limite de `/build`: o agente que produz nao e verificacao independente do que produziu.
 - **Fase 10 (`prototype-api`)** — le o **codigo**, nao o plano. Se `03-api-requirements.md` sair identico a `01-screens.md`, a fase falhou: ela copiou a intencao em vez de extrair o fato.
+- **`05-findings.md` tem tres autores.** `/prototype` registra caso de uso ambiguo, `/prototype-build` registra regra de negocio descoberta ao implementar, e `/prototype-api` o preenche. As fases 8 e 9 escrevem nele mesmo sem declara-lo em `DOCS:` — a convencao Write/Edit evita perda, mas conte com isso ao consolidar.
 - **Achados de risco alto** de `05-findings.md` sao reportados ao orquestrador. Em modo autonomo o pipeline **nao para** por causa deles (documento incompleto nao corrompe o proximo), mas eles entram no relatorio final **acima** das suposicoes — sao evidencia, nao inferencia.
 - **Nao commite** no projeto-alvo nestas fases.
 

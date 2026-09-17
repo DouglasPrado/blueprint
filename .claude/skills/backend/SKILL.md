@@ -9,9 +9,11 @@ Le o **blueprint tecnico ja preenchido** (`docs/blueprint/`) e transforma as dec
 
 O blueprint e a fonte primaria — ja contem entidades, requisitos, fluxos, casos de uso, ADRs e maquinas de estado. Voce so pergunta o que ele **nao** cobre: detalhes de implementacao (framework, ORM, estrutura de classes, metodos).
 
-## Se `docs/prototype/` existir, ele muda esta skill
+## Se `docs/prototype/` estiver PREENCHIDO, ele muda esta skill
 
 O prototipo e um frontend completo e mockado construido **antes** do backend. Quando ele existe, o contrato de API deixa de ser inventado e passa a ser **herdado de um consumidor real**.
+
+> **Verifique preenchimento, nao existencia.** `docs/prototype/` e versionado no framework com os 6 templates — a pasta existe sempre. Rode `grep -l '{{' docs/prototype/*.md`: se os arquivos ainda tem `{{placeholders}}`, **a fase nao rodou** e nada desta secao se aplica. Siga o fluxo normal, com o blueprint tecnico como unica fonte.
 
 | Documento do prototipo | Autoridade sobre | Efeito |
 |---|---|---|
@@ -21,7 +23,7 @@ O prototipo e um frontend completo e mockado construido **antes** do backend. Qu
 | `01-screens.md` | `11-permissions.md` | As personas ja exercitaram a matriz RBAC — confirme, nao reinvente |
 | `05-findings.md` | todos | Achado de risco **alto** aberto **bloqueia esta skill** |
 
-**Portao:** antes de gerar qualquer documento, leia `docs/prototype/05-findings.md`. Se houver achado de risco alto em aberto, **pare**:
+**Portao:** antes de gerar qualquer documento, verifique se `docs/prototype/05-findings.md` esta preenchido (sem `{{placeholders}}`). Se estiver, leia-o. Se houver achado de risco alto em aberto, **pare**:
 
 > "O prototipo registrou {{N}} achados de risco alto ainda abertos. Um contrato construido sobre lacuna conhecida propaga a lacuna para o schema — e schema com dados nao se corrige com `/increment`.
 > Resolva com `/increment` ou `/patch`, rode `/prototype-api` para regenerar o contrato, e volte."

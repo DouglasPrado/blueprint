@@ -85,7 +85,12 @@ Define quais endpoints do backend o frontend consome, quais campos utiliza e o i
 - [ ] Cache strategy esta definida
 - [ ] Rate limit do endpoint esta dentro do aceitavel para a UX
 
+> Fontes, em ordem de autoridade:
+> 1. `docs/prototype/03-api-requirements.md` — quando a fase de prototipo rodou, ela ja traz endpoint, campos consumidos e tela consumidora, extraidos de codigo
+> 2. `docs/backend/05-api-contracts.md` — o contrato implementado
+> 3. `docs/blueprint/08-use_cases.md` + `06-system-architecture.md` — derivacao, quando nao ha nenhum dos dois
+>
 > Referenciado por:
-> - `docs/backend/05-api-contracts.md` (fonte dos contratos)
+> - `docs/backend/05-api-contracts.md` (fonte dos contratos, prioridade 2)
 > - `docs/frontend/06-data-layer.md` (implementacao do client)
 > - `docs/shared/error-ux-mapping.md` (tratamento de erros)

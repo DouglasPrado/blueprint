@@ -52,7 +52,7 @@ Colete tres inventarios independentes:
 | Inventario | Onde | O que extrair |
 |---|---|---|
 | **Endpoints servidos** | `src/mocks/handlers/` | Metodo, rota, forma do request, forma do response |
-| **Chamadas feitas** | Camada de dados da aplicacao (hooks, `api/`) | Quem chama, de qual tela, com que frequencia |
+| **Chamadas feitas** | **`src/api/`** — a camada de dados que `/prototype-build` torna obrigatoria | Quem chama, de qual tela, com que frequencia |
 | **Campos renderizados** | Componentes | Qual campo aparece, onde, com qual fallback |
 
 Cruze os tres. As lacunas entre eles sao o achado mais valioso desta skill:
@@ -82,7 +82,7 @@ Preencha tambem: **operacoes que precisam ser atomicas** (sequencias que a UI tr
 
 Extraia dos componentes:
 
-- Matriz de estados por tela — carregando, vazio, erro, parcial, sem permissao. **Celula vazia e tela incompleta**, e volta para `/prototype-build`.
+- Matriz de estados por tela. Os **quatro obrigatorios** — carregando, vazio, erro, sucesso — precisam estar preenchidos em toda tela que busca dados; celula vazia num deles e tela incompleta e volta para `/prototype-build`. **Parcial** e **sem permissao** sao condicionais: `n/a` e resposta valida quando a tela nao os admite.
 - Catalogo de erros exercidos, com como o prototipo dispara cada um
 - **Requisitos derivados**: cada tratamento impoe algo ao backend — erro por campo exige `details[]`; contagem regressiva exige `Retry-After`; refresh silencioso exige distinguir token expirado de invalido; referencia de suporte exige `requestId`
 - Mutacoes otimistas e o que cada uma exige de idempotencia

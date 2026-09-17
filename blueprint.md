@@ -5,12 +5,14 @@
 > **O que este arquivo é:** o mapa integral do que precisa existir, estar decidido e estar escrito para construir um SaaS de forma rastreável — e como cada peça se conecta às outras.
 >
 > **O que este arquivo não é:** um substituto dos documentos individuais. Ele é a visão de conjunto; cada seção aponta para o arquivo-fonte onde o detalhe vive e é preenchido.
+>
+> **Sobre divergências:** onde os arquivos do repositório se contradizem entre si, este documento **registra o conflito e diz qual fonte seguir** em vez de escolher um lado em silêncio. As quatro divergências verificadas estão em [§17.4](#174-divergências-internas-do-repositório-verificadas), e a mais perigosa delas — os marcadores de append — está corrigida em [§14.3](#143-marcadores-de-append-pontos-de-inserção-estáveis).
 
 | Campo | Valor |
 | --- | --- |
 | Versão | v1.0.0 |
 | Fonte | Repositório Blueprint — `README.md`, `docs/**`, `.claude/skills/**` |
-| Cobertura | 52 documentos padrão (1 cliente frontend) · 21 skills · 13 diagramas |
+| Cobertura | 52 documentos padrão (1 cliente frontend) · 21 skills · 10 diagramas `.mmd` + 4 READMEs de diagramas |
 | Idioma | Descrições em português; identificadores técnicos em inglês |
 
 ---
@@ -23,7 +25,7 @@
 | **1** | [Os 14 pilares de um SaaS](#1-os-14-pilares-de-um-saas) | O que é fundamental — visão de conjunto |
 | **2** | [A cadeia de derivação](#2-a-cadeia-de-derivação-prd--código) | Como a informação flui do PRD ao código |
 | **3** | [Matriz de rastreabilidade consolidada](#3-matriz-de-rastreabilidade-consolidada) | Qual arquivo alimenta qual arquivo |
-| **4** | [Fundação: contexto, visão, princípios, requisitos](#4-fundação-contexto-visão-princípios-requisitos) | Por que o sistema existe e o que ele deve fazer |
+| **4** | [Fundação: PRD, contexto, visão, princípios, requisitos](#4-fundação-contexto-visão-princípios-requisitos) | Por que o sistema existe, o que ele deve fazer, **quem decide e quem é dono do risco** |
 | **5** | [Domínio, dados e estados](#5-domínio-dados-e-estados) | O coração conceitual |
 | **6** | [Arquitetura do sistema e ADRs](#6-arquitetura-do-sistema-e-adrs) | Como o sistema é montado e por quê |
 | **7** | [Fluxos críticos e casos de uso](#7-fluxos-críticos-e-casos-de-uso) | Como o sistema se comporta |
@@ -31,12 +33,12 @@
 | **9** | [Frontend — multi-client](#9-frontend--multi-client) | Design system + 13 docs por cliente |
 | **10** | [Camada cross-layer](#10-camada-cross-layer-o-que-impede-divergência) | O que impede os blueprints de divergirem |
 | **11** | [Atributos de qualidade](#11-atributos-de-qualidade) | Testes, segurança, escalabilidade, observabilidade |
-| **12** | [Construção, evolução e operação](#12-construção-evolução-e-operação) | Plano de entrega, deploy, débito, deprecação |
+| **12** | [Construção, evolução e operação](#12-construção-evolução-e-operação) | Plano de entrega, deploy, **hierarquia ENT→EP→ST→TSK**, débito, deprecação |
 | **13** | [O que é específico de SaaS](#13-o-que-é-específico-de-saas) | Multi-tenancy, billing, planos, quotas, onboarding |
 | **14** | [Contrato das skills e automação](#14-contrato-das-skills-e-automação) | Pipeline, build, codegen, increment, patch, specs |
 | **15** | [Estratégia de contexto para agentes](#15-estratégia-de-contexto-para-agentes) | Como não estourar a janela de contexto |
 | **16** | [Checklists operacionais](#16-checklists-operacionais) | Definition of Done, go/no-go, pré-produção |
-| **17** | [Anti-patterns e armadilhas](#17-anti-patterns-e-armadilhas) | O que quebra projetos assistidos por IA |
+| **17** | [Anti-patterns e armadilhas](#17-anti-patterns-e-armadilhas) | O que quebra projetos assistidos por IA + **divergências internas do repositório** |
 | **18** | [Índice de arquivos do repositório](#18-índice-de-arquivos-do-repositório) | Onde cada coisa mora |
 
 ---
@@ -61,7 +63,28 @@ Três consequências práticas, que aparecem repetidas em todas as skills:
 2. **Nada é inventado silenciosamente.** SLAs, métricas, percentuais, nomes próprios e volumes vêm do PRD, de uma resposta do usuário, ou são marcados como suposição (`<!-- assumido: X — base: Y -->`) e consolidados em `docs/ASSUMPTIONS.md` com classificação de risco.
 3. **Verificação é independente.** Suíte verde prova consistência interna, não conformidade com o desenho. Por isso existe um gate separado (`/codegen-verify`) que compara código contra documento.
 
-### 0.3 Dois modos de trabalho
+### 0.3 Pré-requisitos do ambiente
+
+| Requisito | Por quê |
+| --- | --- |
+| **Claude Code** | Executa as skills |
+| **Um PRD** | Sem ele não há de onde inferir — o resultado seria inteiramente inventado. O `/pipeline` **para** se não encontrar `docs/prd.md` nem receber um caminho |
+| **Context7 MCP** | Documentação de tecnologia **atualizada**. Toda skill que cita versão de biblioteca consulta `resolve-library-id` → `query-docs` em vez de assumir o que o modelo memorizou no treino |
+
+```json
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstreamapi/context7-mcp@latest"]
+    }
+  }
+}
+```
+
+**Setup:** clonar o repositório → colocar o PRD em `docs/prd.md` → escolher o modo de execução abaixo.
+
+### 0.4 Dois modos de trabalho
 
 ```
 MODO AUTÔNOMO (PRD detalhado, primeira versão rápida)
@@ -167,7 +190,7 @@ Cada fase consome o que a anterior produziu. Pular gera documento genérico — 
 | 9 | `/frontend` | `frontend/shared/06`, `15` | blueprint + **`backend/05-api-contracts.md`** |
 | 10 | `/frontend-app {client}` | 8 docs do cliente | blueprint + shared |
 | 11 | `/frontend-quality {client}` | 5 docs do cliente | `blueprint/12,13,14,15` + docs do cliente |
-| 12 | `/codegen-setup` | `CLAUDE.md`, `src/contracts/`, schema, scaffold | `04`, `05`, `06`, `backend/00-04` |
+| 12 | `/codegen-setup` | `CLAUDE.md`, `src/contracts/`, schema, scaffold | `02` (patterns e convenções), `04`, `05`, `06`, `backend/00-04`, **`shared/glossary.md`** e, por cliente ativo, `{client}/02-project-structure` + `shared/03-design-system` |
 
 > **Detalhe crítico da ordem:** a fase 9 (`/frontend`, que gera `shared/15-api-dependencies.md`) roda **depois** da fase 7 (`/backend`), porque `backend/05-api-contracts.md` é a fonte autoritativa dos endpoints. Inverter a ordem produz um frontend que consome endpoints que não existem.
 
@@ -245,8 +268,21 @@ Esta é a correlação integral entre arquivos. É o conteúdo de `docs/shared/M
 | `domain/class-diagram.mmd` | `blueprint/04-domain-model` | `/blueprint-domain` |
 | `domain/er-diagram.mmd` | `blueprint/05-data-model` | `/blueprint-domain` |
 | `domain/state-{entidade}.mmd` | `blueprint/09-state-models` | `/blueprint-domain` |
-| `{client}/{client}-architecture.mmd` | `frontend/{client}/01-architecture` | `/frontend-app` |
+| `{client}/{client}-architecture.mmd` ⚠ | `frontend/{client}/01-architecture` | `/frontend-app` |
 | `{client}/fluxo-{n}.mmd` | `frontend/{client}/08-flows` | `/frontend-app` |
+
+**Arquivos-base que são copiados, não editados:**
+
+| Template | Duplicado para | Por |
+| --- | --- | --- |
+| `domain/state-template.mmd` | `domain/state-{entidade}.mmd`, um por entidade com ciclo de vida | `/blueprint-domain` |
+| `sequences/template-flow.mmd` | `sequences/{nome-do-fluxo}.mmd` e `{client}/fluxo-{n}.mmd` | `/blueprint-flows`, `/frontend-app` |
+| `components/api-components.mmd` | `components/{container}-components.mmd`, um por container | `/blueprint-architecture` |
+
+⚠️ **Divergências do repositório neste ponto — verificadas, não resolvidas por escolha silenciosa:**
+
+1. **Nome do diagrama de arquitetura do cliente web.** A skill `/frontend-app` manda criar `docs/diagrams/{client}/{client}-architecture.mmd`, o que daria `web-architecture.mmd`. Mas `docs/diagrams/web/README.md` declara **`frontend-architecture.mmd`** — e é esse o nome referenciado por `docs/frontend/web/01-architecture.md`. Para `mobile` e `desktop` os READMEs seguem o padrão da skill (`mobile-architecture.mmd`, `desktop-architecture.mmd`). **Só o cliente web diverge.**
+2. **Dono do `auth-flow.mmd`.** `docs/diagrams/README.md` §6 atribui todos os `sequences/*.mmd` a `07-critical_flows.md`; a skill `/blueprint-quality` manda atualizar `auth-flow.mmd` com o fluxo de autenticação real ao gerar `13-security.md`. Na prática o arquivo tem dois donos — o fluxo vem de `07`, o detalhe de autenticação de `13`.
 
 **Modelo C4** (Simon Brown), com o nível 4 (Code) intencionalmente omitido — o código-fonte é a documentação mais precisa daquele nível. Arquivos `.mmd` contêm Mermaid puro, sem wrapper markdown, para renderização direta por ferramentas.
 
@@ -264,7 +300,13 @@ Estas conexões não aparecem no `MAPPING.md` mas são obrigatórias segundo as 
 | Todo template de mensagem (`backend/13-integrations`) precisa de evento disparador em `backend/12-events` | `/backend` — template órfão é proibido |
 | Toda rota de `{client}/07-routes` precisa de subseção em `{client}/14-copies` | `/frontend-app` — checklist de cobertura |
 | Todo fluxo de `{client}/08-flows` precisa de ≥1 teste E2E em `{client}/09-tests` | `/frontend-quality` |
-| Todo erro de `backend/09-errors` precisa de linha em `shared/error-ux-mapping` | `/specs` — validação de cobertura |
+| Toda integração externa de `00`/`06` pede **teste de contrato** em `12-testing` | `/blueprint-quality` |
+| O glossário de produto de `{client}/14-copies` cobre os termos de domínio de `04-domain-model` | `/frontend-app` — checklist de cobertura |
+| As mensagens de erro de `{client}/14-copies` cobrem os cenários de erro dos endpoints de `shared/15-api-dependencies` | `/frontend-app` — checklist de cobertura |
+| Toda lista e tela com dados dinâmicos tem **empty state** definido em `{client}/14-copies` | `/frontend-app` — checklist de cobertura |
+| `shared/glossary.md` é a fonte única consumida por `blueprint/04-domain-model`, `backend/03-domain`, `{client}/04-components` e `{client}/14-copies` | rodapé do próprio `glossary.md` — nenhum deles cria glossário próprio |
+| Débitos de `16-evolution` alimentam os **limites conhecidos** de `backend/00-backend-vision` (além do versionamento → `05-api-contracts`) | `/backend` — mapa de extração |
+| Todo erro de `backend/09-errors` precisa de linha em `shared/error-ux-mapping` | `docs/shared/error-ux-mapping.md` — *"Para CADA código de erro do backend, documente a resposta no frontend"*. **Não** está no checklist de `/specs`: lacuna real do framework |
 
 ---
 
@@ -273,6 +315,45 @@ Estas conexões não aparecem no `MAPPING.md` mas são obrigatórias segundo as 
 **Fase 1** · Skill `/blueprint-foundation` · Gera `00`, `01`, `02`, `03` · Fonte: `docs/prd.md`
 
 As três perguntas que esta fase faz (máximo 3 na skill inteira), em ordem de importância: **limites do sistema e integrações** (00), **métricas de sucesso e não-objetivos** (01), **SLAs e metas de performance** (03). São exatamente os três pontos que um PRD quase nunca cobre.
+
+### 4.0 O PRD — a entrada de todo o sistema
+
+`docs/prd.md`, escrito a partir de `docs/templates/prd-template.md` (20 seções). **A qualidade de tudo o que vem depois é limitada pela qualidade deste arquivo** — o framework estrutura incerteza, não inventa conhecimento de negócio. Um PRD raso produz documentação rasa com muitas suposições de risco alto.
+
+| § | Seção | Por que é fundamental num SaaS | Alimenta |
+| --- | --- | --- | --- |
+| 1 | Resumo executivo | 3-5 linhas: o quê, para quem, que problema | `01-vision` |
+| 2 | **Problema** — situação atual, **evidências** (fonte / dado / data), impacto de não resolver | Separa dor real de opinião: NPS, tickets/mês, % de abandono | `01-vision` §problema |
+| 3 | Visão da solução — elevator pitch, solução, **princípios de design de produto** | Os princípios de produto são distintos dos arquiteturais de `02` | `01-vision`, `02-principles` |
+| 4 | **Personas · Jobs to Be Done · Jornada atual** | JTBD (*"Quando {situação}, quero {ação}, para que {resultado}"*) e os **pontos de dor da jornada atual** são o insumo dos casos de uso | `00-context` §atores, `08-use_cases` |
+| 5 | Objetivos (OBJ-01 com **alinhamento estratégico**) · KPIs (linha de base → meta → prazo → como medir) · **guardrails** | **Guardrails são métricas que NÃO podem piorar com o lançamento** — conversão, latência, disponibilidade. É o que impede uma feature de ganhar adoção destruindo o funil | `01-vision` §métricas, `03-requirements` §RNF |
+| 6 | Não-objetivos | Trava expansão de escopo antes que ela comece | `01-vision` §não-objetivos |
+| 7 | Requisitos funcionais por área + MoSCoW | RF-001… com **critério de aceitação verificável** por requisito | `03-requirements` |
+| 8 | Requisitos não funcionais | RNF-001… com meta e método de medição (inclui **acessibilidade** WCAG e **compatibilidade** de browsers) | `03-requirements`, `12-testing` |
+| 9 | User stories + **cenários detalhados** (fluxo principal, alternativos, **cenários de erro**) | É daqui que saem os fluxos alternativos de `08-use_cases`, que o PRD "normal" omite | `08-use_cases`, `07-critical_flows` |
+| 10 | Escopo · entregas priorizadas (ENT-001…) · **definição de MVP** | O MVP explícito (*"o menor conjunto que entrega valor real"* + **o que NÃO está nele**) é a fronteira da primeira release | `11-build_plan` |
+| 11 | Design e UX — fluxo ideal, wireframes/Figma, **requisitos de UX** | Ex.: "estados de loading, vazio, erro e sucesso para todas as telas" — vira checklist de `{client}/14-copies` | `{client}/08-flows`, `14-copies` |
+| 12 | **Dependências** internas (time responsável) · externas (fornecedor, SLA, plano B) · técnicas | Dependência externa não resolvida é o atraso mais comum e o menos visível | `11-build_plan` §dependências externas |
+| 13 | Riscos e mitigações (R-01, com owner e status) | | `11-build_plan` §riscos técnicos |
+| 14 | **Hipóteses e validações** (H-01: hipótese → como validar → resultado esperado → status) | Um SaaS é uma aposta; a hipótese não validada é a que quebra o produto depois do lançamento | `01-vision`, ADRs |
+| 15 | Restrições (técnica / negócio / regulatória / **temporal**) e premissas | *"Se alguma premissa se provar falsa, quais decisões precisariam ser revisitadas?"* | `00-context` §restrições |
+| 16 | Segurança e privacidade — dados manipulados e classificação, compliance, considerações | PII, token de pagamento (tokenizar, não armazenar), logs sem PII | `13-security` |
+| 17 | **Plano de lançamento** — rollout, comunicação, go/no-go | ver abaixo | `12-evolution`, deploy |
+| 18 | **Suporte e operações pós-lançamento** | Novos tipos de chamado esperados, treinamento do suporte, FAQ; o que monitorar com threshold e ação | `15-observability`, runbooks |
+| 19 | **Questões em aberto** (Q-01: questão / impacto / owner / prazo / status) | O que ainda não foi decidido, com dono e prazo — não vira suposição silenciosa | `ASSUMPTIONS.md` |
+| 20 | Referências e aprovações (Produto, Engenharia, Design, Segurança, Stakeholder) | | governança |
+
+**Plano de rollout (§17.1) — o que precisa estar decidido antes de lançar:**
+
+| Etapa | Público | Critério de avanço | Rollback |
+| --- | --- | --- | --- |
+| **Alpha** | Time interno | Ex.: zero bugs críticos por 1 semana | estratégia definida |
+| **Beta** | Ex.: 10% dos usuários | Métricas dentro do esperado | estratégia definida |
+| **GA** | 100% | KPIs atingidos | estratégia definida |
+
+**Plano de comunicação (§17.2)** — público / canal / mensagem / responsável / quando, cobrindo **usuários** (e-mail, in-app), **suporte** (FAQ, runbook, treinamento **antes** do lançamento) e **stakeholders** (resultados pós-lançamento).
+
+> **Onde o PRD vira o resto:** `/blueprint` salva o PRD em `docs/prd.md`, classifica cada uma das 6 fases como **Coberto / Parcial / Lacuna** e indica nas observações o que provavelmente será perguntado em cada fase. É essa análise de cobertura que diz, antes de qualquer geração, se o modo autônomo é viável ou se o modo guiado é obrigatório.
 
 ### 4.1 `00-context.md` — Contexto do sistema
 
@@ -332,6 +413,40 @@ Referências prontas no repositório: *Simplicidade sobre complexidade*, *Segura
 > **Regra dura:** um RNF sem threshold numérico não é requisito, é desejo. "API rápida" não testa; "latência p95 < 200 ms medida via APM" testa.
 
 **Matriz de priorização** — `valor de negócio (1-5) | esforço técnico (1-5) | risco (1-5) → prioridade final`. Alto valor + baixo esforço são os candidatos naturais às primeiras entregas.
+
+### 4.5 Governança: quem decide, quem é dono do risco, o que está em aberto
+
+Estes quatro blocos vivem no **blueprint master** (`docs/blueprint/README.MD` §0.3, §5, §15, §24) e não têm arquivo próprio entre os 17 documentos modulares. São os que respondem *"quem responde por isso?"* — e num SaaS, ausência de dono é a causa-raiz de decisão que nunca é tomada.
+
+**Status de aprovação (§0.3)** — o documento não é "verdade" até ser aprovado:
+
+| Papel | Responsável | Status | Data |
+| --- | --- | --- | --- |
+| Produto · Arquitetura · Segurança · Engenharia | | | |
+
+**Stakeholders e responsabilidades (§5)** — stakeholder / área / interesse / **poder de decisão** (alto-médio-baixo) / **cadência de alinhamento** (semanal-mensal-ad hoc); e responsabilidade por área: Produto · Engenharia · Segurança · SRE · QA.
+
+**Riscos, restrições e assunções (§15)** — três tabelas com ID e dono:
+
+| Tabela | Campos |
+| --- | --- |
+| Assunções | `A-01` · assunção · **impacto se falsa** |
+| Restrições | `C-01` · restrição · **fonte** (estratégia interna, legal, comercial) |
+| Riscos | `R-01` · risco · probabilidade · impacto · mitigação · **owner** |
+
+**Questões em aberto (§24)** — `Q-01` · questão · impacto · **owner** · prazo. Distinção que importa: uma **questão em aberto** tem dono e prazo; uma **suposição** (`ASSUMPTIONS.md`) já foi resolvida por inferência e precisa ser auditada. Confundir as duas é como um projeto perde rastreabilidade.
+
+**Escopo (§4)** — escopo funcional · escopo técnico (serviços a criar, serviços a alterar, bancos impactados, filas impactadas, **contratos impactados**) · fora de escopo · fases de entrega.
+
+### 4.6 Histórico de decisões por documento
+
+**24 arquivos** de `docs/` terminam com uma tabela `Data | Decisão | Motivo` (os documentos de frontend e vários do backend). É o mecanismo de rastreabilidade mais barato do framework: registra **por que aquele documento mudou**, sem exigir um ADR formal.
+
+| Nível | Artefato | Quando usar |
+| --- | --- | --- |
+| Decisão estrutural do sistema | **ADR** em `docs/adr/` | Banco, framework, protocolo, padrão arquitetural, segurança estrutural |
+| Decisão local do documento | **Histórico de Decisões** no rodapé do próprio doc | "Trocamos bottom tabs por drawer porque…", "Subimos o TTL do cache de 5 para 15 min porque…" |
+| Decisão do blueprint inteiro | **Histórico de revisões** (`16-evolution`, `README.MD` §0.4) | Versão, data, autor, seções alteradas, motivo |
 
 ---
 
@@ -668,7 +783,7 @@ Request
   → 1.  RequestId        gera UUID para tracing (X-Request-Id)
   → 2.  Logger           method, path, início
   → 3.  CORS             headers de cross-origin
-  → 4.  RateLimiter      limites por IP/usuário/tenant
+  → 4.  RateLimiter      limites por IP, usuário e endpoint
   → 5.  BodyParser       parse JSON, limite de tamanho (1MB)
   → 6.  Authentication   valida JWT, extrai user       → 401
   → 7.  Authorization    verifica role/permissão        → 403
@@ -843,7 +958,7 @@ docs/frontend/
 
 **Design tokens:** cores (primary, secondary, background, surface, text, error, warning, success) · tipografia (heading-1/2, body, caption, code) · **espaçamento em grid de 8px** (xs 4 · sm 8 · md 16 · lg 24 · xl 32 · 2xl 48) · breakpoints (sm 640 · md 768 · lg 1024 · xl 1280).
 
-**Tipografia** — a skill escolhe um par heading+body do Google Fonts derivado da **identidade do produto** descrita em `01-vision.md`:
+**Tipografia** — a skill deriva a **categoria** da identidade do produto descrita em `01-vision.md`, **apresenta 2-3 pares** (heading + body, Google Fonts, referência [Fontpair](https://www.fontpair.co/all)) e **pergunta ao usuário** qual representa melhor o produto — não decide sozinha:
 
 | Categoria | Quando usar | Exemplos (Heading / Body) |
 | --- | --- | --- |
@@ -869,7 +984,13 @@ O `globals.css` documenta **todas** as variáveis em light e dark: backgrounds, 
 
 **Iconografia:** Lucide Animated (primária — loading, transições, feedback, onboarding, empty states) + shadcn/ui Icons (complementar — navegação, botões, menus, tabelas). Tamanhos: sm 16 · md 20 · lg 24 · xl 32; stroke 1.5-2px; sempre `currentColor`; **não misturar outros icon packs**.
 
-**Acessibilidade (meta WCAG 2.1/2.2 AA):** contraste 4.5:1 (texto normal) e 3:1 (large) · todo interativo focável via Tab · alt text descritivo · labels associadas e erros acessíveis · modal com focus trap e Esc · navegação 100% por teclado · `aria-live` para mudanças de estado · **nenhuma informação transmitida só por cor**.
+**Temas** — decisão explícita entre *light only* / *light + dark* / *customizável pelo usuário*, com a estratégia documentada: como os tokens são alternados, onde fica a lógica de troca, se usa CSS variables ou outra abordagem. A implementação de referência usa `:root` + `[data-theme="dark"]`, e a regra de derivação do dark mode é **inverter a lightness (L) do oklch mantendo chroma (C) e hue (H)**.
+
+**Ferramentas que ligam design e código** — **Figma** (design de interfaces e prototipação) e **Storybook** (documentação interativa de componentes), com URL registrada. O Storybook é citado como o lugar a consultar **antes de criar qualquer componente novo**.
+
+**Catálogo de componentes base** — tabela `componente | variantes | status` (Pronto / Em desenvolvimento / Planejado), cobrindo os 10 primitivos: Button, Input, Select, Card, Modal, Toast, Badge, Avatar, Tooltip, Skeleton. O status é o que impede duas pessoas construírem o mesmo componente em paralelo.
+
+**Acessibilidade — meta WCAG 2.1/2.2 AA.** Os 8 itens verificáveis estão consolidados em [§16.6](#166-checklist-de-acessibilidade); aqui ficam os **padrões por componente**, que são a parte que o design system precisa carregar.
 
 Padrões ARIA documentados por componente: Button (`role="button"`, aria-label se icon-only) · Modal (`role="dialog"`, `aria-modal`, `aria-labelledby`) · Toast (`aria-live` polite/assertive, `role="status"|"alert"`) · Input (`htmlFor`, `aria-invalid`, `aria-describedby`) · Select (`role="listbox"`, setas, Enter, Esc).
 
@@ -915,6 +1036,25 @@ Este documento existe para tornar visível o acoplamento que normalmente é invi
 | `08-flows` | 3-5 fluxos críticos de UI derivados de `blueprint/07` |
 | `14-copies` | Todos os textos: telas, feedback, validação, componentes globais, convenções |
 
+#### Adaptação por plataforma — o que muda em cada um dos 8 documentos
+
+A mesma estrutura de documento produz conteúdo substancialmente diferente por cliente. Esta é a matriz que `/frontend-app` aplica:
+
+| Doc | web | mobile | desktop |
+| --- | --- | --- | --- |
+| **00 Visão** | Next.js / Remix / SPA (Vite+React); SSR/SSG, hidratação, **SEO**, responsividade | React Native / Expo; navegação nativa, **gestos**, push, **offline-first**; versões mínimas (iOS 16, Android API 24) | Electron / Tauri; integração com o SO, menu bar, system tray, **auto-update** |
+| **01 Arquitetura** | Camadas SSR/SSG, React Server Components, API routes, middleware no edge | **Bridge para módulos nativos** (câmera, GPS, biometria); arquitetura de navegação stack/tab/drawer | **Processo main vs renderer** (Electron) ou core vs webview (Tauri); **IPC entre processos** |
+| **02 Estrutura** | `app/` router (Next.js) ou `routes/` (Remix); `public/`, middleware, API routes | Expo Router com `app/` ou `screens/`; `assets/`, navegação | Separação `main/` e `renderer/`; pasta `ipc/` para comunicação entre processos |
+| **04 Componentes** | Base DOM (div, button, input); shadcn/ui, Radix, Headless UI | React Native Views (View, Text, Pressable, ScrollView); **listas performáticas FlatList, FlashList, SectionList** | Base web + **TitleBar, SystemTray, MenuBar, ContextMenu** |
+| **05 Estado** | **SSR hydration** (sincronização servidor↔cliente); URL state via searchParams, shallow routing | **Persistência background/foreground** (AppState listener); cold start, warm start, resume | **Sincronização main↔renderer via IPC** (invoke/handle); estado persistido em disco (electron-store, tauri fs) |
+| **07 Rotas** | App Router file-based; guards via middleware | React Navigation (stacks, tabs, drawers); **deep linking via URL schemes e universal links** | **Navegação baseada em janelas**; menu bar e system tray com context menu |
+| **08 Fluxos** | Page transitions, forms, modals; navegação por URL e histórico do browser | **Gestos** (swipe, pull-to-refresh, swipe actions); **haptic feedback** em ações críticas | **Drag-and-drop de arquivos do SO**; **keyboard shortcuts** para ações frequentes; multi-window |
+| **14 Copies** | i18next / next-intl / react-intl; **SEO** (meta titles, descriptions, OpenGraph) | expo-localization, react-native-localize; **push notifications**, app store listing, onboarding, **textos de permissão** (câmera, localização, notificação) | i18next/next-intl + **strings de menu bar, system tray e diálogos nativos do SO** |
+
+> A implicação prática: `04-components` e `14-copies` **não são portáveis entre clientes**. Uma tab bar com textos de permissão de iOS não tem equivalente no web; um menu bar de macOS não tem equivalente no mobile. Por isso esses 8 documentos são por cliente, e só `03-design-system`, `06-data-layer` e `15-api-dependencies` são compartilhados.
+
+**Microfrontends** (`08-flows`, quando aplicável) — decisão explícita: não necessário (aplicação monolítica) · por rota · por componente. Se sim, documentar microfrontend / rota ou componente / bundle independente? / ferramenta (Webpack Module Federation, single-spa, Next.js Multi-Zones).
+
 #### Camadas do frontend (Clean Architecture adaptada)
 
 ```
@@ -943,7 +1083,7 @@ Infrastructure Layer (API Client, Storage, Analytics)
 
 > **Regra:** use o tipo mais simples que resolve. Não coloque em global o que pode ser local.
 
-**Anti-patterns de estado** (do repositório):
+**Anti-patterns de estado** (fonte: `{client}/05-state.md`; reaparecem no índice consolidado de [§17.1](#171-os-que-o-repositório-declara-explicitamente) junto com os das demais camadas):
 
 | Anti-pattern | Por que evitar | Alternativa |
 | --- | --- | --- |
@@ -989,6 +1129,34 @@ Centralizar copies permite revisão por produto/UX, consistência de tom de voz 
 | `12-observability` | Sentry + Web Vitals RUM | Sentry RN + Crashlytics + OTA monitoring | Sentry Electron + crash reporting do main + telemetria de auto-update |
 | `13-cicd` | Vercel/Netlify + PR previews | **EAS Build**, TestFlight, Play Console, OTA updates | electron-builder/tauri-action, DMG/NSIS/AppImage, notarization |
 
+#### A metade "conventions" do `13-cicd-conventions`
+
+O nome do documento tem duas partes e a segunda costuma ser esquecida. Além do pipeline e dos ambientes, ele fixa:
+
+| Bloco | Conteúdo |
+| --- | --- |
+| **Nomenclatura** | Componentes PascalCase (`UserProfile.tsx`) · hooks camelCase com prefixo `use` (`useUser.ts`) · utils camelCase · types PascalCase · constantes UPPER_SNAKE_CASE · testes `mesmo-nome.test.tsx` |
+| **Componentes** | Nomes descritivos (`UserProfileCard`, não `UPC`) · um componente por arquivo · props tipadas com `interface` (não `type` alias) · **export named**, não default (exceto páginas Next.js) |
+| **Commits** | Conventional Commits (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`) · escopo opcional (`feat(auth): add OAuth login`) · mensagem em inglês, imperativo (`add`, não `added`) |
+| **Ferramentas de qualidade** | ESLint · Prettier · TypeScript strict mode · **Husky** (git hooks) · **lint-staged** (lint só nos arquivos staged) |
+| **Documentação viva** | Storybook para componentes · README por feature · ADRs para decisões técnicas · blueprint atualizado a cada milestone |
+
+> *"Documentação que não é mantida atualizada é pior que nenhuma documentação."* — a frase está literalmente no template, e é o motivo de `/increment` e `/patch` existirem.
+
+**Versionamento do app (mobile):** além do SemVer, `version` + `buildNumber`/`versionCode` incrementais, e a política de quando um update vai por **OTA** (JS apenas) vs **submissão à store** (código nativo).
+
+#### O que `12-observability` cobre além de error tracking
+
+| Bloco | Conteúdo |
+| --- | --- |
+| **Logging estruturado no cliente** | Níveis com critério: Error (exceções, falha de API) · Warn (retry, fallback ativado) · Info (ações do usuário / analytics) · Debug (só desenvolvimento) |
+| **Métricas de API vistas do cliente** | Latência p95, taxa de erro, timeout rate, disponibilidade — cada uma com meta **e** condição de alerta (ex.: erro > 5% por 2 min). São diferentes das métricas do servidor: medem a experiência real, com a rede do usuário no meio |
+| **User flow monitoring** | Cada fluxo crítico de `08-flows` instrumentado com eventos e **meta de conclusão** (onboarding 80%, checkout 90%, login 95%) — é o que detecta abandono antes do churn |
+| **Feature flags** | Flag / descrição / status (inativo, 10% rollout, beta users). Ciclo: flag → avaliação → renderização condicional → métricas → decisão (manter/remover). Ferramentas: LaunchDarkly, Unleash, Flagsmith ou custom |
+| **Específicos de plataforma** | mobile: crash reporting (Crashlytics) + **OTA update monitoring** (taxa de adoção, rollback) · desktop: crash do processo main + **telemetria de auto-update** + monitoramento de recursos do sistema |
+
+> Feature flags são a peça que liga observabilidade a produto: sem elas, o rollout Alpha→Beta→GA do §4.0 não tem mecanismo de execução.
+
 #### Budget de performance (web, referência do repositório)
 
 | Recurso | Budget |
@@ -1017,6 +1185,8 @@ Centralizar copies permite revisão por produto/UX, consistência de tom de voz 
 **CSP de referência:** `default-src 'self'; script-src 'self' 'nonce-{random}'; connect-src 'self' {api-domain}; frame-ancestors 'none'`.
 
 **Armazenamento de token:** cookie `httpOnly; Secure; SameSite=Strict` é o padrão recomendado no repositório — o checklist diz literalmente *"tokens nunca expostos em localStorage"*.
+
+> Os checklists de release das três plataformas (web, mobile, desktop) estão consolidados em [§16.5](#165-checklist-de-segurança-consolidado), para serem usados como um artefato só na hora de lançar.
 
 #### Especificidades de plataforma que mudam a arquitetura
 
@@ -1233,9 +1403,11 @@ Mais: **riscos técnicos** (risco / impacto / probabilidade / mitigação) e **d
 
 **Cobertura obrigatória:** todo requisito **Must** de `03-requirements.md` está dentro de alguma entrega. Musts fora são listados explicitamente.
 
-**Definition of Done** (README mestre §17.7) — uma entrega só está pronta quando: código revisado · testes passando · **logs e métricas implementados** · documentação atualizada · rollout definido · monitoramento configurado.
+**Definition of Done** (README mestre §17.7) — seis condições, consolidadas em [§16.2](#162-definition-of-done-por-entrega). A que mais é esquecida: *logs e métricas implementados* — uma entrega sem observabilidade está pronta para o desenvolvedor, não para a operação.
 
 ### 12.2 Deploy e ambientes
+
+> **Fonte:** este bloco **não** é produzido por `/blueprint-plan`. Ele vive em `blueprint/06-system-architecture.md` (§Infraestrutura e Deploy, gerado na **fase 3**), no blueprint master `README.MD` §22, e é detalhado por cliente em `frontend/{client}/13-cicd-conventions.md` e por ambiente em `backend/01-architecture.md` §Estratégia de Deploy. Está aqui por proximidade temática com o plano de construção, não por autoria.
 
 | Bloco | Decisões |
 | --- | --- |
@@ -1255,7 +1427,47 @@ Mais: **riscos técnicos** (risco / impacto / probabilidade / mitigação) e **d
 - **Critérios de revisão do blueprint** — gatilhos (mudança de arquitetura, entrada de novos membros, **incidentes que revelem lacunas na documentação**), cadência, responsável
 - **Histórico de revisões**
 
-### 12.4 Migração (README mestre §23)
+### 12.4 A hierarquia de trabalho: ENT → EP → ST → TSK
+
+O framework tem **duas** granularidades de backlog que convivem, e confundi-las é fonte comum de planejamento incoerente:
+
+```
+ENT-XXX   Entrega          blueprint/11-build_plan.md · unidade de VALOR e de dependência
+   │                        prioridade MoSCoW, estimativa T-shirt (S/M/L/XL), critérios de aceite
+   │
+   ├── EP-XXX   Epic        docs/templates/epic-template.md · agrupamento de valor
+   │      │                  contexto, escopo dentro/fora, critérios de aceite do epic,
+   │      │                  dependências (bloqueia/depende), riscos
+   │      │
+   │      └── ST-XXX  Story  docs/templates/story-template.md
+   │             │            "Como {persona}, quero {ação}, para {benefício}"
+   │             │            critérios de aceite em Gherkin (Dado/Quando/Então),
+   │             │            CENÁRIOS DE ERRO obrigatórios, estimativa P/M/G/GG,
+   │             │            Definição de Pronto própria
+   │             │
+   │             └── TSK-XXX  Task  docs/templates/task-template.md
+   │                           tipo (backend/frontend/infra/banco/teste/doc),
+   │                           checklist de implementação, critérios técnicos
+   │
+   └── TASK-{GRP}-{NNN}      docs/specs/TASKS.md · gerado por /specs
+                              derivado de docs/backend/, com camada, entidade, origem
+                              (arquivo), dependências entre tasks, RN-XX, arquivos a
+                              criar/editar, testes e componente de frontend dependente
+```
+
+| Eixo | `EP → ST → TSK` (templates) | `TASK-{GRP}-{NNN}` (`/specs`) |
+| --- | --- | --- |
+| Origem | Escrito por pessoas, a partir de `11-build_plan` e do PRD | **Derivado mecanicamente** de `docs/backend/` |
+| Linguagem | Produto — valor, persona, benefício | Implementação — classes, métodos, campos, tipos |
+| Agrupamento | Por valor de negócio | Por camada técnica (SETUP, DOM, DATA, SVC, API, AUTH, ERR, MW, EVT, INT, TEST, FE) |
+| Consumidor | Time, board ágil, stakeholders | `/build` e `/codegen-feature` |
+| Estimativa | P/M/G/GG (story), S/M/L/XL (entrega) | — (dependências, não estimativa) |
+
+**Como usar os dois sem duplicar:** a entrega (`ENT-XXX`) é a fonte comum. Para o time, ela vira epics e stories com linguagem de produto. Para o agente, `/specs` a decompõe em tasks técnicas rastreáveis até o arquivo de origem. O `/build` quebra cada entrega em **features verticais** (banco + API + frontend + testes) e usa `TASKS.md`, quando existe, para detalhar o escopo de cada uma.
+
+O blueprint master (`README.MD` §17.3-17.5) traz as três tabelas — Epics, Stories e Tasks técnicas — no mesmo documento, para quem prefere um arquivo único a templates separados.
+
+### 12.5 Migração (README mestre §23)
 
 Situação atual → situação futura → **estratégia** (big bang / incremental / paralela / **strangler**) → compatibilidade (backward compatibility, contratos legados, janelas de coexistência) → depreciação (o que sai, quando e como comunicar).
 
@@ -1274,7 +1486,7 @@ Esta parte consolida o que está **espalhado** pelo repositório e é o que dife
 | `blueprint/06-system-architecture` (§10.7 do README mestre) | **Boundaries e isolamento: multi-tenant vs single-tenant, isolamento lógico/físico** |
 | `blueprint/14-scalability` | Sharding **por tenant** como estratégia de particionamento |
 | `blueprint/14-scalability` | Rate limit de webhooks/integrações **por tenant** |
-| `backend/08-middlewares` | Identificação do cliente para rate limit pode ser **tenant ID** |
+| `blueprint/14-scalability` (§Rate limiting) | Identificação do cliente para rate limit pode ser **tenant ID** |
 
 **As decisões obrigatórias que precisam estar escritas antes da primeira migração:**
 
@@ -1368,6 +1580,14 @@ O framework cobre a engenharia de um SaaS com profundidade, mas há temas de Saa
 | Status page e comunicação de incidente ao cliente | `blueprint/15-observability` §runbooks |
 | Impersonation e ferramentas de suporte | `backend/11-permissions` + trilha de auditoria em `13-security` |
 | Analytics de produto e experimentação (A/B) | `{client}/12-observability` §feature flags |
+| **Fuso horário e moeda como decisão de domínio** — armazenar em UTC, exibir no tz do tenant/usuário; multi-moeda e taxa de conversão no momento da cobrança | `blueprint/04-domain-model` (convenção de campo) + `05-data-model` (tipo de coluna) + ADR. É causa clássica de bug de faturamento e de relatório |
+| **Entitlements por plano** — quais *features* ligam e desligam por plano, distinto de quota numérica | `blueprint/04-domain-model` (entidade `Plan`) + `backend/11-permissions` (checagem) + `{client}/12-observability` (feature flags) |
+| **Ciclo de vida do próprio tenant** — criar, provisionar (seed inicial, subdomínio), suspender, excluir com hard delete e backups | `blueprint/09-state-models` (máquina de estados de `Tenant`) + `08-use_cases` |
+| **Import/export de dados do tenant** — migração na entrada, export sob demanda, portabilidade LGPD/GDPR | `blueprint/08-use_cases` + `13-security` §privacidade + `backend/12-events` (job assíncrono) |
+| **Audit log exposto ao cliente como feature** (distinto da trilha interna de compliance) | `blueprint/04-domain-model` + `backend/05-api-contracts` + `13-security` |
+| **SLA contratual, créditos de SLA e níveis de suporte** — o compromisso externo, distinto do SLO interno | `blueprint/03-requirements` §RNF + `15-observability` (o que comprova) + `11-build_plan` |
+| **Custo por tenant / unit economics de infraestrutura** (COGS, FinOps, atribuição de custo por plano) | `blueprint/14-scalability` §plano de capacidade + dashboard de negócio em `15-observability` |
+| **Faturamento fiscal** — nota fiscal, impostos, faturamento por país e moeda | `backend/13-integrations` + ADR; complementa a lacuna de pricing acima |
 
 > Reconhecer a lacuna é parte do blueprint. Um documento que finge cobrir tudo é mais perigoso do que um que marca explicitamente onde não vai.
 
@@ -1409,28 +1629,52 @@ O framework cobre a engenharia de um SaaS com profundidade, mas há temas de Saa
 | **Rastreabilidade** | Conteúdo derivado é marcado: `<!-- do PRD -->`, `<!-- inferido do PRD -->`, `<!-- do blueprint: XX-arquivo.md -->` |
 | **Versões de tecnologia** | Consultadas via Context7 (`resolve-library-id` → `query-docs`), nunca assumidas do treino do modelo |
 | **Números são sensíveis a evidência** | Nunca inventar SLAs, metas de performance, métricas de negócio, nomes próprios ou constraints numéricos |
-| **Perguntas são limitadas** | Máximo **3 por skill inteira** (não por documento), agrupadas e feitas **antes** de gerar qualquer conteúdo |
+| **Perguntas são limitadas** | Nas skills de fase (as 6 do blueprint técnico, `/frontend`, `/frontend-app`, `/frontend-quality`): máximo **3 por skill inteira** (não por documento), agrupadas e feitas **antes** de gerar. **Exceções declaradas:** `/backend` faz até **14 perguntas** de implementação em grupos temáticos, aguardando resposta entre grupos; `/frontend-design-system` não tem teto — as escolhas de tipografia e paleta *são* as perguntas da skill |
 | **Idioma** | Identificadores técnicos em inglês; descrições em português |
 
 ### 14.3 Marcadores de append (pontos de inserção estáveis)
 
 `/increment` insere conteúdo **antes** destes marcadores, em vez de reescrever o documento:
 
-| Doc | Marcadores |
+> ⚠️ **Divergência do repositório, verificada arquivo por arquivo.** A skill `/increment` afirma que os documentos `02`, `05`, `06`, `07`, `08`, `14`, `15` e `16` do blueprint técnico **não têm** marcador `APPEND` e devem receber inserção "na seção apropriada". **Isso é falso: todos os oito têm marcador.** A lista abaixo é o inventário real, extraído dos arquivos. Seguir a skill neste ponto faz um agente inserir conteúdo no lugar errado — este é o erro mais caro que o documento poderia propagar, e por isso ele é corrigido aqui em vez de repetido.
+
+**Blueprint técnico** (inventário completo, com linha do arquivo):
+
+| Doc | Marcadores reais |
 | --- | --- |
 | `00-context` | `actors`, `external-systems`, `constraints` |
 | `01-vision` | `objectives`, `personas`, `success-metrics` |
+| `02-architecture_principles` | `principles` *(a skill diz que não existe — existe, linha 110)* |
 | `03-requirements` | `functional-requirements`, `nonfunctional-requirements` |
 | `04-domain-model` | `glossary`, `entities`, `relationships` |
+| `05-data-model` | `tables`, `critical-queries` *(linhas 42, 75)* |
+| `06-system-architecture` | `components`, `communication` *(linhas 42, 67)* |
+| `07-critical_flows` | `flows` *(linha 114)* |
+| `08-use_cases` | `use-cases` *(linha 141)* |
 | `09-state-models` | `state-models` |
-| `10-decisions` | `adrs` |
+| `10-architecture_decisions` | `adrs` |
 | `11-build_plan` | `technical-risks`, `deliverables`, `external-dependencies` |
-| `12-testing` | `coverage`, `ci-pipeline` |
+| `12-testing_strategy` | `coverage`, `ci-pipeline` |
 | `13-security` | `threats`, `roles`, `security-checklist` |
-| Backend | `stack`, `camadas`, `principios`, `entidades`, `repositories`, `endpoints`, `services`, `controllers`, `middlewares`, `codigos`, `regras`, `matriz`, `eventos`, `workers`, `integracoes`, `cenarios` |
-| Frontend | `principios`, `dominios`, `features`, `primitivos`, `compostos`, `stores`, `rotas`, `layouts`, `fluxos`, `cobertura`, `flags`, `copies-*` |
+| `14-scalability` | `capacity-limits`, `cache-strategies`, `rate-limits` *(linhas 75, 109, 128)* |
+| `15-observability` | `metrics`, `alerts`, `dashboards` *(linhas 71, 116, 153)* |
+| `16-evolution` | `technical-roadmap`, `technical-debt`, `deprecations`, `revision-history` *(linhas 17, 31, 82, 113)* |
 
-Documentos sem marcador (02, 05, 06, 07, 08, 14, 15, 16) recebem inserção na seção apropriada, após a última entrada.
+**Backend** — 50 marcadores distintos nos 15 documentos:
+`stack` · `camadas` · `principios` · `metricas` · `provedores` · `dominios` · `comunicacao` · `deploy` · `estrutura` · `nomenclatura` · `entidades` · `value-objects` · `regras` · `relacionamentos` · `maquinas` · `persistencia` · `repositories` · `schema` · `queries` · `endpoints` · `detalhamento` · `dtos` · `services` · `fluxos` · `controllers` · `rotas` · `serializers` · `middlewares` · `condicionais` · `hierarquia` · `codigos` · `cross-field` · `roles` · `matriz` · `campos-visiveis` · `eventos` · `schemas` · `workers` · `cron` · `catalogo` · `integracoes` · `webhooks` · `webhooks-enviados` · `provedores-comunicacao` · `templates-comunicacao` · `variaveis-comunicacao` · `regras-envio` · `convencoes-comunicacao` · `cenarios` · `ci`
+
+**Frontend** — 59 marcadores distintos entre `shared/` e os clientes:
+`cores` · `a11y` · `catalogo` · `hooks` · `dtos` · `cache` · `dependencias` · `campos-criticos` · `principios` · `usuarios` · `dominios` · `features` · `regras-importacao` · `primitivos` · `compostos` · `feature-components` · `desktop-components` · `stores` · `eventos` · `rotas` · `layouts` · `janelas` · `menus` · `tray` · `shortcuts` · `fluxos` · `flows` · `cobertura` · `estrategias` · `budget` · `vulnerabilidades` · `checklist` · `flags` · `ambientes` · `glossario` · `convencoes` · `decisoes` · `notifications` · `feedback-sucesso` · `feedback-erro` · `feedback-validacao` · `feedback-aviso` · e a família `copies-*` (`login`, `cadastro`, `dashboard`, `telas`, `navbar`, `sidebar`, `footer`, `modais`, `empty-states`, `tabbar`, `header`, `permissoes`, `alertas`, `titlebar`, `menubar`, `tray`, `notifications`, `dialogs`)
+
+**Cross-layer** (`docs/shared/`) — 6 marcadores:
+
+| Doc | Marcadores |
+| --- | --- |
+| `glossary.md` | `termos`, `acronimos`, `convencoes` *(linhas 10, 29, 47)* |
+| `error-ux-mapping.md` | `erros` *(linha 26)* |
+| `event-mapping.md` | `eventos`, `impacto` *(linhas 18, 45)* |
+
+> ⚠️ **Segunda lacuna do framework:** `docs/shared/` tem marcadores de append, mas `/increment` **não oferece `shared` como alvo** (os alvos são `blueprint`, `backend`, `frontend`, `all`). Na prática, glossário, mapeamento de erros e mapeamento de eventos só são atualizados de carona, quando o alvo escolhido os menciona. Adicionar um termo ao glossário exige edição manual ou `/patch`.
 
 ### 14.4 `/pipeline` — modo autônomo
 
@@ -1753,6 +1997,19 @@ Do próprio README e das seções "Limites conhecidos" das skills:
 - **Blueprint é pesado para trabalho pequeno.** Experimento descartável, arquitetura temporária, exploração pré-requisitos ou uma sessão curta de agente não justificam o custo.
 - **O pipeline autônomo é má escolha para sistema crítico com PRD raso.** Nesse caso, skills guiadas e resolução de incerteza antes da implementação.
 
+### 17.4 Divergências internas do repositório (verificadas)
+
+Um framework documentation-driven também sofre de deriva documental. Estas quatro divergências foram confirmadas arquivo a arquivo e estão registradas aqui em vez de resolvidas em silêncio — porque um agente que segue a fonte errada produz um erro difícil de rastrear:
+
+| # | Divergência | Fontes em conflito | Qual seguir |
+| --- | --- | --- | --- |
+| 1 | **Marcadores `APPEND` do blueprint técnico** | `.claude/skills/increment/SKILL.md` diz que `02, 05, 06, 07, 08, 14, 15, 16` não têm marcador; **os oito arquivos têm** | Os arquivos. Inventário real em §14.3 |
+| 2 | **Nome do diagrama de arquitetura do cliente web** | `/frontend-app` gera `{client}-architecture.mmd`; `docs/diagrams/web/README.md` declara `frontend-architecture.mmd` | O README do diagrama, que é o que `frontend/web/01-architecture.md` referencia |
+| 3 | **Numeração de fluxos alternativos e exceções em casos de uso** | `/blueprint-flows` diz `1a, 2a…` e `E1, E2…`; `docs/blueprint/08-use_cases.md` e `docs/templates/use-case-template.md` usam `2a` (alternativo) e `2b` (exceção) | Os templates, que são o que o documento gerado precisa espelhar |
+| 4 | **Caminhos no `claudemd-template.md`** | O template do router aponta para `docs/frontend/04-componentes.md`, `05-estado.md`, `07-rotas.md`, `08-fluxos.md`, `09-testes.md`, `11-seguranca.md`, `12-observabilidade.md` — **arquivos em português e flat que não existem**; a estrutura real é `docs/frontend/{shared,web,mobile,desktop}/` com nomes em inglês | A estrutura real. O template ficou para trás na migração flat → multi-client |
+
+> Estas quatro são, elas próprias, casos de uso de `/patch` e `/increment`: o framework tem a ferramenta para corrigir a si mesmo — o que faltou foi rodá-la depois das refatorações.
+
 ---
 
 ## 18. Índice de arquivos do repositório
@@ -1764,8 +2021,12 @@ docs/
 ├── prd.md                              ENTRADA (criado pelo usuário a partir de templates/prd-template.md)
 ├── ASSUMPTIONS.md                      Relatório de inferências do modo autônomo
 │
-├── blueprint/                          17 documentos — FONTE PRIMÁRIA
-│   ├── README.MD                       blueprint master (25 seções, todas num arquivo)
+├── blueprint/                          17 documentos modulares + 1 master — FONTE PRIMÁRIA
+│   ├── README.MD                       blueprint master: seções 0 a 25 num único arquivo.
+│   │                                   Contém 5 blocos que NÃO têm doc modular equivalente:
+│   │                                   §0.3 aprovações · §4 escopo · §5 stakeholders ·
+│   │                                   §15 riscos/restrições/assunções · §24 questões em aberto.
+│   │                                   Escolha UM formato: master OU modulares (não sincronize os dois)
 │   ├── 00-context.md                   atores, sistemas externos, limites, restrições
 │   ├── 01-vision.md                    problema, pitch, objetivos, personas, métricas
 │   ├── 02-architecture_principles.md   3-7 princípios com implicações
@@ -1801,9 +2062,11 @@ docs/
 │   ├── error-ux-mapping.md             erro do backend → comportamento visual
 │   └── event-mapping.md                evento do backend → estado do frontend
 │
+├── backend-answers.md                  respostas de implementação coletadas por /backend (14 perguntas)
 ├── specs/TASKS.md                      backlog integral (gerado por /specs)
 │
-├── templates/                          prd · claudemd · epic · story · task · use-case
+├── templates/                          prd (468 linhas, ENTRADA) · claudemd (router) ·
+│                                       epic · story · task · use-case
 ├── adr/adr-template.md                 template de decisão arquitetural
 └── diagrams/                           C4 (contexto, containers, componentes) +
                                         sequences · deployment · domain · por cliente

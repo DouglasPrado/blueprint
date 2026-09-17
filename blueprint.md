@@ -6,7 +6,7 @@
 >
 > **O que este arquivo não é:** um substituto dos documentos individuais. Ele é a visão de conjunto; cada seção aponta para o arquivo-fonte onde o detalhe vive e é preenchido.
 >
-> **Sobre divergências:** onde os arquivos do repositório se contradizem entre si, este documento **registra o conflito e diz qual fonte seguir** em vez de escolher um lado em silêncio. As **seis divergências verificadas** estão em [§17.4](#174-divergências-internas-do-repositório-verificadas) e as **quatro lacunas estruturais do framework** — três em [§14.3](#143-marcadores-de-append-pontos-de-inserção-estáveis), a quarta no fecho de §17.4. A mais consequente: **nenhuma skill gera `docs/shared/`**, de modo que o `/pipeline` entrega 48 documentos preenchidos, não 52.
+> **Sobre divergências:** onde os arquivos do repositório se contradizem entre si, este documento **registra o conflito e diz qual fonte seguir** em vez de escolher um lado em silêncio. As **sete divergências verificadas** estão em [§17.4](#174-divergências-internas-do-repositório-verificadas) e as **quatro lacunas estruturais do framework** — três em [§14.3](#143-marcadores-de-append-pontos-de-inserção-estáveis), a quarta no fecho de §17.4. A mais consequente: **nenhuma skill gera `docs/shared/`**, de modo que o `/pipeline` entrega 48 documentos preenchidos, não 52.
 
 | Campo | Valor |
 | --- | --- |
@@ -81,6 +81,8 @@ Três consequências práticas, que aparecem repetidas em todas as skills:
   }
 }
 ```
+
+> ⚠️ Este snippet é reproduzido do `README.md` do repositório **sem alteração**. Confirme o nome do pacote e os nomes das ferramentas no registro do MCP antes de usar — o `README.md` cita `@upstreamapi/context7-mcp` e as skills chamam `resolve-library-id` / `query-docs`, mas nomes de pacote e de tool mudam entre versões, e um nome errado faz o MCP simplesmente não subir.
 
 **Setup:** clonar o repositório → colocar o PRD em `docs/prd.md` → escolher o modo de execução abaixo.
 
@@ -280,7 +282,7 @@ Esta é a correlação integral entre arquivos. É o conteúdo de `docs/shared/M
 | `sequences/template-flow.mmd` | `sequences/{nome-do-fluxo}.mmd` e `{client}/fluxo-{n}.mmd` | `/blueprint-flows`, `/frontend-app` |
 | `components/api-components.mmd` | `components/{container}-components.mmd`, um por container | `/blueprint-architecture` |
 
-⚠️ **Divergências do repositório neste ponto** — verificadas, não resolvidas por escolha silenciosa. São as entradas 2 e 6 do índice consolidado de [§17.4](#174-divergências-internas-do-repositório-verificadas):
+⚠️ **Divergências do repositório neste ponto** — verificadas, não resolvidas por escolha silenciosa. São as entradas #2 e #6 do índice consolidado de [§17.4](#174-divergências-internas-do-repositório-verificadas), que lista as sete:
 
 1. **Nome do diagrama de arquitetura do cliente web.** A skill `/frontend-app` manda criar `docs/diagrams/{client}/{client}-architecture.mmd`, o que daria `web-architecture.mmd`. Mas `docs/diagrams/web/README.md` declara **`frontend-architecture.mmd`** — e é esse o nome referenciado por `docs/frontend/web/01-architecture.md`. Para `mobile` e `desktop` os READMEs seguem o padrão da skill (`mobile-architecture.mmd`, `desktop-architecture.mmd`). **Só o cliente web diverge.**
 2. **Dono do `auth-flow.mmd`.** `docs/diagrams/README.md` §6 atribui todos os `sequences/*.mmd` a `07-critical_flows.md`; a skill `/blueprint-quality` manda atualizar `auth-flow.mmd` com o fluxo de autenticação real ao gerar `13-security.md`. Na prática o arquivo tem dois donos — o fluxo vem de `07`, o detalhe de autenticação de `13`.
@@ -1008,7 +1010,7 @@ O `globals.css` documenta **todas** as variáveis em light e dark: backgrounds, 
 
 **Iconografia:** Lucide Animated (primária — loading, transições, feedback, onboarding, empty states) + shadcn/ui Icons (complementar — navegação, botões, menus, tabelas). Tamanhos: sm 16 · md 20 · lg 24 · xl 32; stroke 1.5-2px; sempre `currentColor`; **não misturar outros icon packs**.
 
-**Temas** — decisão explícita entre *light only* / *light + dark* / *customizável pelo usuário*, com a estratégia documentada: como os tokens são alternados, onde fica a lógica de troca, se usa CSS variables ou outra abordagem. A regra de derivação do dark mode é **inverter a lightness (L) do oklch mantendo chroma (C) e hue (H)**. *(Nota: o template usa o seletor `[data-theme="dark"]` e a skill usa `.dark` — divergência menor, mas escolha um e use em todo o projeto.)*
+**Temas** — decisão explícita entre *light only* / *light + dark* / *customizável pelo usuário*, com a estratégia documentada: como os tokens são alternados, onde fica a lógica de troca, se usa CSS variables ou outra abordagem. A regra de derivação do dark mode é **inverter a lightness (L) do oklch mantendo chroma (C) e hue (H)**. *(Nota: o template usa o seletor `[data-theme="dark"]` e a skill usa `.dark` — divergência #7 de [§17.4](#174-divergências-internas-do-repositório-verificadas). Menor, mas escolha um e use em todo o projeto.)*
 
 **Ferramentas que ligam design e código** — **Figma** (design de interfaces e prototipação) e **Storybook** (documentação interativa de componentes), com URL registrada. O Storybook é citado como o lugar a consultar **antes de criar qualquer componente novo**.
 
@@ -2062,7 +2064,7 @@ Do próprio README e das seções "Limites conhecidos" das skills:
 
 ### 17.4 Divergências internas do repositório (verificadas)
 
-Um framework documentation-driven também sofre de deriva documental. Estas **seis** divergências foram confirmadas arquivo a arquivo e estão registradas aqui em vez de resolvidas em silêncio — porque um agente que segue a fonte errada produz um erro difícil de rastrear:
+Um framework documentation-driven também sofre de deriva documental. Estas **sete** divergências foram confirmadas arquivo a arquivo e estão registradas aqui em vez de resolvidas em silêncio — porque um agente que segue a fonte errada produz um erro difícil de rastrear:
 
 | # | Divergência | Fontes em conflito | Qual seguir |
 | --- | --- | --- | --- |
@@ -2072,8 +2074,9 @@ Um framework documentation-driven também sofre de deriva documental. Estas **se
 | 4 | **Referências cruzadas em português e em caminho flat, apontando para arquivos inexistentes** | Não é um template isolado: **37 ocorrências em 25 arquivos**, em quatro classes — (a) o template do router `docs/templates/claudemd-template.md` (`04-componentes.md`, `05-estado.md`, `07-rotas.md`, `08-fluxos.md`, `09-testes.md`, `11-seguranca.md`, `12-observabilidade.md` e o flat `docs/frontend/06-data-layer.md`); (b) **`01-arquitetura.md`, referenciado em 6 documentos de cliente** (`{web,desktop}/00-frontend-vision.md`, `.../02-project-structure.md`, `.../05-state.md`); (c) o resto dos docs de cliente (`07-rotas.md`, `11-seguranca.md`, `09-testes.md`, `13-cicd-convencoes.md`, `12-observabilidade.md`, `00-visao-frontend.md`); (d) os **compartilhados e cross-layer** — `frontend/shared/03-design-system.md:122`, `frontend/shared/06-data-layer.md:149`, `frontend/shared/15-api-dependencies.md:90`, `docs/shared/event-mapping.md:49-51` e `docs/shared/error-ux-mapping.md:60-61`, estes últimos com o caminho **flat** `docs/frontend/06-data-layer.md`, `docs/frontend/11-security.md`, `docs/frontend/12-observability.md` | A estrutura real (`docs/frontend/{shared,web,mobile,desktop}/`, nomes em inglês). **Deriva sistêmica** da migração flat → multi-client: atingiu o template do router, os documentos gerados *e* os conectores cross-layer |
 | 5 | **Prefixo de regra de negócio** | `docs/blueprint/04-domain-model.md`, `08-use_cases.md`, `backend/03-domain.md` e `/specs` usam **`RN-XX`**; `docs/templates/use-case-template.md:54` e `docs/blueprint/README.MD:356,608` usam **`RB-01`** | **`RN-XX`** — é o que os documentos modulares, o backend e o gerador de backlog usam. `RB-` sobrevive só no master e no template de caso de uso |
 | 6 | **Dono do `auth-flow.mmd`** | `docs/diagrams/README.md` §6 atribui todos os `sequences/*.mmd` a `07-critical_flows.md`; `/blueprint-quality` manda atualizá-lo ao gerar `13-security.md` | Ambos, em momentos diferentes: o fluxo nasce em `07` (fase 4) e o detalhe de autenticação é refinado por `13` (fase 5). Detalhado em §3.3 |
+| 7 | **Seletor do tema escuro** | `docs/frontend/shared/03-design-system.md:80` usa `[data-theme="dark"]`; `.claude/skills/frontend-design-system/SKILL.md:149` usa `.dark` | Qualquer um — mas **um só**, e o mesmo em todo o projeto. Detalhado em §9.1 |
 
-> ⚠️ **E aqui está a quarta lacuna estrutural do framework:** `/patch` e `/increment` **não alcançam cinco destas seis divergências**. A varredura do `/patch` cobre apenas `docs/blueprint/`, `docs/backend/`, `docs/frontend/shared/`, `docs/frontend/*/`, `docs/shared/`, `docs/specs/` e `docs/adr/`. Ficam **inteiramente fora de alcance** três diretórios: **`docs/templates/`**, **`docs/diagrams/`** e — o mais importante — **`.claude/skills/`**, já que a varredura só desce em `docs/**`. `/increment` é ainda mais restrito (só `blueprint`, `backend`, `frontend`).
+> ⚠️ **E aqui está a quarta lacuna estrutural do framework:** `/patch` e `/increment` **não alcançam seis destas sete divergências**. A varredura do `/patch` cobre apenas `docs/blueprint/`, `docs/backend/`, `docs/frontend/shared/`, `docs/frontend/*/`, `docs/shared/`, `docs/specs/` e `docs/adr/`. Ficam **inteiramente fora de alcance** três diretórios: **`docs/templates/`**, **`docs/diagrams/`** e — o mais importante — **`.claude/skills/`**, já que a varredura só desce em `docs/**`. `/increment` é ainda mais restrito (só `blueprint`, `backend`, `frontend`).
 >
 > Onde cada divergência mora, e o que isso implica:
 >
@@ -2082,11 +2085,14 @@ Um framework documentation-driven também sofre de deriva documental. Estas **se
 > | 1 | `.claude/skills/increment/SKILL.md` | — | **manual** |
 > | 2 | `docs/diagrams/web/README.md` + `.claude/skills/frontend-app/SKILL.md` | — | **manual (as duas pontas)** |
 > | 3 | `.claude/skills/blueprint-flows/SKILL.md` + `docs/templates/use-case-template.md` | `docs/blueprint/08-use_cases.md` | **manual** nas fontes; o doc gerado o `/patch` alcança |
-> | 4 | classe (a): `docs/templates/claudemd-template.md` (8 ocorrências) | classes (b)(c)(d): 17 arquivos em `docs/frontend/` e `docs/shared/` | `/patch` resolve a maior parte; o template é manual |
+> | 4 | classe (a): `docs/templates/claudemd-template.md` (8 ocorrências) | classes (b)(c)(d): **24 arquivos, 29 ocorrências** em `docs/frontend/` e `docs/shared/` | `/patch` resolve 29 das 37; o template é manual |
 > | 5 | `docs/templates/use-case-template.md:54` | `docs/blueprint/README.MD:356,608` | parcial |
 > | 6 | `docs/diagrams/README.md` + `.claude/skills/blueprint-quality/SKILL.md` | — | **manual (as duas pontas)** |
+| 7 | `.claude/skills/frontend-design-system/SKILL.md` | `frontend/shared/03-design-system.md` | parcial |
 >
-> **Quem usar §17.4 como lista de tarefas precisa saber disto:** rodar `/patch` corrige a maior parte da #4 e metade da #5, e nada mais. As outras quatro exigem edição manual. O framework tem ferramenta para corrigir a si mesmo, mas não para corrigir as próprias ferramentas — as skills, os templates e os diagramas estão fora de todo automatismo que ele oferece.
+> **Quem usar §17.4 como lista de tarefas precisa saber disto:** rodar `/patch` corrige 29 das 37 ocorrências da #4 e metade das #5 e #7 — e nada mais. As outras quatro exigem edição manual dentro de `.claude/skills/`, `docs/templates/` e `docs/diagrams/`.
+>
+> *(Detalhe de execução: a varredura da skill está escrita como `docs/blueprint/*.md`, em minúsculas, e o blueprint master é `README.MD` — num filesystem sensível a maiúsculas, o glob literal não o pega. A ponta "alcançável" da #5 depende de o agente ajustar o padrão.)* O framework tem ferramenta para corrigir a si mesmo, mas não para corrigir as próprias ferramentas — as skills, os templates e os diagramas estão fora de todo automatismo que ele oferece.
 >
 > Somem-se a estas as **três lacunas estruturais** registradas em §14.3: marcadores que a skill `/increment` não conhece · `docs/shared/` fora do alvo de `/increment` · `docs/shared/` sem skill que o gere. E a **inconsistência interna do `/specs`** (grupos `CTRL` e `VAL` no mapa, ausentes na saída), em §14.8.
 
@@ -2216,7 +2222,7 @@ docs/
 
 O que este documento reúne, em uma frase:
 
-> **Um SaaS é fundamentalmente 14 decisões — domínio, dados, estados, limites, arquitetura, contratos, isolamento entre tenants, assíncrono, resiliência, segurança, qualidade, plano, evolução e o vocabulário que amarra tudo — e a diferença entre um sistema que cresce e um que trava está em quantas dessas decisões existem escritas antes do código, e em quantas continuam sendo verdade depois dele.**
+> **Um SaaS é fundamentalmente os 14 pilares de [§1](#1-os-14-pilares-de-um-saas) — problema e valor · limites · requisitos com threshold · domínio e linguagem ubíqua · dados e migrações · ciclo de vida das entidades · arquitetura e decisões registradas · fluxos e casos de uso · contrato de API · autenticação, autorização e multi-tenancy · assíncrono · integrações e resiliência · qualidade · plano e evolução — e a diferença entre um sistema que cresce e um que trava está em quantos desses pilares existem escritos antes do código, e em quantos continuam sendo verdade depois dele.**
 
 O framework não torna as decisões mais fáceis. Torna-as **explícitas, rastreáveis e verificáveis** — e é isso que permite que um agente de IA, ou um engenheiro que entrou ontem, construa a coisa certa sem precisar que alguém explique de novo.
 

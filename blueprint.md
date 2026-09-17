@@ -187,7 +187,7 @@ Cada fase consome o que a anterior produziu. Pular gera documento genérico — 
 | 6 | `/blueprint-plan` | `11`, `16` | `03`, `07`, `08`, `10`, `14` |
 | 7 | `/backend` | `backend/00-14` | os 17 docs do blueprint |
 | 8 | `/frontend-design-system` | `frontend/shared/03` | `01-vision` (identidade do produto) |
-| 9 | `/frontend` | `frontend/shared/06`, `15` | blueprint + **`backend/05-api-contracts.md`** |
+| 9 | `/frontend` | `frontend/shared/06`, `15` | blueprint + `backend/05-api-contracts.md` **quando existir** (a skill o trata como fonte autoritativa se presente — daí a ordem recomendada abaixo) |
 | 10 | `/frontend-app {client}` | 8 docs do cliente | blueprint + shared |
 | 11 | `/frontend-quality {client}` | 5 docs do cliente | `blueprint/12,13,14,15` + docs do cliente |
 | 12 | `/codegen-setup` | `CLAUDE.md`, `src/contracts/`, schema, scaffold | `02` (patterns e convenções), `04`, `05`, `06`, `backend/00-04`, **`shared/glossary.md`** e, por cliente ativo, `{client}/02-project-structure` + `shared/03-design-system` |
@@ -306,7 +306,7 @@ Estas conexões não aparecem no `MAPPING.md` mas são obrigatórias segundo as 
 | Toda lista e tela com dados dinâmicos tem **empty state** definido em `{client}/14-copies` | `/frontend-app` — checklist de cobertura |
 | `shared/glossary.md` é a fonte única consumida por `blueprint/04-domain-model`, `backend/03-domain`, `{client}/04-components` e `{client}/14-copies` | rodapé do próprio `glossary.md` — nenhum deles cria glossário próprio |
 | Débitos de `16-evolution` alimentam os **limites conhecidos** de `backend/00-backend-vision` (além do versionamento → `05-api-contracts`) | `/backend` — mapa de extração |
-| Todo erro de `backend/09-errors` precisa de linha em `shared/error-ux-mapping` | `docs/shared/error-ux-mapping.md` — *"Para CADA código de erro do backend, documente a resposta no frontend"*. **Não** está no checklist de `/specs`: lacuna real do framework |
+| Todo erro de `backend/09-errors` precisa de linha em `shared/error-ux-mapping` | `docs/shared/error-ux-mapping.md` — *"Para CADA código de erro do backend, documente a resposta no frontend"*. o Passo 3 de `/specs` manda identificar consumidor de frontend "para cada endpoint/evento/erro do backend", mas o **checklist final de cobertura não inclui esse cruzamento** — a validação depende do zelo do passo intermediário |
 
 ---
 
@@ -444,7 +444,7 @@ Estes blocos vivem no **blueprint master** (`docs/blueprint/README.MD` §0.3, §
 
 **24 arquivos** terminam com uma tabela `Data | Decisão | Motivo`: exatamente os documentos **07 a 14 de cada um dos três clientes frontend** (`07-routes`, `08-flows`, `09-tests`, `10-performance`, `11-security`, `12-observability`, `13-cicd-conventions`, `14-copies` × web, mobile, desktop). **Nenhum documento de `docs/backend/`, de `docs/blueprint/` ou de `docs/frontend/shared/` tem essa seção** — é uma convenção que existe só na metade "de cliente" do frontend.
 
-É o mecanismo de rastreabilidade mais barato do framework: registra **por que aquele documento mudou**, sem exigir um ADR formal. Que ele não exista nos outros 28 documentos é, em si, uma assimetria a resolver.
+É o mecanismo de rastreabilidade mais barato do framework: registra **por que aquele documento mudou**, sem exigir um ADR formal. Que ele não exista nos outros **54 documentos do repositório** (78 docs com os três clientes, menos os 24 que o têm) é, em si, uma assimetria a resolver — e explica por que só o frontend de cliente consegue responder *"por que essa decisão mudou?"* sem abrir um ADR.
 
 | Nível | Artefato | Quando usar |
 | --- | --- | --- |
@@ -1503,7 +1503,7 @@ ENT-XXX   Entrega          blueprint/11-build_plan.md · unidade de VALOR e de d
 | --- | --- | --- |
 | Origem | Escrito por pessoas, a partir de `11-build_plan` e do PRD | **Derivado mecanicamente** de `docs/backend/` |
 | Linguagem | Produto — valor, persona, benefício | Implementação — classes, métodos, campos, tipos |
-| Agrupamento | Por valor de negócio | Por camada técnica (SETUP, DOM, DATA, SVC, API, AUTH, ERR, MW, EVT, INT, TEST, FE) |
+| Agrupamento | Por valor de negócio | Por camada técnica — 14 grupos (SETUP, DOM, DATA, SVC, API, CTRL, AUTH, ERR, VAL, MW, EVT, INT, TEST, FE); ver o aviso em [§14.8](#148-specs--backlog-integral) |
 | Consumidor | Time, board ágil, stakeholders | `/build` e `/codegen-feature` |
 | Estimativa | P/M/G/GG (story), S/M/L/XL (entrega) | — (dependências, não estimativa) |
 
@@ -1845,7 +1845,9 @@ Testes: {n} novos, suíte com {total} verdes
 
 Gera `docs/specs/TASKS.md` a partir de `docs/backend/` (fonte primária), validado contra frontend e blueprint.
 
-**Grupos de task:** `SETUP` · `DOM` · `DATA` · `SVC` · `API` · `AUTH` · `ERR` · `MW` · `EVT` · `INT` · `TEST` · `FE`.
+**Grupos de task — 14, não 12:** `SETUP` · `DOM` · `DATA` · `SVC` · `API` · **`CTRL`** · `AUTH` · `ERR` · **`VAL`** · `MW` · `EVT` · `INT` · `TEST` · `FE`.
+
+> ⚠️ **Inconsistência interna da skill.** O mapa de extração de `/specs` declara `07-controllers → CTRL` (1 task por controller) e `10-validation → VAL` (1 task por grupo de validação), mas a lista de IDs da estrutura de saída omite os dois. Seguir a lista de saída faz o backlog **perder duas camadas inteiras** — controllers e validação — que o mapa mandou gerar. Use os 14.
 
 **Regra de derivação:** cada entidade gera no mínimo `DOM` + `DATA` + `SVC` + `API`.
 
@@ -1886,7 +1888,9 @@ Um blueprint preenchido de projeto real ultrapassa em muito o que cabe numa jane
 
 ### 15.1 `CLAUDE.md` router
 
-Mapeia **tipo de tarefa → 2-3 documentos relevantes**. Gerado por `/codegen-setup` a partir de `docs/templates/claudemd-template.md`:
+Mapeia **tipo de tarefa → 2-3 documentos relevantes**. Gerado por `/codegen-setup` a partir de `docs/templates/claudemd-template.md`.
+
+> ⚠️ A tabela abaixo usa os **nomes reais** dos arquivos. O template de origem ainda traz nomes em português e em caminho flat (`04-componentes.md`, `05-estado.md`, `07-rotas.md`…) que **não existem** — ver §17.4 #4. Como `docs/templates/` está fora do escopo de `/patch` e `/increment`, essa correção é manual.
 
 | Tipo de tarefa | Documentos a ler |
 | --- | --- |
@@ -2056,18 +2060,20 @@ Do próprio README e das seções "Limites conhecidos" das skills:
 
 ### 17.4 Divergências internas do repositório (verificadas)
 
-Um framework documentation-driven também sofre de deriva documental. Estas quatro divergências foram confirmadas arquivo a arquivo e estão registradas aqui em vez de resolvidas em silêncio — porque um agente que segue a fonte errada produz um erro difícil de rastrear:
+Um framework documentation-driven também sofre de deriva documental. Estas **seis** divergências foram confirmadas arquivo a arquivo e estão registradas aqui em vez de resolvidas em silêncio — porque um agente que segue a fonte errada produz um erro difícil de rastrear:
 
 | # | Divergência | Fontes em conflito | Qual seguir |
 | --- | --- | --- | --- |
 | 1 | **Marcadores `APPEND` do blueprint técnico** | `.claude/skills/increment/SKILL.md` diz que `02, 05, 06, 07, 08, 14, 15, 16` não têm marcador; **os oito arquivos têm** | Os arquivos. Inventário real em §14.3 |
 | 2 | **Nome do diagrama de arquitetura do cliente web** | `/frontend-app` gera `{client}-architecture.mmd`; `docs/diagrams/web/README.md` declara `frontend-architecture.mmd` | O README do diagrama, que é o que `frontend/web/01-architecture.md` referencia |
 | 3 | **Numeração de fluxos alternativos e exceções em casos de uso** | `/blueprint-flows` diz `1a, 2a…` e `E1, E2…`; `docs/blueprint/08-use_cases.md` e `docs/templates/use-case-template.md` usam `2a` (alternativo) e `2b` (exceção) | Os templates, que são o que o documento gerado precisa espelhar |
-| 4 | **Referências cruzadas em português e em caminho flat, que apontam para arquivos inexistentes** | Não é um template isolado: são **19 ocorrências em 11 arquivos**. `docs/templates/claudemd-template.md` (`04-componentes.md`, `05-estado.md`, `07-rotas.md`, `08-fluxos.md`, `09-testes.md`, `11-seguranca.md`, `12-observabilidade.md`); os próprios docs gerados — `frontend/{web,desktop}/07-routes.md`, `.../11-security.md` (2 cada), `.../09-tests.md`, `.../10-performance.md`, `.../13-cicd-conventions.md`, `.../14-copies.md`, `web/01-architecture.md` (`00-visao-frontend.md`); e os compartilhados — `frontend/shared/03-design-system.md:122` (`04-componentes.md`), `frontend/shared/06-data-layer.md:149` (`05-estado.md`). Além disso, `docs/shared/event-mapping.md:50` e `frontend/shared/15-api-dependencies.md:90` citam o caminho **flat** `docs/frontend/06-data-layer.md`, que virou `docs/frontend/shared/06-data-layer.md` | A estrutura real (`docs/frontend/{shared,web,mobile,desktop}/`, nomes em inglês). **Deriva sistêmica** da migração flat → multi-client: atingiu o template do router *e* os documentos gerados |
+| 4 | **Referências cruzadas em português e em caminho flat, apontando para arquivos inexistentes** | Não é um template isolado: **37 ocorrências em 25 arquivos**, em quatro classes — (a) o template do router `docs/templates/claudemd-template.md` (`04-componentes.md`, `05-estado.md`, `07-rotas.md`, `08-fluxos.md`, `09-testes.md`, `11-seguranca.md`, `12-observabilidade.md` e o flat `docs/frontend/06-data-layer.md`); (b) **`01-arquitetura.md`, referenciado em 6 documentos de cliente** (`{web,desktop}/00-frontend-vision.md`, `.../02-project-structure.md`, `.../05-state.md`); (c) o resto dos docs de cliente (`07-rotas.md`, `11-seguranca.md`, `09-testes.md`, `13-cicd-convencoes.md`, `12-observabilidade.md`, `00-visao-frontend.md`); (d) os **compartilhados e cross-layer** — `frontend/shared/03-design-system.md:122`, `frontend/shared/06-data-layer.md:149`, `frontend/shared/15-api-dependencies.md:90`, `docs/shared/event-mapping.md:49-51` e `docs/shared/error-ux-mapping.md:60-61`, estes últimos com o caminho **flat** `docs/frontend/06-data-layer.md`, `docs/frontend/11-security.md`, `docs/frontend/12-observability.md` | A estrutura real (`docs/frontend/{shared,web,mobile,desktop}/`, nomes em inglês). **Deriva sistêmica** da migração flat → multi-client: atingiu o template do router, os documentos gerados *e* os conectores cross-layer |
 | 5 | **Prefixo de regra de negócio** | `docs/blueprint/04-domain-model.md`, `08-use_cases.md`, `backend/03-domain.md` e `/specs` usam **`RN-XX`**; `docs/templates/use-case-template.md:54` e `docs/blueprint/README.MD:356,608` usam **`RB-01`** | **`RN-XX`** — é o que os documentos modulares, o backend e o gerador de backlog usam. `RB-` sobrevive só no master e no template de caso de uso |
 | 6 | **Dono do `auth-flow.mmd`** | `docs/diagrams/README.md` §6 atribui todos os `sequences/*.mmd` a `07-critical_flows.md`; `/blueprint-quality` manda atualizá-lo ao gerar `13-security.md` | Ambos, em momentos diferentes: o fluxo nasce em `07` (fase 4) e o detalhe de autenticação é refinado por `13` (fase 5). Detalhado em §3.3 |
 
-> Estas seis são, elas próprias, casos de uso de `/patch` e `/increment`: o framework tem a ferramenta para corrigir a si mesmo — o que faltou foi rodá-la depois das refatorações. Some-se a elas as **três lacunas estruturais** registradas em §14.3 (marcadores que a skill `/increment` não conhece, `docs/shared/` fora do alvo de `/increment`, e `docs/shared/` sem skill que o gere).
+> ⚠️ **E aqui está a quarta lacuna estrutural do framework:** `/patch` e `/increment` **não conseguem corrigir metade destas divergências**. A varredura do `/patch` cobre `docs/blueprint/`, `docs/backend/`, `docs/frontend/shared/`, `docs/frontend/*/`, `docs/shared/`, `docs/specs/` e `docs/adr/` — **`docs/templates/` e `docs/diagrams/` ficam de fora**, e `/increment` também não os alcança. Ou seja: a divergência #2 (`docs/diagrams/web/README.md`) e a classe (a) da #4 (as 8 ocorrências no `claudemd-template.md`) exigem **edição manual**. O framework tem ferramenta para corrigir a si mesmo, mas não para corrigir as próprias ferramentas.
+>
+> Somem-se a estas as **três lacunas estruturais** registradas em §14.3: marcadores que a skill `/increment` não conhece · `docs/shared/` fora do alvo de `/increment` · `docs/shared/` sem skill que o gere. E a **inconsistência interna do `/specs`** (grupos `CTRL` e `VAL` no mapa, ausentes na saída), em §14.8.
 
 ---
 
@@ -2082,11 +2088,14 @@ docs/
 │
 ├── blueprint/                          17 documentos modulares + 1 master — FONTE PRIMÁRIA
 │   ├── README.MD                       blueprint master: seções 0 a 25 num único arquivo.
-│   │                                   Sem equivalente modular: §0.3 aprovações ·
-│   │                                   §5 stakeholders · §24 questões em aberto · §11 integrações
-│   │                                   e interfaces. Com equivalente parcial: §4 escopo,
-│   │                                   §15 riscos/restrições/assunções (o master acrescenta
-│   │                                   IDs e owner — ver §4.5).
+│   │                                   SEM equivalente modular — quem escolher "modulares"
+│   │                                   perde: §0.3 aprovações · §5 stakeholders · §11 integrações
+│   │                                   e interfaces · §20.1 SLA/SLO/error budget (não há "SLO"
+│   │                                   em nenhum dos 17) · §24 questões em aberto ·
+│   │                                   §9.5/§9.6 retenção, arquivamento, backup e RPO/RTO.
+│   │                                   Com equivalente PARCIAL: §4 escopo, §15 riscos/
+│   │                                   restrições/assunções (o master acrescenta IDs, owner,
+│   │                                   "impacto se falsa" e "fonte" — ver §4.5).
 │   │                                   Escolha UM formato: master OU modulares (não sincronize os dois)
 │   ├── 00-context.md                   atores, sistemas externos, limites, restrições
 │   ├── 01-vision.md                    problema, pitch, objetivos, personas, métricas
